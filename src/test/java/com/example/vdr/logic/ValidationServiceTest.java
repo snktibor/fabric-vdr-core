@@ -1,0 +1,118 @@
+package com.example.vdr.logic;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import com.example.vdr.exception.VdrException;
+import com.example.vdr.model.DidDocument;
+import com.example.vdr.model.SchemaRecord;
+import com.example.vdr.util.JsonUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Unit tests for {@link ValidationService} fail-fast validation helpers.
+ *
+ * <p>Covers string normalization, JSON shape enforcement, and schema-attribute compatibility checks
+ * used by domain services.
+ */
+@SuppressWarnings("java:S1192")
+class ValidationServiceTest {
+
+    private final ValidationService validationService = new ValidationService();
+
+    /** Verifies blank values are rejected while surrounding whitespace is trimmed. */
+    @Test
+    void requireNotBlankTrimsAndRejects() {
+        assertEquals("id", validationService.requireNotBlank(" id ", "id"));
+        assertThrows(VdrException.class, () -> validationService.requireNotBlank("  ", "id"));
+    }
+
+    /** Verifies identifier matching trims payload values and rejects mismatches. */
+    @Test
+    void requireMatchingIdsTrimsActual() {
+        validationService.requireMatchingIds("id", " id ", "id");
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireMatchingIds("id", "other", "id"));
+    }
+
+    /** Verifies object parsing helper rejects JSON arrays. */
+    @Test
+    void parseJsonObjectRejectsArray() {
+        assertThrows(VdrException.class, () -> validationService.parseJsonObject("[1]", "payload"));
+    }
+
+    /** Verifies string-array parser rejects duplicate entries. */
+    @Test
+    void parseStringArrayRejectsDuplicates() {
+        assertThrows(
+                VdrException.class,
+                () -> validationService.parseStringArray("[\"a\",\"a\"]", "attrNames"));
+    }
+
+    /** Verifies string-array parser rejects non-text and empty arrays. */
+    @Test
+    void parseStringArrayRejectsNonStringAndEmpty() {
+        assertThrows(
+                VdrException.class, () -> validationService.parseStringArray("[1]", "attrNames"));
+        assertThrows(
+                VdrException.class, () -> validationService.parseStringArray("[]", "attrNames"));
+    }
+
+    /** Verifies string-array parser returns normalized values for valid input. */
+    @Test
+    void parseStringArrayReturnsValues() {
+        assertEquals(
+                List.of("a", "b"),
+                validationService.parseStringArray("[\"a\",\"b\"]", "attrNames"));
+    }
+
+    /** Verifies DID document shape validation rejects non-object entries. */
+    @Test
+    void validateDidDocumentShapeRejectsNonObjectElements() {
+        final DidDocument document = new DidDocument();
+        document.setVerificationMethod(List.of(TextNode.valueOf("bad")));
+
+        assertThrows(
+                VdrException.class, () -> validationService.validateDidDocumentShape(document));
+    }
+
+    /** Verifies credential validation rejects fields not declared in schema. */
+    @Test
+    void validateCredentialAgainstSchemaRejectsExtraField() {
+        final SchemaRecord schema = new SchemaRecord();
+        schema.setAttrNames(List.of("name"));
+        final JsonNode credential = JsonUtil.readTree("{\"name\":\"Alice\",\"age\":30}");
+
+        assertThrows(
+                VdrException.class,
+                () -> validationService.validateCredentialAgainstSchema(credential, schema));
+    }
+
+    /** Verifies credential validation rejects non-object payloads. */
+    @Test
+    void validateCredentialAgainstSchemaRejectsNonObject() {
+        final SchemaRecord schema = new SchemaRecord();
+        schema.setAttrNames(List.of("name"));
+        final JsonNode credential = JsonUtil.readTree("[1]");
+
+        assertThrows(
+                VdrException.class,
+                () -> validationService.validateCredentialAgainstSchema(credential, schema));
+    }
+
+    /** Verifies credential validation accepts payloads matching schema fields. */
+    @Test
+    void validateCredentialAgainstSchemaAcceptsExactFields() {
+        final SchemaRecord schema = new SchemaRecord();
+        schema.setAttrNames(List.of("name"));
+        final JsonNode credential = JsonUtil.readTree("{\"name\":\"Alice\"}");
+
+        assertDoesNotThrow(
+                () -> validationService.validateCredentialAgainstSchema(credential, schema));
+    }
+}

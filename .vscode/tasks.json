@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Maven: test",
+      "type": "shell",
+      "command": "mvn -q test",
+      "options": {
+        "cwd": "${workspaceFolder}/chaincodes/chaincode-vdr-java"
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

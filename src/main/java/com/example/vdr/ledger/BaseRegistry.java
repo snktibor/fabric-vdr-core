@@ -1,0 +1,135 @@
+package com.example.vdr.ledger;
+
+import com.example.vdr.util.JsonUtil;
+import java.util.ArrayList;
+import java.util.List;
+import org.hyperledger.fabric.shim.ChaincodeStub;
+import org.hyperledger.fabric.shim.ledger.CompositeKey;
+import org.hyperledger.fabric.shim.ledger.KeyValue;
+import org.hyperledger.fabric.shim.ledger.QueryResultsIterator;
+
+/**
+ * Layer 4: Data Access. This class provides a generic persistence layer for Hyperledger Fabric,
+ * encapsulating all direct interactions with the {@link ChaincodeStub}.
+ *
+ * <p>It manages the creation of Fabric Composite Keys to prevent namespace collisions and handles
+ * the serialization/deserialization of domain objects to/from the ledger.
+ *
+ * @param <T> The type of domain object managed by this registry.
+ */
+public abstract class BaseRegistry<T> {
+
+    private final ChaincodeStub stub;
+    private final String objectType;
+    private final Class<T> type;
+
+    /**
+     * Initializes the registry with its core Fabric dependencies.
+     *
+     * @param stub The Fabric ChaincodeStub.
+     * @param objectType The primary component of the composite key namespace.
+     * @param type The class type for deserialization.
+     */
+    protected BaseRegistry(final ChaincodeStub stub, final String objectType, final Class<T> type) {
+        this.stub = stub;
+        this.objectType = objectType;
+        this.type = type;
+    }
+
+    /**
+     * Checks if an entity with the given ID exists on the ledger.
+     *
+     * @param id The unique identifier for the entity.
+     * @return {@code true} if the entity exists and is not empty.
+     */
+    public boolean exists(final String id) {
+        final String value = stub.getStringState(compositeKey(id));
+        return value != null && !value.isBlank();
+    }
+
+    /**
+     * Fetches and deserializes an entity from the ledger by its ID.
+     *
+     * @param id The unique identifier for the entity.
+     * @return The deserialized object, or {@code null} if it doesn't exist.
+     */
+    public T get(final String id) {
+        final String value = stub.getStringState(compositeKey(id));
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return JsonUtil.fromJson(value, type);
+    }
+
+    /**
+     * Reads the raw JSON string state for debugging or direct output.
+     *
+     * @param id The unique identifier.
+     * @return The raw JSON stored on the ledger.
+     */
+    public String getJson(final String id) {
+        return stub.getStringState(compositeKey(id));
+    }
+
+    /**
+     * Serializes a domain object and writes it to the ledger. This method uses {@link JsonUtil} to
+     * ensure canonical formatting of the stored data.
+     *
+     * @param id The unique identifier for the entity.
+     * @param value The object to be persisted.
+     */
+    public void put(final String id, final T value) {
+        stub.putStringState(compositeKey(id), JsonUtil.toCanonicalJson(value));
+    }
+
+    /**
+     * Performs a prefix scan on the ledger to retrieve all entities under this registry's composite
+     * key namespace.
+     *
+     * @return A list of all registry entries (ID and value).
+     */
+    public List<RegistryEntry<T>> listAll() {
+        final List<RegistryEntry<T>> results = new ArrayList<>();
+        QueryResultsIterator<KeyValue> iterator = null;
+        try {
+            iterator = stub.getStateByPartialCompositeKey(objectType);
+            for (final KeyValue entry : iterator) {
+                final CompositeKey key = CompositeKey.parseCompositeKey(entry.getKey());
+                final String id =
+                        key.getAttributes().isEmpty() ? entry.getKey() : key.getAttributes().get(0);
+                final T value = JsonUtil.fromJson(entry.getStringValue(), type);
+                results.add(new RegistryEntry<>(id, value));
+            }
+            return List.copyOf(results);
+        } finally {
+            closeQuietly(iterator);
+        }
+    }
+
+    /**
+     * Constructs a Fabric composite key for the given ID. Composite keys are optimized for prefix
+     * queries and help organize data.
+     *
+     * @param id The entity's unique ID.
+     * @return The string representation of the composite key.
+     */
+    protected String compositeKey(final String id) {
+        return stub.createCompositeKey(objectType, id).toString();
+    }
+
+    /**
+     * Helper to safely close Fabric ledger iterators.
+     *
+     * @param closeable The iterator or resource to close.
+     */
+    protected void closeQuietly(final AutoCloseable closeable) {
+        if (closeable == null) {
+            return;
+        }
+        try {
+            closeable.close();
+        } catch (final Exception ignored) {
+            // Iterator cleanup should not fail query responses.
+        }
+    }
+}
