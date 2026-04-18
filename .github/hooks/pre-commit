@@ -1,0 +1,42 @@
+#!/bin/sh
+
+echo "======================================================"
+echo "⏳ PRE-COMMIT: Calling WSL for Format Check & Tests..."
+echo "======================================================"
+
+# STEP 1: Code Formatting Check in Ubuntu
+echo "🧹 1/2: Running Spotless formatting check..."
+wsl -d Ubuntu -e bash -c "cd /home/sinti/chaincodes/chaincode-vdr-java && mvn spotless:check"
+
+# Save the result of the Spotless check (0 = success, 1 = failure)
+FORMAT_RESULT=$?
+
+if [ $FORMAT_RESULT -ne 0 ]; then
+  echo "======================================================"
+  echo "❌ FORMATTING ERROR! Your code does not match the style guide."
+  echo "The VS Code commit has been ABORTED!"
+  echo "ACTION REQUIRED: Please run 'mvn spotless:apply' to fix the files."
+  echo "======================================================"
+  exit 1
+fi
+
+# STEP 2: Running Tests in Ubuntu
+echo "🧪 2/2: Running Maven Unit Tests..."
+wsl -d Ubuntu -e bash -c "cd /home/sinti/chaincodes/chaincode-vdr-java && mvn test -q"
+
+# Save the result of the tests (0 = success, 1 = failure)
+TEST_RESULT=$?
+
+if [ $TEST_RESULT -ne 0 ]; then
+  echo "======================================================"
+  echo "❌ TEST FAILED! Maven tests failed in Ubuntu."
+  echo "The VS Code commit has been ABORTED!"
+  echo "TIP: If you are in a hurry and want to force save, use the Bypass (No Verify) option."
+  echo "======================================================"
+  exit 1
+fi
+
+echo "======================================================"
+echo "✅ All green! Code is strictly formatted and tested. Commit successful."
+echo "======================================================"
+exit 0
