@@ -33,7 +33,7 @@ class VdrChaincodeTest {
     void mainNormalizesPeerAddressFromArgs() throws Exception {
         VdrChaincode.main(new String[] {"--peerAddress", "grpc://peer0.org1"});
 
-        assertEquals(List.of("--peerAddress", "peer0.org1:7051"), ContractRouter.LAST_ARGS.get());
+        assertEquals(List.of("--peerAddress", "peer0.org1"), ContractRouter.LAST_ARGS.get());
         assertEquals(
                 "true",
                 System.getProperty("io.grpc.ManagedChannelBuilder.disable_check_authority"));
@@ -49,7 +49,7 @@ class VdrChaincodeTest {
         VdrChaincode.corePeerAddressSupplier = () -> "grpcs://peer1.org1";
         VdrChaincode.main(new String[0]);
 
-        assertEquals(List.of("--peerAddress", "peer1.org1:7051"), ContractRouter.LAST_ARGS.get());
+        assertEquals(List.of("--peerAddress", "peer1.org1"), ContractRouter.LAST_ARGS.get());
     }
 
     /**
@@ -78,7 +78,7 @@ class VdrChaincodeTest {
                 VdrChaincode.class.getDeclaredMethod("sanitizePeerAddress", String.class);
         method.setAccessible(true);
 
-        assertEquals("peer0:7051", method.invoke(null, "grpc:///peer0"));
+        assertEquals("peer0", method.invoke(null, "grpc:///peer0"));
         assertEquals("peer1:9051", method.invoke(null, "grpcs://peer1:9051"));
     }
 }

@@ -1,7 +1,14 @@
 package com.example.vdr;
 
+import io.grpc.NameResolver;
+import io.grpc.NameResolverProvider;
+import io.grpc.NameResolverRegistry;
+import io.grpc.internal.DnsNameResolverProvider;
+import java.net.SocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 import org.hyperledger.fabric.contract.ContractRouter;
@@ -16,6 +23,61 @@ public final class VdrChaincode {
     /** Supplier indirection used to read peer address environment value. */
     static Supplier<String> corePeerAddressSupplier = () -> System.getenv("CORE_PEER_ADDRESS");
 
+    static {
+        System.setProperty("java.net.preferIPv4Stack", "true");
+        System.setProperty("java.net.preferIPv4Addresses", "true");
+        System.setProperty("io.grpc.netty.shaded.io.netty.transport.noNative", "true");
+        System.setProperty("io.grpc.ManagedChannelBuilder.disable_check_authority", "true");
+        forceDnsResolverProvider();
+    }
+
+    /**
+     * Registers a DNS resolver provider with elevated priority.
+     *
+     * <p>Some Fabric javaenv packaging flows can end up with only the unix resolver service entry
+     * in the chaincode uber-jar. Registering DNS explicitly avoids fallback to unix for host:port
+     * peer targets.
+     */
+    private static void forceDnsResolverProvider() {
+        try {
+            final NameResolverRegistry registry = NameResolverRegistry.getDefaultRegistry();
+            registry.register(
+                    new NameResolverProvider() {
+                        private final DnsNameResolverProvider delegate =
+                                new DnsNameResolverProvider();
+
+                        @Override
+                        public NameResolver newNameResolver(
+                                final URI targetUri, final NameResolver.Args args) {
+                            return delegate.newNameResolver(targetUri, args);
+                        }
+
+                        @Override
+                        public String getDefaultScheme() {
+                            return "dns";
+                        }
+
+                        @Override
+                        protected boolean isAvailable() {
+                            return true;
+                        }
+
+                        @Override
+                        public int priority() {
+                            return 100;
+                        }
+
+                        @Override
+                        public Collection<Class<? extends SocketAddress>>
+                                getProducedSocketAddressTypes() {
+                            return delegate.getProducedSocketAddressTypes();
+                        }
+                    });
+        } catch (RuntimeException ignored) {
+            // Continue startup with defaults if provider registration is unavailable.
+        }
+    }
+
     /** Utility class constructor is private to prevent instantiation. */
     private VdrChaincode() {}
 
@@ -27,9 +89,6 @@ public final class VdrChaincode {
      * @throws Exception if contract router initialization or startup fails
      */
     public static void main(final String[] args) throws Exception {
-        // Some deployment environments require explicit authority check disablement.
-        System.setProperty("io.grpc.ManagedChannelBuilder.disable_check_authority", "true");
-
         final List<String> normalizedArgs = new ArrayList<>(Arrays.asList(args));
         boolean peerAddressNormalized = false;
 
@@ -77,10 +136,6 @@ public final class VdrChaincode {
 
         while (sanitized.startsWith("/")) {
             sanitized = sanitized.substring(1);
-        }
-
-        if (!sanitized.contains(":")) {
-            sanitized = sanitized + ":7051";
         }
 
         return sanitized;
