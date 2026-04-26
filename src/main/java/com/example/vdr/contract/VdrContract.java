@@ -103,6 +103,25 @@ public class VdrContract implements ContractInterface {
     }
 
     /**
+     * Updates an existing DID document when it is still active and owned by the caller.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param id The unique identifier of the DID to update.
+     * @param didDocumentJson The replacement DID document JSON payload.
+     * @return The canonical JSON representation of the updated {@link DidDocument}.
+     * @throws ChaincodeException If validation or authorization fails.
+     */
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String updateDid(final SsiContext ctx, final String id, final String didDocumentJson) {
+        return execute(
+                () ->
+                        JsonUtil.toCanonicalJson(
+                                ctx.getServices()
+                                        .getDidService()
+                                        .updateDid(ctx.getCallerId(), id, didDocumentJson)));
+    }
+
+    /**
      * Lists all registered DID documents on the ledger. Iterates through all entries stored under
      * the DID composite key namespace.
      *

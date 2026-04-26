@@ -2,7 +2,9 @@ package com.example.vdr.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -73,6 +75,45 @@ class DidServiceTest {
 
         assertThrows(
                 VdrException.class, () -> didService.deactivateDid("other", "did:example:123"));
+    }
+
+    /** Verifies DID update preserves owner/status and writes replacement document. */
+    @Test
+    void updateDidActiveOwnerPersistsUpdatedDocument() {
+        final DidDocument existing = new DidDocument();
+        existing.setId("did:example:123");
+        existing.setOwnerId("owner");
+        existing.setStatus(RecordStatus.ACTIVE);
+        when(didRegistry.get("did:example:123")).thenReturn(existing);
+
+        final String json =
+                "{\"id\":\"did:example:123\",\"controller\":\"did:example:controller\"}";
+        didService.updateDid("owner", "did:example:123", json);
+
+        final ArgumentCaptor<DidDocument> captor = ArgumentCaptor.forClass(DidDocument.class);
+        verify(didRegistry).put(eq("did:example:123"), captor.capture());
+        final DidDocument stored = captor.getValue();
+        assertEquals("owner", stored.getOwnerId());
+        assertEquals(RecordStatus.ACTIVE, stored.getStatus());
+        assertEquals("did:example:controller", stored.getController());
+    }
+
+    /** Verifies DID update rejects inactive records with authorization-style failure. */
+    @Test
+    void updateDidInactiveDidRejected() {
+        final DidDocument existing = new DidDocument();
+        existing.setId("did:example:123");
+        existing.setOwnerId("owner");
+        existing.setStatus(RecordStatus.INACTIVE);
+        when(didRegistry.get("did:example:123")).thenReturn(existing);
+
+        final String json = "{\"id\":\"did:example:123\"}";
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () -> didService.updateDid("owner", "did:example:123", json));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+        assertTrue(exception.getMessage().toLowerCase().contains("authorization"));
     }
 
     /** Verifies active-state assertion fails for inactive DID records. */

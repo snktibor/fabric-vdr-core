@@ -122,6 +122,28 @@ class VdrContractTest {
         assertEquals(JsonUtil.toCanonicalJson(document), result);
     }
 
+    /** Verifies DID update endpoint returns canonical JSON response. */
+    @Test
+    void updateDidReturnsCanonicalJson() {
+        final VdrContract contract = new VdrContract();
+        final String didJson =
+                "{\"id\":\"did:example:999\",\"controller\":\"did:example:controller\"}";
+        final DidDocument document = new DidDocument();
+        document.setId("did:example:999");
+        document.setOwnerId("caller");
+        document.setStatus(RecordStatus.ACTIVE);
+
+        when(ctx.getServices()).thenReturn(services);
+        when(ctx.getCallerId()).thenReturn("caller");
+        when(services.getDidService()).thenReturn(didService);
+        when(didService.updateDid("caller", "did:example:999", didJson)).thenReturn(document);
+
+        final String result = contract.updateDid(ctx, "did:example:999", didJson);
+
+        assertEquals(JsonUtil.toCanonicalJson(document), result);
+        verify(didService).updateDid("caller", "did:example:999", didJson);
+    }
+
     /** Verifies DID listing endpoint serializes registry entries as array envelope. */
     @Test
     void listDidsReturnsEntryArray() {

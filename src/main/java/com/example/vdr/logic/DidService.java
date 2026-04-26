@@ -114,6 +114,41 @@ public class DidService {
     }
 
     /**
+     * Updates a DID document while preserving ownership and lifecycle state.
+     *
+     * <p>Only the owner may update, and deactivated DIDs are immutable.
+     *
+     * @param callerId identity of transaction invoker
+     * @param id DID identifier to update
+     * @param didDocumentJson replacement DID document payload
+     * @return updated DID document as persisted on ledger
+     * @throws VdrException if DID is missing, caller is not owner, DID is inactive, or payload is
+     *     invalid
+     */
+    public DidDocument updateDid(
+            final String callerId, final String id, final String didDocumentJson) {
+        final String normalizedId = validationService.requireNotBlank(id, "id");
+        final DidDocument existing = getDid(normalizedId);
+
+        authorizationService.assertCallerIsOwner(
+                callerId, existing.getOwnerId(), "did", existing.getId());
+        if (existing.getStatus() != RecordStatus.ACTIVE) {
+            throw VdrException.unauthorized(
+                    "authorization failed: did '" + normalizedId + "' is not active");
+        }
+
+        final DidDocument updated = validationService.parseJson(didDocumentJson, DidDocument.class);
+        validationService.requireNotBlank(updated.getId(), "did document id");
+        validationService.requireMatchingIds(normalizedId, updated.getId(), "did document id");
+        validationService.validateDidDocumentShape(updated);
+
+        updated.setOwnerId(existing.getOwnerId());
+        updated.setStatus(existing.getStatus());
+        didRegistry.put(normalizedId, updated);
+        return updated;
+    }
+
+    /**
      * Ensures that a DID exists and is currently active.
      *
      * <p>Downstream service flows use this guard when they depend on a valid, non-deactivated DID
