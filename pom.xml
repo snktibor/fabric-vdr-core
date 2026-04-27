@@ -227,6 +227,7 @@
                     <style>AOSP</style>
                 </googleJavaFormat>
             </java>
+            <lineEndings>UNIX</lineEndings>
         </configuration>
       </plugin>
 
