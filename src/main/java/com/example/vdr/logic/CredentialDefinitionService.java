@@ -54,7 +54,7 @@ public class CredentialDefinitionService {
      * <p>The method enforces deterministic preconditions before persistence: required input fields,
      * id uniqueness, referenced schema existence, and active issuer DID status.
      *
-     * @param callerId identity of the transaction invoker becoming owner
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param id unique identifier for the credential definition
      * @param issuerId issuer DID associated with the definition
      * @param schemaId referenced schema identifier
@@ -66,7 +66,7 @@ public class CredentialDefinitionService {
      *     already exists
      */
     public CredentialDefinitionRecord createCredDef(
-            final String callerId,
+            final String signerDid,
             final String id,
             final String issuerId,
             final String schemaId,
@@ -80,6 +80,11 @@ public class CredentialDefinitionService {
         final String normalizedTag = validationService.requireNotBlank(tag, "tag");
         final JsonNode publicMetadata =
                 validationService.parseJsonObject(publicMetadataJson, "publicMetadata");
+
+        if (!normalizedIssuerId.equals(signerDid)) {
+            throw VdrException.unauthorized(
+                    "Unauthorized: signer DID must match issuerId for credential definition creation");
+        }
 
         if (credDefRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("creddef", normalizedId);
@@ -106,7 +111,7 @@ public class CredentialDefinitionService {
                         normalizedType,
                         normalizedTag,
                         publicMetadata,
-                        callerId);
+                        signerDid);
 
         credDefRegistry.put(normalizedId, credDefRecord);
         return credDefRecord;
@@ -143,15 +148,15 @@ public class CredentialDefinitionService {
      * <p>The caller must own the target record. The record is retained on ledger and only its
      * status is transitioned to {@code INACTIVE}.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param id identifier of the credential definition to deactivate
      * @return updated credential definition with inactive status
      * @throws VdrException if record is missing or caller is not the owner
      */
-    public CredentialDefinitionRecord deactivateCredDef(final String callerId, final String id) {
+    public CredentialDefinitionRecord deactivateCredDef(final String signerDid, final String id) {
         final CredentialDefinitionRecord credDefRecord = getCredDef(id);
-        authorizationService.assertCallerIsOwner(
-                callerId, credDefRecord.getOwnerId(), "creddef", credDefRecord.getId());
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, credDefRecord.getOwnerId(), "creddef", credDefRecord.getId());
         credDefRecord.setStatus(RecordStatus.INACTIVE);
         credDefRegistry.put(credDefRecord.getId(), credDefRecord);
         return credDefRecord;
@@ -160,13 +165,13 @@ public class CredentialDefinitionService {
     /**
      * Enforces ownership of a credential definition for the current caller.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param credDefRecord credential definition record under authorization check
      * @throws VdrException if the caller is not the owner of the record
      */
-    public void assertCallerOwnsCredDef(
-            final String callerId, final CredentialDefinitionRecord credDefRecord) {
-        authorizationService.assertCallerIsOwner(
-                callerId, credDefRecord.getOwnerId(), "creddef", credDefRecord.getId());
+    public void assertSignerOwnsCredDef(
+            final String signerDid, final CredentialDefinitionRecord credDefRecord) {
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, credDefRecord.getOwnerId(), "creddef", credDefRecord.getId());
     }
 }

@@ -1,12 +1,10 @@
 package com.example.vdr.context;
 
-import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.CredentialRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import java.time.Instant;
-import org.hyperledger.fabric.contract.ClientIdentity;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.shim.ChaincodeStub;
 
@@ -19,8 +17,6 @@ import org.hyperledger.fabric.shim.ChaincodeStub;
  */
 public class SsiContext extends Context {
 
-    // Caller identity (X.509) resolved from the stub per transaction.
-    private final ClientIdentity clientIdentity;
     // Ledger registries for each aggregate type.
     private final DidRegistry didRegistry;
     private final SchemaRegistry schemaRegistry;
@@ -38,39 +34,12 @@ public class SsiContext extends Context {
     public SsiContext(final ChaincodeStub stub) {
         super(stub);
         // All dependencies are created per transaction for thread-safety.
-        this.clientIdentity = createClientIdentity(stub);
         this.didRegistry = new DidRegistry(stub);
         this.schemaRegistry = new SchemaRegistry(stub);
         this.credDefRegistry = new CredentialDefinitionRegistry(stub);
         this.credentialRegistry = new CredentialRegistry(stub);
         this.services =
                 new SsiServices(didRegistry, schemaRegistry, credDefRegistry, credentialRegistry);
-    }
-
-    /**
-     * Helper to resolve the {@link ClientIdentity} from the stub. This is used to identify the
-     * organization and user making the request.
-     *
-     * @param stub The transaction stub.
-     * @return The resolved client identity.
-     * @throws VdrException If the identity cannot be resolved correctly.
-     */
-    private ClientIdentity createClientIdentity(final ChaincodeStub stub) {
-        try {
-            return new ClientIdentity(stub);
-        } catch (final Exception exception) {
-            throw VdrException.invalid("Unable to read client identity: " + exception.getMessage());
-        }
-    }
-
-    /**
-     * Retrieves the unique identifier of the transaction caller (the invoker). This ID is typically
-     * derived from the X.509 certificate of the client.
-     *
-     * @return The caller's identifier string.
-     */
-    public String getCallerId() {
-        return clientIdentity.getId();
     }
 
     /**

@@ -25,7 +25,7 @@ public class CredentialDefinitionRecord {
     private String tag;
     // Public metadata for verifiers (JSON).
     private JsonNode publicMetadata;
-    // Recorded owner identity from the invoking client.
+    // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
     // Lifecycle status tracked on ledger (ACTIVE, INACTIVE).
     private RecordStatus status;
@@ -45,7 +45,7 @@ public class CredentialDefinitionRecord {
      * @param type definition type or signature scheme
      * @param tag issuer-defined discriminator tag
      * @param publicMetadata public metadata exposed to verifiers
-     * @param ownerId transaction caller identity recorded as owner
+     * @param ownerId signer DID recorded as owner
      */
     public CredentialDefinitionRecord(
             final String id,
@@ -174,18 +174,18 @@ public class CredentialDefinitionRecord {
     }
 
     /**
-     * Returns the owner identity recorded for authorization checks.
+     * Returns the owner DID recorded for authorization checks.
      *
-     * @return owner identity string
+     * @return owner DID string
      */
     public String getOwnerId() {
         return ownerId;
     }
 
     /**
-     * Sets the owner identity recorded for authorization checks.
+     * Sets the owner DID recorded for authorization checks.
      *
-     * @param ownerId owner identity value
+     * @param ownerId owner DID value
      */
     public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;

@@ -60,9 +60,7 @@ public class VdrContract implements ContractInterface {
         return execute(
                 () -> {
                     final DidDocument document =
-                            ctx.getServices()
-                                    .getDidService()
-                                    .createDid(ctx.getCallerId(), id, didDocumentJson);
+                            ctx.getServices().getDidService().createDid(id, didDocumentJson);
                     return JsonUtil.toCanonicalJson(document);
                 });
     }
@@ -89,17 +87,18 @@ public class VdrContract implements ContractInterface {
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier of the DID to deactivate.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the updated {@link DidDocument}.
      * @throws ChaincodeException If the caller is not the owner or the DID is not found.
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String deactivateDid(final SsiContext ctx, final String id) {
+    public String deactivateDid(final SsiContext ctx, final String id, final String jwt) {
         return execute(
                 () ->
                         JsonUtil.toCanonicalJson(
                                 ctx.getServices()
                                         .getDidService()
-                                        .deactivateDid(ctx.getCallerId(), id)));
+                                        .deactivateDid(requireSignerDid(ctx, jwt), id)));
     }
 
     /**
@@ -108,17 +107,20 @@ public class VdrContract implements ContractInterface {
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier of the DID to update.
      * @param didDocumentJson The replacement DID document JSON payload.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the updated {@link DidDocument}.
      * @throws ChaincodeException If validation or authorization fails.
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String updateDid(final SsiContext ctx, final String id, final String didDocumentJson) {
+    public String updateDid(
+            final SsiContext ctx, final String id, final String didDocumentJson, final String jwt) {
         return execute(
                 () ->
                         JsonUtil.toCanonicalJson(
                                 ctx.getServices()
                                         .getDidService()
-                                        .updateDid(ctx.getCallerId(), id, didDocumentJson)));
+                                        .updateDid(
+                                                requireSignerDid(ctx, jwt), id, didDocumentJson)));
     }
 
     /**
@@ -143,6 +145,7 @@ public class VdrContract implements ContractInterface {
      * @param name The human-readable name of the schema.
      * @param version The version string of the schema.
      * @param attrNamesJson A JSON array of attribute names defined in the schema.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the created {@link SchemaRecord}.
      * @throws ChaincodeException If validation fails or the schema ID is duplicated.
      */
@@ -153,14 +156,15 @@ public class VdrContract implements ContractInterface {
             final String issuerId,
             final String name,
             final String version,
-            final String attrNamesJson) {
+            final String attrNamesJson,
+            final String jwt) {
         return execute(
                 () -> {
                     final SchemaRecord schemaRecord =
                             ctx.getServices()
                                     .getSchemaService()
                                     .createSchema(
-                                            ctx.getCallerId(),
+                                            requireSignerDid(ctx, jwt),
                                             id,
                                             issuerId,
                                             name,
@@ -201,17 +205,18 @@ public class VdrContract implements ContractInterface {
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier of the schema to deactivate.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the updated {@link SchemaRecord}.
      * @throws ChaincodeException If the caller is not the owner or the schema is missing.
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String deactivateSchema(final SsiContext ctx, final String id) {
+    public String deactivateSchema(final SsiContext ctx, final String id, final String jwt) {
         return execute(
                 () ->
                         JsonUtil.toCanonicalJson(
                                 ctx.getServices()
                                         .getSchemaService()
-                                        .deactivateSchema(ctx.getCallerId(), id)));
+                                        .deactivateSchema(requireSignerDid(ctx, jwt), id)));
     }
 
     /**
@@ -227,6 +232,7 @@ public class VdrContract implements ContractInterface {
      * @param tag An arbitrary tag for the credential definition.
      * @param publicMetadataJson Optional public metadata associated with the credential definition
      *     as a JSON string.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the created {@link CredentialDefinitionRecord}.
      * @throws ChaincodeException If validation fails, the schema or issuer DID is not active, or
      *     the ID is duplicated.
@@ -239,14 +245,15 @@ public class VdrContract implements ContractInterface {
             final String schemaId,
             final String type,
             final String tag,
-            final String publicMetadataJson) {
+            final String publicMetadataJson,
+            final String jwt) {
         return execute(
                 () -> {
                     final CredentialDefinitionRecord credDefRecord =
                             ctx.getServices()
                                     .getCredentialDefinitionService()
                                     .createCredDef(
-                                            ctx.getCallerId(),
+                                            requireSignerDid(ctx, jwt),
                                             id,
                                             issuerId,
                                             schemaId,
@@ -293,18 +300,19 @@ public class VdrContract implements ContractInterface {
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier of the credential definition to deactivate.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the updated {@link CredentialDefinitionRecord}.
      * @throws ChaincodeException If the caller is not the owner or the credential definition is
      *     missing.
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String deactivateCredDef(final SsiContext ctx, final String id) {
+    public String deactivateCredDef(final SsiContext ctx, final String id, final String jwt) {
         return execute(
                 () ->
                         JsonUtil.toCanonicalJson(
                                 ctx.getServices()
                                         .getCredentialDefinitionService()
-                                        .deactivateCredDef(ctx.getCallerId(), id)));
+                                        .deactivateCredDef(requireSignerDid(ctx, jwt), id)));
     }
 
     /**
@@ -319,6 +327,7 @@ public class VdrContract implements ContractInterface {
      * @param subjectDid The DID of the subject to whom this credential is issued.
      * @param credentialJson The full credential object as a JSON string. This will be hashed and
      *     only the hash will be stored on-ledger.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return A JSON object containing the credential ID, hash, issuance date, and a message.
      * @throws ChaincodeException If validation fails, the credential definition or subject DID is
      *     not active, or the credential ID is duplicated.
@@ -329,14 +338,15 @@ public class VdrContract implements ContractInterface {
             final String credentialId,
             final String credDefId,
             final String subjectDid,
-            final String credentialJson) {
+            final String credentialJson,
+            final String jwt) {
         return execute(
                 () -> {
                     final CredentialRecord credentialRecord =
                             ctx.getServices()
                                     .getCredentialService()
                                     .issueCredential(
-                                            ctx.getCallerId(),
+                                            requireSignerDid(ctx, jwt),
                                             ctx.getTxTimestamp(),
                                             credentialId,
                                             credDefId,
@@ -397,18 +407,35 @@ public class VdrContract implements ContractInterface {
      *
      * @param ctx The custom SSI transaction context.
      * @param credentialId The unique identifier of the credential to revoke.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the updated {@link CredentialRecord}.
      * @throws ChaincodeException If the caller is not the issuer/owner, or the credential is not
      *     found.
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String revokeCredential(final SsiContext ctx, final String credentialId) {
+    public String revokeCredential(
+            final SsiContext ctx, final String credentialId, final String jwt) {
         return execute(
                 () ->
                         JsonUtil.toCanonicalJson(
                                 ctx.getServices()
                                         .getCredentialService()
-                                        .revokeCredential(ctx.getCallerId(), credentialId)));
+                                        .revokeCredential(
+                                                requireSignerDid(ctx, jwt), credentialId)));
+    }
+
+    /**
+     * Validates JWT and returns authenticated signer DID for submit transactions.
+     *
+     * @param ctx transaction context with scoped service graph
+     * @param jwt compact JWT token
+     * @return signer DID resolved from validated token
+     */
+    private String requireSignerDid(final SsiContext ctx, final String jwt) {
+        return ctx.getServices()
+                .getJwtValidator()
+                .validate(jwt, ctx.getTxTimestamp())
+                .getSignerDid();
     }
 
     /**

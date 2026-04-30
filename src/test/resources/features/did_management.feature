@@ -24,3 +24,8 @@ Feature: DID Lifecycle Management
         And the "DID document" for "did:vdr:test-3" should be marked as "INACTIVE"
         When I submit a transaction to update the "DID document" with ID "did:vdr:test-3"
         Then the transaction should fail with an "authorization" error
+
+    Scenario: 4. Reject a protected DID transaction with an invalid JWT
+        Given the ledger contains the "DID document" for "did:vdr:test-4"
+        When I submit a transaction to deactivate the "DID document" with ID "did:vdr:test-4" using an invalid jwt
+        Then the transaction should fail with an "authorization" error

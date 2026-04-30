@@ -8,6 +8,7 @@ import com.example.vdr.logic.AuthorizationService;
 import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.CredentialService;
 import com.example.vdr.logic.DidService;
+import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.logic.ValidationService;
 
@@ -22,6 +23,7 @@ public class SsiServices {
 
     private final AuthorizationService authorizationService;
     private final ValidationService validationService;
+    private final JwtValidator jwtValidator;
     private final DidService didService;
     private final SchemaService schemaService;
     private final CredentialDefinitionService credentialDefinitionService;
@@ -47,6 +49,7 @@ public class SsiServices {
         // Cross-cutting services first, then domain services that depend on them.
         this.authorizationService = new AuthorizationService();
         this.validationService = new ValidationService();
+        this.jwtValidator = new JwtValidator(didRegistry);
         this.didService = new DidService(didRegistry, authorizationService, validationService);
         this.schemaService =
                 new SchemaService(
@@ -75,6 +78,15 @@ public class SsiServices {
      */
     public DidService getDidService() {
         return didService;
+    }
+
+    /**
+     * Exposes the shared transaction JWT validator.
+     *
+     * @return transaction-scoped {@link JwtValidator}
+     */
+    public JwtValidator getJwtValidator() {
+        return jwtValidator;
     }
 
     /**

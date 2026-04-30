@@ -22,7 +22,7 @@ public class DidDocument {
     private List<JsonNode> verificationMethod;
     // Raw JSON entries for services.
     private List<JsonNode> service;
-    // Recorded owner identity from the invoking client.
+    // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
     // Lifecycle status tracked on ledger.
     private RecordStatus status = RecordStatus.ACTIVE;

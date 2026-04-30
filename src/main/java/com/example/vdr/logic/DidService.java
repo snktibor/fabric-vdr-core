@@ -37,19 +37,17 @@ public class DidService {
     }
 
     /**
-     * Creates and persists a new DID document owned by the caller.
+     * Creates and persists a new DID document owned by the DID itself.
      *
      * <p>The method validates payload shape and id consistency, enforces unique identifier
      * constraints, and initializes lifecycle state to active.
      *
-     * @param callerId identity of transaction invoker becoming owner
      * @param id unique DID identifier requested by caller
      * @param didDocumentJson DID document payload as JSON
      * @return created and persisted DID document
      * @throws VdrException if validation fails or the DID id already exists
      */
-    public DidDocument createDid(
-            final String callerId, final String id, final String didDocumentJson) {
+    public DidDocument createDid(final String id, final String didDocumentJson) {
         final String normalizedId = validationService.requireNotBlank(id, "id");
         final DidDocument document =
                 validationService.parseJson(didDocumentJson, DidDocument.class);
@@ -62,7 +60,7 @@ public class DidService {
             throw VdrException.duplicate("did", normalizedId);
         }
 
-        document.setOwnerId(callerId);
+        document.setOwnerId(document.getId());
         document.setStatus(RecordStatus.ACTIVE);
         didRegistry.put(normalizedId, document);
         return document;
@@ -99,15 +97,15 @@ public class DidService {
      * <p>Ownership is enforced before status transition so only the recorded owner can change a DID
      * lifecycle state from active to inactive.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param id DID identifier to deactivate
      * @return updated DID document with inactive status
      * @throws VdrException if DID is missing or caller is not the owner
      */
-    public DidDocument deactivateDid(final String callerId, final String id) {
+    public DidDocument deactivateDid(final String signerDid, final String id) {
         final DidDocument document = getDid(id);
-        authorizationService.assertCallerIsOwner(
-                callerId, document.getOwnerId(), "did", document.getId());
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, document.getOwnerId(), "did", document.getId());
         document.setStatus(RecordStatus.INACTIVE);
         didRegistry.put(document.getId(), document);
         return document;
@@ -118,7 +116,7 @@ public class DidService {
      *
      * <p>Only the owner may update, and deactivated DIDs are immutable.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param id DID identifier to update
      * @param didDocumentJson replacement DID document payload
      * @return updated DID document as persisted on ledger
@@ -126,12 +124,12 @@ public class DidService {
      *     invalid
      */
     public DidDocument updateDid(
-            final String callerId, final String id, final String didDocumentJson) {
+            final String signerDid, final String id, final String didDocumentJson) {
         final String normalizedId = validationService.requireNotBlank(id, "id");
         final DidDocument existing = getDid(normalizedId);
 
-        authorizationService.assertCallerIsOwner(
-                callerId, existing.getOwnerId(), "did", existing.getId());
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, existing.getOwnerId(), "did", existing.getId());
         if (existing.getStatus() != RecordStatus.ACTIVE) {
             throw VdrException.unauthorized(
                     "authorization failed: did '" + normalizedId + "' is not active");

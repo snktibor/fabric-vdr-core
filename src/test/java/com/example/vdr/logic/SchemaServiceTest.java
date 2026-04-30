@@ -46,7 +46,7 @@ class SchemaServiceTest {
                         new ValidationService());
     }
 
-    /** Verifies schema creation stores caller as owner and parsed attributes. */
+    /** Verifies schema creation stores signer DID as owner and parsed attributes. */
     @Test
     void createSchemaSetsOwner() {
         when(schemaRegistry.exists("schema-1")).thenReturn(false);
@@ -57,11 +57,11 @@ class SchemaServiceTest {
 
         final String attrNamesJson = "[\"name\",\"degree\"]";
         schemaService.createSchema(
-                "caller", "schema-1", "did:issuer", "name", "1.0", attrNamesJson);
+                "did:issuer", "schema-1", "did:issuer", "name", "1.0", attrNamesJson);
 
         final ArgumentCaptor<SchemaRecord> captor = ArgumentCaptor.forClass(SchemaRecord.class);
         verify(schemaRegistry).put(anyString(), captor.capture());
-        assertEquals("caller", captor.getValue().getOwnerId());
+        assertEquals("did:issuer", captor.getValue().getOwnerId());
         assertEquals(List.of("name", "degree"), captor.getValue().getAttrNames());
     }
 
@@ -79,6 +79,28 @@ class SchemaServiceTest {
                 VdrException.class,
                 () ->
                         schemaService.createSchema(
-                                "caller", "schema-1", "did:issuer", "name", "1.0", attrNamesJson));
+                                "did:issuer",
+                                "schema-1",
+                                "did:issuer",
+                                "name",
+                                "1.0",
+                                attrNamesJson));
+    }
+
+    /** Verifies schema creation rejects signer DID mismatched with issuer DID. */
+    @Test
+    void createSchemaRejectsSignerMismatch() {
+        // when(schemaRegistry.exists("schema-1")).thenReturn(false);
+
+        assertThrows(
+                VdrException.class,
+                () ->
+                        schemaService.createSchema(
+                                "did:other",
+                                "schema-1",
+                                "did:issuer",
+                                "name",
+                                "1.0",
+                                "[\"name\"]"));
     }
 }

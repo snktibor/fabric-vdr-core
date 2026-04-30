@@ -13,11 +13,23 @@ import io.grpc.ChannelCredentials;
 import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.TlsChannelCredentials;
+import io.jsonwebtoken.Jwts;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECGenParameterSpec;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hyperledger.fabric.client.Contract;
@@ -45,6 +57,7 @@ public class DidSteps {
     private static final String CHANNEL_NAME = "my-channel1";
     private static final String CHAINCODE_NAME = "vdrchaincode";
     private static final String CONTRACT_NAME = "VdrContract";
+    private static final int JWT_VALIDITY_SECONDS = 300;
 
     private Gateway gateway;
     private Contract contract;
@@ -52,6 +65,7 @@ public class DidSteps {
     private String effectiveDid;
     private String queryResponse;
     private Exception queryException;
+    private final Map<String, KeyPair> didKeyPairs = new HashMap<>();
 
     // -------------------------------------------------------------------------
     // Given steps
@@ -187,6 +201,19 @@ public class DidSteps {
         }
     }
 
+    @When("I submit a transaction to deactivate the {string} with ID {string} using an invalid jwt")
+    public void submitDeactivationTransactionWithInvalidJwt(
+            final String entityType, final String id) {
+        switch (entityType) {
+            case "DID document":
+                submitDeactivateDidWithInvalidJwt(id);
+                break;
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported entity type for deactivation: " + entityType);
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Then steps
     // -------------------------------------------------------------------------
@@ -245,7 +272,10 @@ public class DidSteps {
     private void setupDid(final String did) {
         effectiveDid = uniqueId(did);
         try {
-            contract.submitTransaction("createDid", effectiveDid, buildDidJson(effectiveDid));
+            final KeyPair keyPair = generateP256KeyPair();
+            didKeyPairs.put(effectiveDid, keyPair);
+            contract.submitTransaction(
+                    "createDid", effectiveDid, buildDidJson(effectiveDid, keyPair, null));
         } catch (Exception e) {
             fail(
                     "Setup failed: could not create prerequisite DID document. Error: "
@@ -257,7 +287,10 @@ public class DidSteps {
         effectiveDid = uniqueId(did);
         transactionException = null;
         try {
-            contract.submitTransaction("createDid", effectiveDid, buildDidJson(effectiveDid));
+            final KeyPair keyPair = generateP256KeyPair();
+            didKeyPairs.put(effectiveDid, keyPair);
+            contract.submitTransaction(
+                    "createDid", effectiveDid, buildDidJson(effectiveDid, keyPair, null));
         } catch (EndorseException e) {
             transactionException = toEndorseFailure(e);
             LOGGER.error(
@@ -273,9 +306,15 @@ public class DidSteps {
     private void submitUpdateDid(final String did) {
         final String resolvedId = resolveId(did);
         transactionException = null;
-        final String updatedJson = "{\"id\":\"" + resolvedId + "\", \"updated\":true}";
         try {
-            contract.submitTransaction("updateDid", resolvedId, updatedJson);
+            final KeyPair keyPair = requireDidKeyPair(resolvedId);
+            final String updatedJson =
+                    buildDidJson(
+                            resolvedId,
+                            keyPair,
+                            "https://example.com/updated/" + System.currentTimeMillis());
+            final String jwt = buildDidJwt(resolvedId, keyPair);
+            contract.submitTransaction("updateDid", resolvedId, updatedJson, jwt);
             LOGGER.info("Update transaction submitted for DID {}.", resolvedId);
         } catch (EndorseException e) {
             transactionException = toEndorseFailure(e);
@@ -293,7 +332,9 @@ public class DidSteps {
         final String resolvedId = resolveId(did);
         transactionException = null;
         try {
-            contract.submitTransaction("deactivateDid", resolvedId);
+            final KeyPair keyPair = requireDidKeyPair(resolvedId);
+            final String jwt = buildDidJwt(resolvedId, keyPair);
+            contract.submitTransaction("deactivateDid", resolvedId, jwt);
             LOGGER.info("Deactivation transaction submitted for DID {}.", resolvedId);
         } catch (EndorseException e) {
             transactionException = toEndorseFailure(e);
@@ -304,6 +345,24 @@ public class DidSteps {
         } catch (Exception e) {
             transactionException = e;
             LOGGER.error("DID deactivation submission failed for '{}'.", resolvedId, e);
+        }
+    }
+
+    private void submitDeactivateDidWithInvalidJwt(final String did) {
+        final String resolvedId = resolveId(did);
+        transactionException = null;
+        try {
+            contract.submitTransaction("deactivateDid", resolvedId, "not-a-valid-jwt");
+            LOGGER.info("Invalid-JWT deactivation transaction submitted for DID {}.", resolvedId);
+        } catch (EndorseException e) {
+            transactionException = toEndorseFailure(e);
+            LOGGER.error(
+                    "Invalid-JWT DID deactivation endorsement failed. Details: {}",
+                    transactionException.getMessage(),
+                    e);
+        } catch (Exception e) {
+            transactionException = e;
+            LOGGER.error("Invalid-JWT DID deactivation submission failed for '{}'.", resolvedId, e);
         }
     }
 
@@ -362,9 +421,100 @@ public class DidSteps {
         return base + "-" + System.currentTimeMillis();
     }
 
-    /** Builds a minimal, well-formed DID JSON document for test purposes. */
-    private static String buildDidJson(final String did) {
-        return "{\"id\":\"" + did + "\"}";
+    /** Builds a v1 DID document using a JsonWebKey2020 ES256 verification method. */
+    private static String buildDidJson(
+            final String did, final KeyPair keyPair, final String serviceEndpoint) {
+        final ECPublicKey publicKey = (ECPublicKey) keyPair.getPublic();
+        final String x = base64UrlCoordinate(publicKey.getW().getAffineX().toByteArray());
+        final String y = base64UrlCoordinate(publicKey.getW().getAffineY().toByteArray());
+
+        final String serviceBlock =
+                serviceEndpoint == null
+                        ? ""
+                        : ",\"service\":[{\"id\":\""
+                                + did
+                                + "#svc-1\",\"type\":\"LinkedDomains\",\"serviceEndpoint\":\""
+                                + serviceEndpoint
+                                + "\"}]";
+
+        return "{"
+                + "\"id\":\""
+                + did
+                + "\","
+                + "\"controller\":\""
+                + did
+                + "\","
+                + "\"verificationMethod\":[{"
+                + "\"id\":\""
+                + keyIdForDid(did)
+                + "\","
+                + "\"type\":\"JsonWebKey2020\","
+                + "\"controller\":\""
+                + did
+                + "\","
+                + "\"publicKeyJwk\":{"
+                + "\"kty\":\"EC\","
+                + "\"crv\":\"P-256\","
+                + "\"x\":\""
+                + x
+                + "\","
+                + "\"y\":\""
+                + y
+                + "\""
+                + "}"
+                + "}]"
+                + serviceBlock
+                + "}";
+    }
+
+    private static String buildDidJwt(final String did, final KeyPair keyPair) {
+        final Instant now = Instant.now();
+        return Jwts.builder()
+                .header()
+                .keyId(keyIdForDid(did))
+                .type("JWT")
+                .and()
+                .issuer(did)
+                .subject(did)
+                .issuedAt(Date.from(now.minusSeconds(5)))
+                .notBefore(Date.from(now.minusSeconds(5)))
+                .expiration(Date.from(now.plusSeconds(JWT_VALIDITY_SECONDS)))
+                .signWith(keyPair.getPrivate(), Jwts.SIG.ES256)
+                .compact();
+    }
+
+    private static KeyPair generateP256KeyPair() throws GeneralSecurityException {
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(new ECGenParameterSpec("secp256r1"));
+        return keyPairGenerator.generateKeyPair();
+    }
+
+    private static String keyIdForDid(final String did) {
+        return did + "#key-1";
+    }
+
+    private KeyPair requireDidKeyPair(final String did) {
+        final KeyPair keyPair = didKeyPairs.get(did);
+        if (keyPair == null) {
+            throw new IllegalStateException("No ES256 keypair found for DID: " + did);
+        }
+        return keyPair;
+    }
+
+    private static String base64UrlCoordinate(final byte[] coordinateBytes) {
+        byte[] value = coordinateBytes;
+        if (coordinateBytes.length == 33 && coordinateBytes[0] == 0x00) {
+            value = Arrays.copyOfRange(coordinateBytes, 1, 33);
+        }
+        if (value.length < 32) {
+            final byte[] padded = new byte[32];
+            System.arraycopy(value, 0, padded, 32 - value.length, value.length);
+            value = padded;
+        }
+        if (value.length > 32) {
+            throw new IllegalStateException("Unexpected EC coordinate length: " + value.length);
+        }
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
     }
 
     /**
@@ -408,6 +558,10 @@ public class DidSteps {
             LOGGER.warn("Gateway close operation reported an error.", e);
         } finally {
             gateway = null;
+            didKeyPairs.clear();
+            effectiveDid = null;
+            transactionException = null;
+            queryResponse = null;
         }
     }
 

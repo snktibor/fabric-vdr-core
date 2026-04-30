@@ -132,11 +132,38 @@ public class ValidationService {
      * @throws VdrException if any embedded array entry is null or non-object
      */
     public void validateDidDocumentShape(final DidDocument document) {
-        if (document.getVerificationMethod() != null) {
-            for (final JsonNode method : document.getVerificationMethod()) {
-                if (method == null || !method.isObject()) {
-                    throw VdrException.invalid("verificationMethod must contain JSON objects");
-                }
+        if (document.getVerificationMethod() == null
+                || document.getVerificationMethod().isEmpty()) {
+            throw VdrException.invalid("verificationMethod must contain at least one entry");
+        }
+
+        for (final JsonNode method : document.getVerificationMethod()) {
+            if (method == null || !method.isObject()) {
+                throw VdrException.invalid("verificationMethod must contain JSON objects");
+            }
+
+            requireJsonTextField(method, "id", "verificationMethod");
+            requireJsonTextField(method, "type", "verificationMethod");
+            requireJsonTextField(method, "controller", "verificationMethod");
+
+            if (!"JsonWebKey2020".equals(method.get("type").asText())) {
+                throw VdrException.invalid(
+                        "verificationMethod type must be JsonWebKey2020 for jwt authorization");
+            }
+
+            final JsonNode jwk = method.get("publicKeyJwk");
+            if (jwk == null || !jwk.isObject()) {
+                throw VdrException.invalid("verificationMethod must include publicKeyJwk object");
+            }
+
+            requireJsonTextField(jwk, "kty", "publicKeyJwk");
+            requireJsonTextField(jwk, "crv", "publicKeyJwk");
+            requireJsonTextField(jwk, "x", "publicKeyJwk");
+            requireJsonTextField(jwk, "y", "publicKeyJwk");
+
+            if (!"EC".equals(jwk.get("kty").asText()) || !"P-256".equals(jwk.get("crv").asText())) {
+                throw VdrException.invalid(
+                        "publicKeyJwk must use EC key type with P-256 curve for ES256");
             }
         }
 
@@ -146,6 +173,23 @@ public class ValidationService {
                     throw VdrException.invalid("service must contain JSON objects");
                 }
             }
+        }
+    }
+
+    /**
+     * Requires a JSON text field to be present and non-empty.
+     *
+     * @param node the JSON node to check
+     * @param fieldName the name of the field to check
+     * @param sectionName the name of the section containing the field
+     * @throws VdrException if the field is missing, not textual, or empty
+     */
+    private void requireJsonTextField(
+            final JsonNode node, final String fieldName, final String sectionName) {
+        final JsonNode value = node.get(fieldName);
+        if (value == null || !value.isTextual() || JsonUtil.trimToNull(value.asText()) == null) {
+            throw VdrException.invalid(
+                    sectionName + " must include non-empty textual field '" + fieldName + "'");
         }
     }
 

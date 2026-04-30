@@ -47,7 +47,7 @@ public class SchemaService {
      * <p>Creation enforces id uniqueness, validates issuer DID existence/activity, and normalizes
      * schema attributes before persistence.
      *
-     * @param callerId identity of transaction invoker becoming owner
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param id unique schema identifier
      * @param issuerId issuer DID that governs the schema
      * @param name schema display name
@@ -58,7 +58,7 @@ public class SchemaService {
      *     exists
      */
     public SchemaRecord createSchema(
-            final String callerId,
+            final String signerDid,
             final String id,
             final String issuerId,
             final String name,
@@ -70,6 +70,11 @@ public class SchemaService {
         final String normalizedVersion = validationService.requireNotBlank(version, "version");
         final List<String> attrNames =
                 validationService.parseStringArray(attrNamesJson, "attrNames");
+
+        if (!normalizedIssuerId.equals(signerDid)) {
+            throw VdrException.unauthorized(
+                    "Unauthorized: signer DID must match issuerId for schema creation");
+        }
 
         if (schemaRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("schema", normalizedId);
@@ -90,7 +95,7 @@ public class SchemaService {
                         normalizedName,
                         normalizedVersion,
                         attrNames,
-                        callerId);
+                        signerDid);
 
         schemaRegistry.put(normalizedId, schemaRecord);
         return schemaRecord;
@@ -127,15 +132,15 @@ public class SchemaService {
      * <p>Ownership is enforced before status transition to preserve authorization guarantees while
      * retaining historical ledger state.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param id schema identifier to deactivate
      * @return updated schema record with inactive status
      * @throws VdrException if schema is missing or caller is not the owner
      */
-    public SchemaRecord deactivateSchema(final String callerId, final String id) {
+    public SchemaRecord deactivateSchema(final String signerDid, final String id) {
         final SchemaRecord schemaRecord = getSchema(id);
-        authorizationService.assertCallerIsOwner(
-                callerId, schemaRecord.getOwnerId(), "schema", schemaRecord.getId());
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, schemaRecord.getOwnerId(), "schema", schemaRecord.getId());
         schemaRecord.setStatus(RecordStatus.INACTIVE);
         schemaRegistry.put(schemaRecord.getId(), schemaRecord);
         return schemaRecord;
@@ -144,12 +149,12 @@ public class SchemaService {
     /**
      * Enforces that caller is owner of the supplied schema record.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param schemaRecord schema record subject to ownership check
      * @throws VdrException if caller does not own the schema
      */
-    public void assertCallerOwnsSchema(final String callerId, final SchemaRecord schemaRecord) {
-        authorizationService.assertCallerIsOwner(
-                callerId, schemaRecord.getOwnerId(), "schema", schemaRecord.getId());
+    public void assertSignerOwnsSchema(final String signerDid, final SchemaRecord schemaRecord) {
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, schemaRecord.getOwnerId(), "schema", schemaRecord.getId());
     }
 }

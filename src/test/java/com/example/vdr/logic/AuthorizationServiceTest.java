@@ -20,12 +20,12 @@ class AuthorizationServiceTest {
 
     /** Verifies missing owner metadata is rejected as unauthorized. */
     @Test
-    void assertCallerIsOwnerRejectsMissingOwner() {
+    void assertSignerOwnsEntityRejectsMissingOwner() {
         final VdrException exception =
                 assertThrows(
                         VdrException.class,
                         () ->
-                                authorizationService.assertCallerIsOwner(
+                                authorizationService.assertSignerOwnsEntity(
                                         "caller", null, "did", "did:1"));
 
         assertEquals("UNAUTHORIZED", exception.getErrorCode());
@@ -33,12 +33,12 @@ class AuthorizationServiceTest {
 
     /** Verifies owner mismatch is rejected as unauthorized. */
     @Test
-    void assertCallerIsOwnerRejectsDifferentOwner() {
+    void assertSignerOwnsEntityRejectsDifferentOwner() {
         final VdrException exception =
                 assertThrows(
                         VdrException.class,
                         () ->
-                                authorizationService.assertCallerIsOwner(
+                                authorizationService.assertSignerOwnsEntity(
                                         "caller", "owner", "schema", "schema-1"));
 
         assertEquals("UNAUTHORIZED", exception.getErrorCode());
@@ -46,10 +46,10 @@ class AuthorizationServiceTest {
 
     /** Verifies access is allowed when caller matches recorded owner. */
     @Test
-    void assertCallerIsOwnerAllowsOwner() {
+    void assertSignerOwnsEntityAllowsOwner() {
         assertDoesNotThrow(
                 () ->
-                        authorizationService.assertCallerIsOwner(
+                        authorizationService.assertSignerOwnsEntity(
                                 "caller", "caller", "cred", "cred-1"));
     }
 }

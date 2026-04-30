@@ -81,6 +81,36 @@ class ValidationServiceTest {
                 VdrException.class, () -> validationService.validateDidDocumentShape(document));
     }
 
+    /** Verifies DID document shape validation requires verification methods. */
+    @Test
+    void validateDidDocumentShapeRejectsMissingVerificationMethods() {
+        final DidDocument document = new DidDocument();
+
+        assertThrows(
+                VdrException.class, () -> validationService.validateDidDocumentShape(document));
+    }
+
+    /** Verifies DID document shape validation accepts JsonWebKey2020 P-256 method entries. */
+    @Test
+    void validateDidDocumentShapeAcceptsJsonWebKey2020() {
+        final DidDocument document = new DidDocument();
+        document.setVerificationMethod(
+                List.of(
+                        JsonUtil.readTree(
+                                "{"
+                                        + "\"id\":\"did:example:123#key-1\","
+                                        + "\"type\":\"JsonWebKey2020\","
+                                        + "\"controller\":\"did:example:123\","
+                                        + "\"publicKeyJwk\":{"
+                                        + "\"kty\":\"EC\","
+                                        + "\"crv\":\"P-256\","
+                                        + "\"x\":\"f83OJ3D2xF4P6sY0j8B1Q9QXc7Tx8U7R8G5C7jS1m3A\","
+                                        + "\"y\":\"x_FEzRu9q4hM9M4f6jQ9QvV4fru3c6JQnSg0dW4mN18\""
+                                        + "}}")));
+
+        assertDoesNotThrow(() -> validationService.validateDidDocumentShape(document));
+    }
+
     /** Verifies credential validation rejects fields not declared in schema. */
     @Test
     void validateCredentialAgainstSchemaRejectsExtraField() {

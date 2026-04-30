@@ -24,7 +24,7 @@ public class CredentialRecord {
     private long issuanceDate;
     // Lifecycle status (active/revoked).
     private RecordStatus status = RecordStatus.ACTIVE;
-    // Recorded owner identity from the invoking client.
+    // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
 
     /** Creates an empty record instance for JSON deserialization frameworks. */

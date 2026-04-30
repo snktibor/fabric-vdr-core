@@ -51,7 +51,7 @@ class CredentialDefinitionServiceTest {
                         new ValidationService());
     }
 
-    /** Verifies newly created credential definitions persist caller ownership. */
+    /** Verifies newly created credential definitions persist signer DID ownership. */
     @Test
     void createCredDefSetsOwner() {
         when(credDefRegistry.exists("creddef-1")).thenReturn(false);
@@ -63,12 +63,12 @@ class CredentialDefinitionServiceTest {
 
         final String publicMetadata = "{\"type\":\"CL\"}";
         credentialDefinitionService.createCredDef(
-                "caller", "creddef-1", "did:issuer", "schema-1", "CL", "TAG", publicMetadata);
+                "did:issuer", "creddef-1", "did:issuer", "schema-1", "CL", "TAG", publicMetadata);
 
         final ArgumentCaptor<CredentialDefinitionRecord> captor =
                 ArgumentCaptor.forClass(CredentialDefinitionRecord.class);
         verify(credDefRegistry).put(anyString(), captor.capture());
-        assertEquals("caller", captor.getValue().getOwnerId());
+        assertEquals("did:issuer", captor.getValue().getOwnerId());
     }
 
     /** Verifies creation fails when the referenced schema does not exist. */
@@ -82,12 +82,28 @@ class CredentialDefinitionServiceTest {
                 VdrException.class,
                 () ->
                         credentialDefinitionService.createCredDef(
-                                "caller",
+                                "did:issuer",
                                 "creddef-1",
                                 "did:issuer",
                                 "schema-1",
                                 "CL",
                                 "TAG",
                                 publicMetadata));
+    }
+
+    /** Verifies creation fails when signer DID differs from issuer DID. */
+    @Test
+    void createCredDefRejectsSignerMismatch() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        credentialDefinitionService.createCredDef(
+                                "did:other",
+                                "creddef-1",
+                                "did:issuer",
+                                "schema-1",
+                                "CL",
+                                "TAG",
+                                "{\"type\":\"CL\"}"));
     }
 }

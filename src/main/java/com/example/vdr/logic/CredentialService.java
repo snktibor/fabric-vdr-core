@@ -64,7 +64,7 @@ public class CredentialService {
      * metadata are recorded to support integrity checks without disclosing sensitive credential
      * payloads.
      *
-     * @param callerId identity of issuer transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param issuedAt issuance timestamp used for immutable record metadata
      * @param credentialId unique credential identifier
      * @param credDefId credential definition identifier that governs issuance
@@ -75,7 +75,7 @@ public class CredentialService {
      *     validation fails, or id exists
      */
     public CredentialRecord issueCredential(
-            final String callerId,
+            final String signerDid,
             final Instant issuedAt,
             final String credentialId,
             final String credDefId,
@@ -100,6 +100,12 @@ public class CredentialService {
         }
         if (credDef.getStatus() != RecordStatus.ACTIVE) {
             throw VdrException.invalid("creddef '" + normalizedCredDefId + "' is not active");
+        }
+        if (!signerDid.equals(credDef.getOwnerId())) {
+            throw VdrException.unauthorized(
+                    "Unauthorized: signer DID is not the owner of creddef '"
+                            + normalizedCredDefId
+                            + "'");
         }
 
         final SchemaRecord schemaRecord = schemaRegistry.get(credDef.getSchemaId());
@@ -132,7 +138,7 @@ public class CredentialService {
                         credentialHash,
                         issuanceDate,
                         RecordStatus.ACTIVE,
-                        callerId);
+                        signerDid);
 
         credentialRegistry.put(normalizedCredentialId, credentialRecord);
         return credentialRecord;
@@ -219,15 +225,15 @@ public class CredentialService {
      * <p>The caller must own the credential. Revocation updates status to {@code REVOKED} while
      * preserving historical ledger state.
      *
-     * @param callerId identity of transaction invoker
+     * @param signerDid DID resolved from verified JWT issuer claim
      * @param credentialId credential identifier to revoke
      * @return updated credential record with revoked status
      * @throws VdrException if credential is missing or caller is not owner
      */
-    public CredentialRecord revokeCredential(final String callerId, final String credentialId) {
+    public CredentialRecord revokeCredential(final String signerDid, final String credentialId) {
         final CredentialRecord credentialRecord = getCredential(credentialId);
-        authorizationService.assertCallerIsOwner(
-                callerId, credentialRecord.getOwnerId(), "credential", credentialRecord.getId());
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, credentialRecord.getOwnerId(), "credential", credentialRecord.getId());
         credentialRecord.setStatus(RecordStatus.REVOKED);
         credentialRegistry.put(credentialRecord.getId(), credentialRecord);
         return credentialRecord;

@@ -68,6 +68,7 @@ class CredentialServiceTest {
         credDef.setId("creddef-1");
         credDef.setSchemaId("schema-1");
         credDef.setStatus(RecordStatus.ACTIVE);
+        credDef.setOwnerId("did:issuer");
         when(credDefRegistry.get("creddef-1")).thenReturn(credDef);
 
         final SchemaRecord schemaRecord = new SchemaRecord();
@@ -84,7 +85,7 @@ class CredentialServiceTest {
         final Instant issuedAt = Instant.ofEpochMilli(123456789L);
 
         credentialService.issueCredential(
-                "caller", issuedAt, "cred-1", "creddef-1", "did:subject", credentialJson);
+                "did:issuer", issuedAt, "cred-1", "creddef-1", "did:subject", credentialJson);
 
         final ArgumentCaptor<CredentialRecord> captor =
                 ArgumentCaptor.forClass(CredentialRecord.class);
@@ -95,7 +96,7 @@ class CredentialServiceTest {
         assertEquals("creddef-1", stored.getCredDefId());
         assertEquals("did:subject", stored.getSubjectDid());
         assertEquals(RecordStatus.ACTIVE, stored.getStatus());
-        assertEquals("caller", stored.getOwnerId());
+        assertEquals("did:issuer", stored.getOwnerId());
         assertEquals(
                 JsonUtil.sha256(JsonUtil.toCanonicalJson(JsonUtil.readTree(credentialJson))),
                 stored.getCredentialHash());
@@ -121,12 +122,37 @@ class CredentialServiceTest {
     void revokeCredentialRequiresOwner() {
         final CredentialRecord stored = new CredentialRecord();
         stored.setId("cred-1");
-        stored.setOwnerId("owner");
+        stored.setOwnerId("did:owner");
         stored.setStatus(RecordStatus.ACTIVE);
         when(credentialRegistry.get("cred-1")).thenReturn(stored);
 
         assertThrows(
-                VdrException.class, () -> credentialService.revokeCredential("other", "cred-1"));
+                VdrException.class,
+                () -> credentialService.revokeCredential("did:other", "cred-1"));
+    }
+
+    /** Verifies issuance rejects signer DID not owning credential definition. */
+    @Test
+    void issueCredentialRejectsSignerNotCredDefOwner() {
+        when(credentialRegistry.exists("cred-1")).thenReturn(false);
+
+        final CredentialDefinitionRecord credDef = new CredentialDefinitionRecord();
+        credDef.setId("creddef-1");
+        credDef.setSchemaId("schema-1");
+        credDef.setStatus(RecordStatus.ACTIVE);
+        credDef.setOwnerId("did:issuer");
+        when(credDefRegistry.get("creddef-1")).thenReturn(credDef);
+
+        assertThrows(
+                VdrException.class,
+                () ->
+                        credentialService.issueCredential(
+                                "did:other",
+                                Instant.ofEpochMilli(10L),
+                                "cred-1",
+                                "creddef-1",
+                                "did:subject",
+                                "{\"name\":\"Alice\"}"));
     }
 
     /** Verifies verification fails for revoked credential records. */

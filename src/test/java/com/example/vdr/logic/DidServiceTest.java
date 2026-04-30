@@ -39,18 +39,42 @@ class DidServiceTest {
                 new DidService(didRegistry, new AuthorizationService(), new ValidationService());
     }
 
-    /** Verifies created DID records persist caller ownership and active status. */
+    private static String didJson(final String did) {
+        return "{"
+                + "\"id\":\""
+                + did
+                + "\","
+                + "\"controller\":\""
+                + did
+                + "\","
+                + "\"verificationMethod\":[{"
+                + "\"id\":\""
+                + did
+                + "#key-1\","
+                + "\"type\":\"JsonWebKey2020\","
+                + "\"controller\":\""
+                + did
+                + "\","
+                + "\"publicKeyJwk\":{"
+                + "\"kty\":\"EC\","
+                + "\"crv\":\"P-256\","
+                + "\"x\":\"f83OJ3D2xF4P6sY0j8B1Q9QXc7Tx8U7R8G5C7jS1m3A\","
+                + "\"y\":\"x_FEzRu9q4hM9M4f6jQ9QvV4fru3c6JQnSg0dW4mN18\""
+                + "}}]}";
+    }
+
+    /** Verifies created DID records persist DID ownership and active status. */
     @Test
     void createDidSetsOwnerAndStatus() {
         when(didRegistry.exists(anyString())).thenReturn(false);
 
-        final String json = "{\"id\":\"did:example:123\",\"controller\":\"did:example:123\"}";
-        didService.createDid("caller", "did:example:123", json);
+        final String json = didJson("did:example:123");
+        didService.createDid("did:example:123", json);
 
         final ArgumentCaptor<DidDocument> captor = ArgumentCaptor.forClass(DidDocument.class);
         verify(didRegistry).put(anyString(), captor.capture());
         final DidDocument stored = captor.getValue();
-        assertEquals("caller", stored.getOwnerId());
+        assertEquals("did:example:123", stored.getOwnerId());
         assertEquals(RecordStatus.ACTIVE, stored.getStatus());
     }
 
@@ -59,9 +83,8 @@ class DidServiceTest {
     void createDidRejectsDuplicate() {
         when(didRegistry.exists("did:example:123")).thenReturn(true);
 
-        final String json = "{\"id\":\"did:example:123\",\"controller\":\"did:example:123\"}";
-        assertThrows(
-                VdrException.class, () -> didService.createDid("caller", "did:example:123", json));
+        final String json = didJson("did:example:123");
+        assertThrows(VdrException.class, () -> didService.createDid("did:example:123", json));
     }
 
     /** Verifies deactivation requires owner identity match. */
@@ -86,8 +109,7 @@ class DidServiceTest {
         existing.setStatus(RecordStatus.ACTIVE);
         when(didRegistry.get("did:example:123")).thenReturn(existing);
 
-        final String json =
-                "{\"id\":\"did:example:123\",\"controller\":\"did:example:controller\"}";
+        final String json = didJson("did:example:123");
         didService.updateDid("owner", "did:example:123", json);
 
         final ArgumentCaptor<DidDocument> captor = ArgumentCaptor.forClass(DidDocument.class);
@@ -95,7 +117,7 @@ class DidServiceTest {
         final DidDocument stored = captor.getValue();
         assertEquals("owner", stored.getOwnerId());
         assertEquals(RecordStatus.ACTIVE, stored.getStatus());
-        assertEquals("did:example:controller", stored.getController());
+        assertEquals("did:example:123", stored.getController());
     }
 
     /** Verifies DID update rejects inactive records with authorization-style failure. */
@@ -107,7 +129,7 @@ class DidServiceTest {
         existing.setStatus(RecordStatus.INACTIVE);
         when(didRegistry.get("did:example:123")).thenReturn(existing);
 
-        final String json = "{\"id\":\"did:example:123\"}";
+        final String json = didJson("did:example:123");
         final VdrException exception =
                 assertThrows(
                         VdrException.class,

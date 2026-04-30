@@ -22,7 +22,7 @@ public class SchemaRecord {
     private String version;
     // Allowed attribute names for credentials.
     private List<String> attrNames;
-    // Recorded owner identity from the invoking client.
+    // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
     // Lifecycle status tracked on ledger (ACTIVE, INACTIVE).
     private RecordStatus status = RecordStatus.ACTIVE;

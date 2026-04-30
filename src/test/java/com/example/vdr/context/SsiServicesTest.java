@@ -28,6 +28,7 @@ class SsiServicesTest {
         final SsiServices services =
                 new SsiServices(didRegistry, schemaRegistry, credDefRegistry, credentialRegistry);
 
+        assertNotNull(services.getJwtValidator());
         assertNotNull(services.getDidService());
         assertNotNull(services.getSchemaService());
         assertNotNull(services.getCredentialDefinitionService());
