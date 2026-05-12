@@ -7,25 +7,25 @@ Feature: DID Lifecycle Management
         Given a connected Fabric Gateway as an "authorized" client
 
     Scenario: 1. Register a new DID document and retrieve it
-        When I submit a transaction to create a "DID document" with ID "did:vdr:test-1"
+        When I create a "DID document" with id "did:vdr:test-1"
         Then the transaction should be successful
-        And the ledger should contain the "DID document" for "did:vdr:test-1"
+        And a "DID document" with id "did:vdr:test-1" should exist on the ledger
 
     Scenario: 2. Query an existing DID to get the document with public keys
-        Given the ledger contains the "DID document" for "did:vdr:test-2"
-        When I query the ledger for the "DID document" with ID "did:vdr:test-2"
+        Given a "DID document" with id "did:vdr:test-2" exists on the ledger
+        When I query the "DID document" with id "did:vdr:test-2"
         Then the transaction should be successful
-        And the ledger should contain the "DID document" for "did:vdr:test-2"
+        And a "DID document" with id "did:vdr:test-2" should exist on the ledger
 
     Scenario: 3. Deactivate a DID and prevent modifications
-        Given the ledger contains the "DID document" for "did:vdr:test-3"
-        When I submit a transaction to deactivate the "DID document" with ID "did:vdr:test-3"
+        Given a "DID document" with id "did:vdr:test-3" exists on the ledger
+        When I deactivate the "DID document" with id "did:vdr:test-3"
         Then the transaction should be successful
-        And the "DID document" for "did:vdr:test-3" should be marked as "INACTIVE"
-        When I submit a transaction to update the "DID document" with ID "did:vdr:test-3"
+        And the "DID document" with id "did:vdr:test-3" is marked as "INACTIVE"
+        When I update the "DID document" with id "did:vdr:test-3"
         Then the transaction should fail with an "authorization" error
 
     Scenario: 4. Reject a protected DID transaction with an invalid JWT
-        Given the ledger contains the "DID document" for "did:vdr:test-4"
-        When I submit a transaction to deactivate the "DID document" with ID "did:vdr:test-4" using an invalid jwt
+        Given a "DID document" with id "did:vdr:test-4" exists on the ledger
+        When I deactivate the "DID document" with id "did:vdr:test-4" using an invalid JWT
         Then the transaction should fail with an "authorization" error
