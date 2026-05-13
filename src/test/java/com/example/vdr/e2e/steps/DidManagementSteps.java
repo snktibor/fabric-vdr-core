@@ -24,7 +24,7 @@ public class DidManagementSteps {
     @Given("I hold a valid JWT for the DID {string}")
     public void iHoldAValidJwtForTheDid(final String didSeed) {
         registry.did().existingOnLedger(didSeed);
-        final String effectiveDid = context.resolveId("DID document", didSeed);
+        final String effectiveDid = context.resolveId(didSeed);
         final KeyPair keyPair = context.requireDidKeyPair(effectiveDid);
         context.holdJwt(effectiveDid, CryptoUtils.buildDidJwt(effectiveDid, keyPair));
         LOGGER.info("Pre-existing JWT generated for {}.", effectiveDid);

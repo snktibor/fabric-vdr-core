@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
@@ -31,6 +32,7 @@ public class FabricConnectionManager {
 
     private Gateway gateway;
     private Contract contract;
+    private ManagedChannel channel;
 
     /**
      * Establishes the gRPC channel and Gateway identity. The {@code clientType} parameter is kept
@@ -70,7 +72,7 @@ public class FabricConnectionManager {
                                         .toFile())
                         .build();
 
-        final ManagedChannel channel =
+        channel =
                 Grpc.newChannelBuilder(E2EConfig.PEER_ENDPOINT, tlsCredentials)
                         .overrideAuthority(E2EConfig.PEER_AUTHORITY)
                         .build();
@@ -101,17 +103,23 @@ public class FabricConnectionManager {
     }
 
     public void close() {
-        if (gateway == null) {
-            return;
+        if (gateway != null) {
+            try {
+                gateway.close();
+            } catch (Exception e) {
+                LOGGER.warn("Gateway close reported an error.", e);
+            }
         }
-        try {
-            gateway.close();
-        } catch (Exception e) {
-            LOGGER.warn("Gateway close reported an error.", e);
-        } finally {
-            gateway = null;
-            contract = null;
+        if (channel != null) {
+            try {
+                channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                LOGGER.warn("Channel shutdown reported an error.", e);
+            }
         }
+        gateway = null;
+        contract = null;
+        channel = null;
     }
 
     private static Path requireFile(final Path path) {

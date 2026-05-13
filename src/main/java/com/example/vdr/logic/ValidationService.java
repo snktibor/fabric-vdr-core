@@ -19,6 +19,10 @@ import java.util.Set;
  */
 public class ValidationService {
 
+    private static final java.util.regex.Pattern UUID_V4_PATTERN =
+            java.util.regex.Pattern.compile(
+                    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abABab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
+
     /**
      * Normalizes a text field and rejects blank or null values.
      *
@@ -32,6 +36,44 @@ public class ValidationService {
         if (normalized == null) {
             throw VdrException.invalid(fieldName + " must not be blank");
         }
+        return normalized;
+    }
+
+    /**
+     * Validates that the input is a well-formed Uniform Resource Name (URN) consisting of a
+     * specific prefix followed by a strict UUIDv4.
+     *
+     * <p>This method first normalizes the input by rejecting blank or null values. It is designed
+     * to be highly reusable for any current or future ledger entities (e.g., {@code "did:vdr:"},
+     * {@code "schema:vdr:"}, {@code "creddef:vdr:"}).
+     *
+     * @param value the raw input identifier to validate
+     * @param expectedPrefix the required namespace prefix (e.g., {@code "did:vdr:"})
+     * @param fieldName the logical name of the field
+     * @return the trimmed, non-blank, and fully validated identifier string
+     * @throws VdrException if the input is null, empty, or whitespace only
+     * @throws IllegalArgumentException if the input does not start with the expected prefix, or if
+     *     the suffix is not a valid UUIDv4
+     */
+    public String requireValidEntityId(
+            final String value, final String expectedPrefix, final String fieldName) {
+        String normalized = requireNotBlank(value, fieldName);
+
+        if (!normalized.startsWith(expectedPrefix)) {
+            throw new IllegalArgumentException(
+                    fieldName
+                            + " format is invalid. Must start with prefix '"
+                            + expectedPrefix
+                            + "'");
+        }
+
+        String uuidPart = normalized.substring(expectedPrefix.length());
+        if (!UUID_V4_PATTERN.matcher(uuidPart).matches()) {
+            throw new IllegalArgumentException(
+                    fieldName
+                            + " format is invalid. Must contain a valid UUIDv4 after the prefix.");
+        }
+
         return normalized;
     }
 

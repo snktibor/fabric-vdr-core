@@ -29,7 +29,7 @@ public class DidEntityHandler extends AbstractEntityHandler {
     @Override
     public void create(final String rawId) {
         final String did = uniqueId(rawId);
-        context.setEffectiveId(TYPE, did);
+        context.setEffectiveId(rawId, did);
         final KeyPair keyPair;
         try {
             keyPair = CryptoUtils.generateP256KeyPair();

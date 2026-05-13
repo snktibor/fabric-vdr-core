@@ -36,7 +36,7 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
     public void create(final String rawId) {
         final String issuerDid = ensureIssuerDid();
         final String schemaId = uniqueId(rawId);
-        context.setEffectiveId(TYPE, schemaId);
+        context.setEffectiveId(rawId, schemaId);
 
         final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
         final String jwt = CryptoUtils.buildDidJwt(issuerDid, keyPair);
@@ -70,7 +70,7 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
                             + " 'Given I hold a valid JWT for the DID ...'.");
         }
         final String schemaId = uniqueId(rawId);
-        context.setEffectiveId(TYPE, schemaId);
+        context.setEffectiveId(rawId, schemaId);
         executor.submitWithJwt(
                 "createSchema",
                 jwt,
@@ -82,16 +82,17 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
     }
 
     private String ensureIssuerDid() {
-        final String existing = context.resolveId(DidEntityHandler.TYPE, null);
-        if (existing != null) {
-            return existing;
+        if (context.heldJwtSubjectDid() != null) {
+            return context.heldJwtSubjectDid();
         }
-        didHandler.create(DEFAULT_ISSUER_DID_SEED);
-        if (context.lastTransactionException() != null) {
-            fail(
-                    "Could not create implicit issuer DID: "
-                            + context.lastTransactionException().getMessage());
+        if (!context.hasEffectiveId(DEFAULT_ISSUER_DID_SEED)) {
+            didHandler.create(DEFAULT_ISSUER_DID_SEED);
+            if (context.lastTransactionException() != null) {
+                fail(
+                        "Could not create implicit issuer DID: "
+                                + context.lastTransactionException().getMessage());
+            }
         }
-        return context.resolveId(DidEntityHandler.TYPE, DEFAULT_ISSUER_DID_SEED);
+        return context.resolveId(DEFAULT_ISSUER_DID_SEED);
     }
 }

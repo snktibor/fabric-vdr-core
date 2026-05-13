@@ -12,7 +12,7 @@ import java.util.Map;
 public class ScenarioContext {
 
     private final Map<String, KeyPair> didKeys = new HashMap<>();
-    private final Map<String, String> effectiveIdsByType = new HashMap<>();
+    private final Map<String, String> effectiveIdsByRawId = new HashMap<>();
 
     private Exception lastTransactionException;
     private String lastQueryResponse;
@@ -31,16 +31,26 @@ public class ScenarioContext {
         return keyPair;
     }
 
-    /**
-     * Records the effective (timestamp-suffixed) id assigned to an entity from the feature file.
-     */
-    public void setEffectiveId(final String entityType, final String effectiveId) {
-        effectiveIdsByType.put(entityType, effectiveId);
+    /** Records the effective (UUID-based) id assigned to an entity from the feature file. */
+    public void setEffectiveId(final String rawId, final String effectiveId) {
+        if (rawId == null || rawId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Test framework error: rawId cannot be null or empty.");
+        }
+        effectiveIdsByRawId.put(rawId, effectiveId);
     }
 
-    /** Returns the recorded effective id for {@code entityType}, falling back to {@code rawId}. */
-    public String resolveId(final String entityType, final String rawId) {
-        return effectiveIdsByType.getOrDefault(entityType, rawId);
+    /** Returns the recorded effective id for {@code rawId} */
+    public String resolveId(final String rawId) {
+        if (rawId == null || rawId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Test framework error: Step definition must explicitly provide a rawId.");
+        }
+        return effectiveIdsByRawId.getOrDefault(rawId, rawId);
+    }
+
+    public boolean hasEffectiveId(final String rawId) {
+        return rawId != null && effectiveIdsByRawId.containsKey(rawId);
     }
 
     public Exception lastTransactionException() {

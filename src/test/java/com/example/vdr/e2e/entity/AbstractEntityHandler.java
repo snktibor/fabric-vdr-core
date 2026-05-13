@@ -21,13 +21,18 @@ public abstract class AbstractEntityHandler implements EntityHandler {
         this.context = context;
     }
 
-    /** Appends epoch millis to guarantee a collision-safe id across repeated runs. */
+    /**
+     * Replaces the last segment or appends a UUID to guarantee a collision-safe, format-compliant
+     * id.
+     */
     protected static String uniqueId(final String base) {
-        return base + "-" + System.currentTimeMillis();
+        int lastColon = base.lastIndexOf(':');
+        String prefix = lastColon != -1 ? base.substring(0, lastColon + 1) : base + "-";
+        return prefix + java.util.UUID.randomUUID().toString();
     }
 
     protected String resolveId(final String rawId) {
-        return context.resolveId(typeKey(), rawId);
+        return context.resolveId(rawId);
     }
 
     /** Helper for {@link #assertExists(String)} implementations. */
