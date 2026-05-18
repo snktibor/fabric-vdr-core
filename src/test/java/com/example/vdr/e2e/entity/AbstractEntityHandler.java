@@ -101,4 +101,20 @@ public abstract class AbstractEntityHandler implements EntityHandler {
 
     /** The evaluate-transaction name used to fetch this entity by id. */
     protected abstract String getterTxName();
+
+    /** Override to enable list support. Default: unsupported. */
+    protected String listTxName() {
+        throw new UnsupportedOperationException(typeKey() + " does not support list");
+    }
+
+    @Override
+    public void list() {
+        context.setLastQueryResponse(null);
+        context.setLastTransactionException(null);
+        try {
+            context.setLastQueryResponse(executor.evaluate(listTxName()));
+        } catch (Exception e) {
+            context.setLastTransactionException(e);
+        }
+    }
 }

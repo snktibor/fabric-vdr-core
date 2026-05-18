@@ -28,4 +28,7 @@ public interface EntityHandler {
     void assertExists(String rawId);
 
     void assertStatus(String rawId, String expectedStatus);
+
+    /** Evaluates the entity's list endpoint, storing the raw JSON array in the context. */
+    void list();
 }

@@ -1,5 +1,6 @@
 package com.example.vdr.e2e.entity;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.CryptoUtils;
@@ -33,21 +34,14 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
     }
 
     @Override
+    protected String listTxName() {
+        return "listSchemas";
+    }
+
+    @Override
     public void create(final String rawId) {
         final String issuerDid = ensureIssuerDid();
-        final String schemaId = uniqueId(rawId);
-        context.setEffectiveId(rawId, schemaId);
-
-        final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
-        final String jwt = CryptoUtils.buildDidJwt(issuerDid, keyPair);
-        executor.submitWithJwt(
-                "createSchema",
-                jwt,
-                schemaId,
-                issuerDid,
-                "Test Schema",
-                "1.0",
-                "[\"attr1\", \"attr2\"]");
+        submitCreate(rawId, issuerDid, signWithIssuer(issuerDid));
     }
 
     @Override
@@ -69,8 +63,45 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
                     "No held JWT in scenario context; precede this step with"
                             + " 'Given I hold a valid JWT for the DID ...'.");
         }
+        submitCreate(rawId, issuerDid, jwt);
+    }
+
+    @Override
+    public void deactivate(final String rawId) {
+        final String schemaId = resolveId(rawId);
+        final String ownerDid = context.requireOwner(schemaId);
+        final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
+        final String jwt = CryptoUtils.buildDidJwt(ownerDid, keyPair);
+        executor.submitWithJwt("deactivateSchema", jwt, schemaId);
+    }
+
+    @Override
+    public void deactivateWithInvalidJwt(final String rawId) {
+        final String schemaId = resolveId(rawId);
+        executor.submitWithJwt("deactivateSchema", "not-a-valid-jwt", schemaId);
+    }
+
+    @Override
+    public void assertStatus(final String rawId, final String expectedStatus) {
+        final String schemaId = resolveId(rawId);
+        try {
+            final String response = executor.evaluate("getSchema", schemaId);
+            final String expected = "\"status\":\"" + expectedStatus.toUpperCase() + "\"";
+            assertTrue(
+                    response.contains(expected),
+                    () ->
+                            String.format(
+                                    "Expected schema '%s' to have status '%s', got: %s",
+                                    schemaId, expectedStatus.toUpperCase(), response));
+        } catch (Exception e) {
+            fail("Failed to query schema status for '" + schemaId + "': " + e.getMessage());
+        }
+    }
+
+    private void submitCreate(final String rawId, final String issuerDid, final String jwt) {
         final String schemaId = uniqueId(rawId);
         context.setEffectiveId(rawId, schemaId);
+        context.recordOwner(schemaId, issuerDid);
         executor.submitWithJwt(
                 "createSchema",
                 jwt,
@@ -79,6 +110,11 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
                 "Test Schema",
                 "1.0",
                 "[\"attr1\", \"attr2\"]");
+    }
+
+    private String signWithIssuer(final String issuerDid) {
+        final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
+        return CryptoUtils.buildDidJwt(issuerDid, keyPair);
     }
 
     private String ensureIssuerDid() {

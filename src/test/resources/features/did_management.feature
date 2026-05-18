@@ -29,3 +29,9 @@ Feature: DID Lifecycle Management
         Given a "DID document" with id "did:vdr:test-4" exists on the ledger
         When I deactivate the "DID document" with id "did:vdr:test-4" using an invalid JWT
         Then the transaction should fail with an "authorization" error
+
+    Scenario: 5. List all registered DIDs includes a newly created one
+        Given a "DID document" with id "did:vdr:test-5" exists on the ledger
+        When I list all "DID document" entries
+        Then the transaction should be successful
+        And the list should contain the "DID document" with id "did:vdr:test-5"

@@ -13,6 +13,7 @@ public class ScenarioContext {
 
     private final Map<String, KeyPair> didKeys = new HashMap<>();
     private final Map<String, String> effectiveIdsByRawId = new HashMap<>();
+    private final Map<String, String> ownerDidByEffectiveId = new HashMap<>();
 
     private Exception lastTransactionException;
     private String lastQueryResponse;
@@ -51,6 +52,26 @@ public class ScenarioContext {
 
     public boolean hasEffectiveId(final String rawId) {
         return rawId != null && effectiveIdsByRawId.containsKey(rawId);
+    }
+
+    /**
+     * Records which DID owns an entity (schema, cred def, ...) so future protected operations on it
+     * can sign with the right keypair.
+     */
+    public void recordOwner(final String effectiveId, final String ownerDid) {
+        if (effectiveId == null || ownerDid == null) {
+            throw new IllegalArgumentException(
+                    "Test framework error: effectiveId and ownerDid must be non-null.");
+        }
+        ownerDidByEffectiveId.put(effectiveId, ownerDid);
+    }
+
+    public String requireOwner(final String effectiveId) {
+        final String ownerDid = ownerDidByEffectiveId.get(effectiveId);
+        if (ownerDid == null) {
+            throw new IllegalStateException("No owner DID recorded for entity id: " + effectiveId);
+        }
+        return ownerDid;
     }
 
     public Exception lastTransactionException() {

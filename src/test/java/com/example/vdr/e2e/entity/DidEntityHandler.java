@@ -27,6 +27,11 @@ public class DidEntityHandler extends AbstractEntityHandler {
     }
 
     @Override
+    protected String listTxName() {
+        return "listDids";
+    }
+
+    @Override
     public void create(final String rawId) {
         final String did = uniqueId(rawId);
         context.setEffectiveId(rawId, did);
