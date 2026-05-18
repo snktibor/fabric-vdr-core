@@ -20,8 +20,11 @@ public class EntityHandlerRegistry {
     public EntityHandlerRegistry(
             final TransactionExecutor executor, final ScenarioContext context) {
         final DidEntityHandler didHandler = new DidEntityHandler(executor, context);
+        final SchemaEntityHandler schemaHandler =
+                new SchemaEntityHandler(executor, context, didHandler);
         register(didHandler);
-        register(new SchemaEntityHandler(executor, context, didHandler));
+        register(schemaHandler);
+        register(new CredDefEntityHandler(executor, context, didHandler, schemaHandler));
     }
 
     private void register(final EntityHandler handler) {
