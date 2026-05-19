@@ -4,7 +4,8 @@ FROM hyperledger/fabric-javaenv:${FABRIC_VERSION}
 
 WORKDIR /root/chaincode-java/chaincode
 
-# Use local build context like kv-node Dockerfile.
 COPY target/chaincode.jar /root/chaincode-java/chaincode/chaincode.jar
+COPY entrypoint.sh /root/chaincode-java/chaincode/entrypoint.sh
+RUN chmod +x /root/chaincode-java/chaincode/entrypoint.sh
 
-ENTRYPOINT ["java", "-jar", "/root/chaincode-java/chaincode/chaincode.jar"]
+ENTRYPOINT ["/root/chaincode-java/chaincode/entrypoint.sh"]

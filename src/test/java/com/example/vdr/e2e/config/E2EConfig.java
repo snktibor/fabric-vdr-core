@@ -8,8 +8,7 @@ public final class E2EConfig {
 
     public static final Path CRYPTO_PATH =
             Paths.get(
-                    System.getProperty("user.home")
-                            + "/fablo-target/fabric-config/crypto-config/peerOrganizations/org1.example.com");
+                    "../fablo-target/fabric-config/crypto-config/peerOrganizations/org1.example.com");
     public static final String MSP_ID = "Org1MSP";
     public static final String PEER_ENDPOINT = "localhost:7041";
     public static final String PEER_AUTHORITY = "peer0.org1.example.com";
