@@ -13,7 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.release>11</maven.compiler.release>
+    <maven.compiler.release>17</maven.compiler.release>
     <fabric.chaincode.version>2.5.8</fabric.chaincode.version>
     <grpc.version>1.78.0</grpc.version>
     <jackson.version>2.17.2</jackson.version>

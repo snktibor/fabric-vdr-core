@@ -1,6 +1,4 @@
-ARG FABRIC_VERSION=2.5.9
-
-FROM hyperledger/fabric-javaenv:${FABRIC_VERSION}
+FROM eclipse-temurin:17-jre
 
 WORKDIR /root/chaincode-java/chaincode
 
