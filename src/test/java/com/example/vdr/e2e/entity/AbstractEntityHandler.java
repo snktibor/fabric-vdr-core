@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
+import io.github.robsonkades.uuidv7.UUIDv7;
 
 /**
  * Convenience base class: any operation an entity does not support throws {@link
@@ -22,13 +23,13 @@ public abstract class AbstractEntityHandler implements EntityHandler {
     }
 
     /**
-     * Replaces the last segment or appends a UUID to guarantee a collision-safe, format-compliant
-     * id.
+     * Replaces the last segment or appends a UUIDv7 to guarantee a collision-safe,
+     * format-compliant, time-ordered id.
      */
     protected static String uniqueId(final String base) {
         int lastColon = base.lastIndexOf(':');
         String prefix = lastColon != -1 ? base.substring(0, lastColon + 1) : base + "-";
-        return prefix + java.util.UUID.randomUUID().toString();
+        return prefix + UUIDv7.randomUUID().toString();
     }
 
     protected String resolveId(final String rawId) {

@@ -19,9 +19,9 @@ import java.util.Set;
  */
 public class ValidationService {
 
-    private static final java.util.regex.Pattern UUID_V4_PATTERN =
+    private static final java.util.regex.Pattern UUID_V7_PATTERN =
             java.util.regex.Pattern.compile(
-                    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abABab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
+                    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
 
     /**
      * Normalizes a text field and rejects blank or null values.
@@ -41,11 +41,13 @@ public class ValidationService {
 
     /**
      * Validates that the input is a well-formed Uniform Resource Name (URN) consisting of a
-     * specific prefix followed by a strict UUIDv4.
+     * specific prefix followed by a strict UUIDv7.
      *
      * <p>This method first normalizes the input by rejecting blank or null values. It is designed
      * to be highly reusable for any current or future ledger entities (e.g., {@code "did:vdr:"},
-     * {@code "schema:vdr:"}, {@code "creddef:vdr:"}).
+     * {@code "schema:vdr:"}, {@code "creddef:vdr:"}). UUIDv7 is chosen so identifiers carry an
+     * embedded millisecond Unix timestamp, allowing ledger transactions to be sorted by creation
+     * time using the id alone.
      *
      * @param value the raw input identifier to validate
      * @param expectedPrefix the required namespace prefix (e.g., {@code "did:vdr:"})
@@ -53,7 +55,7 @@ public class ValidationService {
      * @return the trimmed, non-blank, and fully validated identifier string
      * @throws VdrException if the input is null, empty, or whitespace only
      * @throws IllegalArgumentException if the input does not start with the expected prefix, or if
-     *     the suffix is not a valid UUIDv4
+     *     the suffix is not a valid UUIDv7
      */
     public String requireValidEntityId(
             final String value, final String expectedPrefix, final String fieldName) {
@@ -68,10 +70,10 @@ public class ValidationService {
         }
 
         String uuidPart = normalized.substring(expectedPrefix.length());
-        if (!UUID_V4_PATTERN.matcher(uuidPart).matches()) {
+        if (!UUID_V7_PATTERN.matcher(uuidPart).matches()) {
             throw new IllegalArgumentException(
                     fieldName
-                            + " format is invalid. Must contain a valid UUIDv4 after the prefix.");
+                            + " format is invalid. Must contain a valid UUIDv7 after the prefix.");
         }
 
         return normalized;

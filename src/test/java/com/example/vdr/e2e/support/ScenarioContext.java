@@ -32,7 +32,7 @@ public class ScenarioContext {
         return keyPair;
     }
 
-    /** Records the effective (UUID-based) id assigned to an entity from the feature file. */
+    /** Records the effective (UUIDv7-based) id assigned to an entity from the feature file. */
     public void setEffectiveId(final String rawId, final String effectiveId) {
         if (rawId == null || rawId.isBlank()) {
             throw new IllegalArgumentException(

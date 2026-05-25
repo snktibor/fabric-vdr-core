@@ -154,6 +154,12 @@
       <version>1.7.36</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.github.robsonkades</groupId>
+      <artifactId>uuidv7</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <repositories>
