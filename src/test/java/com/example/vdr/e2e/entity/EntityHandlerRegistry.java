@@ -22,9 +22,12 @@ public class EntityHandlerRegistry {
         final DidEntityHandler didHandler = new DidEntityHandler(executor, context);
         final SchemaEntityHandler schemaHandler =
                 new SchemaEntityHandler(executor, context, didHandler);
+        final CredDefEntityHandler credDefHandler =
+                new CredDefEntityHandler(executor, context, didHandler, schemaHandler);
         register(didHandler);
         register(schemaHandler);
-        register(new CredDefEntityHandler(executor, context, didHandler, schemaHandler));
+        register(credDefHandler);
+        register(new CredentialEntityHandler(executor, context, didHandler, credDefHandler));
     }
 
     private void register(final EntityHandler handler) {
@@ -47,5 +50,10 @@ public class EntityHandlerRegistry {
     /** Direct accessor for the schema handler — useful for schema-specific steps. */
     public SchemaEntityHandler schema() {
         return (SchemaEntityHandler) get(SchemaEntityHandler.TYPE);
+    }
+
+    /** Direct accessor for the credential handler — useful for verify/revoke steps. */
+    public CredentialEntityHandler credential() {
+        return (CredentialEntityHandler) get(CredentialEntityHandler.TYPE);
     }
 }
