@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.model.DidDocument;
-import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -109,40 +107,5 @@ class ValidationServiceTest {
                                         + "}}")));
 
         assertDoesNotThrow(() -> validationService.validateDidDocumentShape(document));
-    }
-
-    /** Verifies credential validation rejects fields not declared in schema. */
-    @Test
-    void validateCredentialAgainstSchemaRejectsExtraField() {
-        final SchemaRecord schema = new SchemaRecord();
-        schema.setAttrNames(List.of("name"));
-        final JsonNode credential = JsonUtil.readTree("{\"name\":\"Alice\",\"age\":30}");
-
-        assertThrows(
-                VdrException.class,
-                () -> validationService.validateCredentialAgainstSchema(credential, schema));
-    }
-
-    /** Verifies credential validation rejects non-object payloads. */
-    @Test
-    void validateCredentialAgainstSchemaRejectsNonObject() {
-        final SchemaRecord schema = new SchemaRecord();
-        schema.setAttrNames(List.of("name"));
-        final JsonNode credential = JsonUtil.readTree("[1]");
-
-        assertThrows(
-                VdrException.class,
-                () -> validationService.validateCredentialAgainstSchema(credential, schema));
-    }
-
-    /** Verifies credential validation accepts payloads matching schema fields. */
-    @Test
-    void validateCredentialAgainstSchemaAcceptsExactFields() {
-        final SchemaRecord schema = new SchemaRecord();
-        schema.setAttrNames(List.of("name"));
-        final JsonNode credential = JsonUtil.readTree("{\"name\":\"Alice\"}");
-
-        assertDoesNotThrow(
-                () -> validationService.validateCredentialAgainstSchema(credential, schema));
     }
 }

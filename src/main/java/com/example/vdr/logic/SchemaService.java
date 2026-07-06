@@ -10,16 +10,16 @@ import com.example.vdr.model.SchemaRecord;
 import java.util.List;
 
 /**
- * Layer-3 business service for schema lifecycle and ownership enforcement.
+ * Layer-3 business service for schema publication and lookup.
  *
- * <p>This service validates schema creation inputs, enforces issuer DID activity, and performs
- * append-only status transitions while delegating persistence to the schema registry layer.
+ * <p>This service validates schema creation inputs and enforces issuer DID activity while
+ * delegating persistence to the schema registry layer. Published schemas are immutable per the
+ * AnonCreds specification: no update or deactivation transitions exist.
  */
 public class SchemaService {
 
     private final SchemaRegistry schemaRegistry;
     private final DidRegistry didRegistry;
-    private final AuthorizationService authorizationService;
     private final ValidationService validationService;
 
     /**
@@ -27,17 +27,14 @@ public class SchemaService {
      *
      * @param schemaRegistry registry used for schema persistence
      * @param didRegistry registry used to resolve issuer DIDs
-     * @param authorizationService owner authorization utility
      * @param validationService fail-fast validation utility
      */
     public SchemaService(
             final SchemaRegistry schemaRegistry,
             final DidRegistry didRegistry,
-            final AuthorizationService authorizationService,
             final ValidationService validationService) {
         this.schemaRegistry = schemaRegistry;
         this.didRegistry = didRegistry;
-        this.authorizationService = authorizationService;
         this.validationService = validationService;
     }
 
@@ -124,37 +121,5 @@ public class SchemaService {
      */
     public List<RegistryEntry<SchemaRecord>> listSchemas() {
         return schemaRegistry.listAll();
-    }
-
-    /**
-     * Performs append-only soft deactivation of a schema.
-     *
-     * <p>Ownership is enforced before status transition to preserve authorization guarantees while
-     * retaining historical ledger state.
-     *
-     * @param signerDid DID resolved from verified JWT issuer claim
-     * @param id schema identifier to deactivate
-     * @return updated schema record with inactive status
-     * @throws VdrException if schema is missing or caller is not the owner
-     */
-    public SchemaRecord deactivateSchema(final String signerDid, final String id) {
-        final SchemaRecord schemaRecord = getSchema(id);
-        authorizationService.assertSignerOwnsEntity(
-                signerDid, schemaRecord.getOwnerId(), "schema", schemaRecord.getId());
-        schemaRecord.setStatus(RecordStatus.INACTIVE);
-        schemaRegistry.put(schemaRecord.getId(), schemaRecord);
-        return schemaRecord;
-    }
-
-    /**
-     * Enforces that caller is owner of the supplied schema record.
-     *
-     * @param signerDid DID resolved from verified JWT issuer claim
-     * @param schemaRecord schema record subject to ownership check
-     * @throws VdrException if caller does not own the schema
-     */
-    public void assertSignerOwnsSchema(final String signerDid, final SchemaRecord schemaRecord) {
-        authorizationService.assertSignerOwnsEntity(
-                signerDid, schemaRecord.getOwnerId(), "schema", schemaRecord.getId());
     }
 }

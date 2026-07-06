@@ -9,24 +9,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
- * Shared JSON and hashing utility for deterministic VDR processing.
+ * Shared JSON utility for deterministic VDR processing.
  *
  * <p>This utility centralizes JSON parsing/serialization behavior, canonical output configuration,
- * and uniform exception mapping to {@link VdrException} so services can enforce stable hashing and
- * predictable error handling.
+ * and uniform exception mapping to {@link VdrException} so services can rely on deterministic
+ * serialization and predictable error handling.
  */
 public final class JsonUtil {
 
     /**
      * Canonically configured mapper used across the chaincode.
      *
-     * <p>Property and map key ordering are enabled to support deterministic JSON byte streams
-     * required by hash-based credential integrity verification.
+     * <p>Property and map key ordering are enabled to guarantee deterministic JSON byte streams
+     * across all peers executing a transaction.
      */
     private static final ObjectMapper MAPPER =
             new ObjectMapper()
@@ -132,40 +129,5 @@ public final class JsonUtil {
         return message == null || message.isBlank()
                 ? exception.getClass().getSimpleName()
                 : message;
-    }
-
-    /**
-     * Computes a lowercase hexadecimal SHA-256 hash for provided content.
-     *
-     * @param content input content to hash
-     * @return SHA-256 hash encoded as lowercase hex
-     * @throws VdrException if SHA-256 algorithm is unavailable on runtime
-     */
-    public static String sha256(final String content) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            final byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hash);
-        } catch (final NoSuchAlgorithmException e) {
-            throw VdrException.invalid("SHA-256 algorithm not available: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Encodes raw bytes into lowercase hexadecimal representation.
-     *
-     * @param bytes byte array to encode
-     * @return lowercase hexadecimal string
-     */
-    private static String bytesToHex(final byte[] bytes) {
-        final StringBuilder hexString = new StringBuilder();
-        for (final byte b : bytes) {
-            final String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
     }
 }

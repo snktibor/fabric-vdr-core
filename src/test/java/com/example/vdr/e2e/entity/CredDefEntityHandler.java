@@ -1,6 +1,5 @@
 package com.example.vdr.e2e.entity;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.CryptoUtils;
@@ -63,42 +62,6 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
             fail(
                     "Setup failed: could not create prerequisite credential definition. Error: "
                             + context.lastTransactionException().getMessage());
-        }
-    }
-
-    @Override
-    public void deactivate(final String rawId) {
-        final String credDefId = resolveId(rawId);
-        final String ownerDid = context.requireOwner(credDefId);
-        final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
-        final String jwt = CryptoUtils.buildDidJwt(ownerDid, keyPair);
-        executor.submitWithJwt("deactivateCredDef", jwt, credDefId);
-    }
-
-    @Override
-    public void deactivateWithInvalidJwt(final String rawId) {
-        final String credDefId = resolveId(rawId);
-        executor.submitWithJwt("deactivateCredDef", "not-a-valid-jwt", credDefId);
-    }
-
-    @Override
-    public void assertStatus(final String rawId, final String expectedStatus) {
-        final String credDefId = resolveId(rawId);
-        try {
-            final String response = executor.evaluate("getCredDef", credDefId);
-            final String expected = "\"status\":\"" + expectedStatus.toUpperCase() + "\"";
-            assertTrue(
-                    response.contains(expected),
-                    () ->
-                            String.format(
-                                    "Expected credential definition '%s' to have status '%s', got: %s",
-                                    credDefId, expectedStatus.toUpperCase(), response));
-        } catch (Exception e) {
-            fail(
-                    "Failed to query credential definition status for '"
-                            + credDefId
-                            + "': "
-                            + e.getMessage());
         }
     }
 

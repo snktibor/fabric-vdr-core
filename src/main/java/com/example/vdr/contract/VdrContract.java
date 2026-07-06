@@ -4,7 +4,6 @@ import com.example.vdr.context.SsiContext;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.model.CredentialDefinitionRecord;
-import com.example.vdr.model.CredentialRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
@@ -200,26 +199,6 @@ public class VdrContract implements ContractInterface {
     }
 
     /**
-     * Deactivates a Schema, marking it as INACTIVE. Only the original owner/creator of the schema
-     * can deactivate it.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier of the schema to deactivate.
-     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
-     * @return The canonical JSON representation of the updated {@link SchemaRecord}.
-     * @throws ChaincodeException If the caller is not the owner or the schema is missing.
-     */
-    @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String deactivateSchema(final SsiContext ctx, final String id, final String jwt) {
-        return execute(
-                () ->
-                        JsonUtil.toCanonicalJson(
-                                ctx.getServices()
-                                        .getSchemaService()
-                                        .deactivateSchema(requireSignerDid(ctx, jwt), id)));
-    }
-
-    /**
      * Creates a new Credential Definition on the ledger. A credential definition describes the
      * structure and details of a verifiable credential. It is linked to a schema and an issuer DID,
      * and owned by the transaction caller.
@@ -295,136 +274,6 @@ public class VdrContract implements ContractInterface {
     }
 
     /**
-     * Deactivates a Credential Definition, marking it as INACTIVE. Only the original owner/creator
-     * of the credential definition can deactivate it.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier of the credential definition to deactivate.
-     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
-     * @return The canonical JSON representation of the updated {@link CredentialDefinitionRecord}.
-     * @throws ChaincodeException If the caller is not the owner or the credential definition is
-     *     missing.
-     */
-    @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String deactivateCredDef(final SsiContext ctx, final String id, final String jwt) {
-        return execute(
-                () ->
-                        JsonUtil.toCanonicalJson(
-                                ctx.getServices()
-                                        .getCredentialDefinitionService()
-                                        .deactivateCredDef(requireSignerDid(ctx, jwt), id)));
-    }
-
-    /**
-     * Issues a new verifiable credential, recording its hash and metadata on the ledger. This
-     * transaction links the credential to a credential definition and a subject DID. The full
-     * credential object is NOT stored on-ledger due to privacy and size constraints; only a
-     * cryptographically verifiable hash and essential metadata are recorded.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @param credentialId The unique identifier for this specific credential instance.
-     * @param credDefId The ID of the credential definition used to issue this credential.
-     * @param subjectDid The DID of the subject to whom this credential is issued.
-     * @param credentialJson The full credential object as a JSON string. This will be hashed and
-     *     only the hash will be stored on-ledger.
-     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
-     * @return A JSON object containing the credential ID, hash, issuance date, and a message.
-     * @throws ChaincodeException If validation fails, the credential definition or subject DID is
-     *     not active, or the credential ID is duplicated.
-     */
-    @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String issueCredential(
-            final SsiContext ctx,
-            final String credentialId,
-            final String credDefId,
-            final String subjectDid,
-            final String credentialJson,
-            final String jwt) {
-        return execute(
-                () -> {
-                    final CredentialRecord credentialRecord =
-                            ctx.getServices()
-                                    .getCredentialService()
-                                    .issueCredential(
-                                            requireSignerDid(ctx, jwt),
-                                            ctx.getTxTimestamp(),
-                                            credentialId,
-                                            credDefId,
-                                            subjectDid,
-                                            credentialJson);
-
-                    final ObjectNode result = JsonUtil.objectNode();
-                    result.put("credentialId", credentialRecord.getId());
-                    result.put("credentialHash", credentialRecord.getCredentialHash());
-                    result.put("issuanceDate", credentialRecord.getIssuanceDate());
-                    result.put(
-                            "message",
-                            "Credential issued successfully. Store the full credential object offline.");
-                    return JsonUtil.toCanonicalJson(result);
-                });
-    }
-
-    /**
-     * Verifies a provided credential against its on-ledger hash and schema rules. This transaction
-     * checks if the hash of the {@code providedCredentialJson} matches the hash stored for {@code
-     * credentialId} and validates the credential's structure against its associated schema.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @param credentialId The unique identifier of the credential to verify.
-     * @param providedCredentialJson The full credential object provided by the holder for
-     *     verification.
-     * @return A JSON object indicating verification status, credential ID, issuance date, subject
-     *     DID, and a verification message.
-     * @throws ChaincodeException If verification fails due to hash mismatch, invalid schema, or the
-     *     credential being revoked/not found.
-     */
-    @Transaction(intent = Transaction.TYPE.EVALUATE)
-    public String verifyCredential(
-            final SsiContext ctx, final String credentialId, final String providedCredentialJson) {
-        return execute(
-                () -> {
-                    final CredentialRecord credentialRecord =
-                            ctx.getServices()
-                                    .getCredentialService()
-                                    .verifyCredential(credentialId, providedCredentialJson);
-
-                    final ObjectNode result = JsonUtil.objectNode();
-                    result.put("credentialId", credentialRecord.getId());
-                    result.put("verified", true);
-                    result.put("issuanceDate", credentialRecord.getIssuanceDate());
-                    result.put("subjectDid", credentialRecord.getSubjectDid());
-                    result.put(
-                            "message",
-                            "Credential verified: content is authentic and matches schema");
-                    return JsonUtil.toCanonicalJson(result);
-                });
-    }
-
-    /**
-     * Revokes an issued credential, marking its status as REVOKED on the ledger. This action
-     * follows the append-only ledger principle via soft-deletion. Only the original issuer (owner)
-     * of the credential can revoke it.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @param credentialId The unique identifier of the credential to revoke.
-     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
-     * @return The canonical JSON representation of the updated {@link CredentialRecord}.
-     * @throws ChaincodeException If the caller is not the issuer/owner, or the credential is not
-     *     found.
-     */
-    @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public String revokeCredential(
-            final SsiContext ctx, final String credentialId, final String jwt) {
-        return execute(
-                () ->
-                        JsonUtil.toCanonicalJson(
-                                ctx.getServices()
-                                        .getCredentialService()
-                                        .revokeCredential(
-                                                requireSignerDid(ctx, jwt), credentialId)));
-    }
-
-    /**
      * Validates JWT and returns authenticated signer DID for submit transactions.
      *
      * @param ctx transaction context with scoped service graph
@@ -436,39 +285,6 @@ public class VdrContract implements ContractInterface {
                 .getJwtValidator()
                 .validate(jwt, ctx.getTxTimestamp())
                 .getSignerDid();
-    }
-
-    /**
-     * Retrieves the metadata of an issued credential from the ledger by its ID. Note that this only
-     * returns the on-ledger metadata (hash, status, dates), not the full credential content, which
-     * is stored off-ledger.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @param credentialId The unique identifier of the credential to retrieve.
-     * @return The canonical JSON representation of the {@link CredentialRecord} metadata.
-     * @throws ChaincodeException If the credential is not found.
-     */
-    @Transaction(intent = Transaction.TYPE.EVALUATE)
-    public String getCredential(final SsiContext ctx, final String credentialId) {
-        return execute(
-                () ->
-                        JsonUtil.toCanonicalJson(
-                                ctx.getServices()
-                                        .getCredentialService()
-                                        .getCredential(credentialId)));
-    }
-
-    /**
-     * Lists all issued credentials on the ledger. This transaction iterates through all entries
-     * stored under the credential composite key namespace.
-     *
-     * @param ctx The custom SSI transaction context.
-     * @return A JSON array containing all credential registry entries (metadata only).
-     */
-    @Transaction(intent = Transaction.TYPE.EVALUATE)
-    public String listCredentials(final SsiContext ctx) {
-        return execute(
-                () -> toEntryList(ctx.getServices().getCredentialService().listCredentials()));
     }
 
     /**

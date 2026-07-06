@@ -10,7 +10,5 @@ public enum RecordStatus {
     /** Record is active and valid for normal operations. */
     ACTIVE,
     /** Record has been deactivated and should no longer be used for new flows. */
-    INACTIVE,
-    /** Record has been explicitly revoked and fails verification checks. */
-    REVOKED
+    INACTIVE
 }

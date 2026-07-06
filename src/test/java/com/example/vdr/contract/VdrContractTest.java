@@ -11,18 +11,15 @@ import com.example.vdr.context.SsiServices;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.logic.CredentialDefinitionService;
-import com.example.vdr.logic.CredentialService;
 import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.JwtPrincipal;
 import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.model.CredentialDefinitionRecord;
-import com.example.vdr.model.CredentialRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
@@ -55,8 +52,6 @@ class VdrContractTest {
     @Mock private SchemaService schemaService;
 
     @Mock private CredentialDefinitionService credentialDefinitionService;
-
-    @Mock private CredentialService credentialService;
 
     @Mock private JwtValidator jwtValidator;
 
@@ -264,38 +259,17 @@ class VdrContractTest {
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
     }
 
-    /** Verifies schema deactivation succeeds for correct owner and returns JSON. */
+    /** Verifies service-layer domain errors are mapped to chaincode exceptions. */
     @Test
-    void deactivateSchemaCorrectOwnerSucceeds() {
+    void getSchemaWrapsVdrException() {
         final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-        final SchemaRecord schema = new SchemaRecord();
-        schema.setId("schema-4");
-        schema.setOwnerId("user1");
-        schema.setStatus(RecordStatus.INACTIVE);
 
-        stubSignerDid(jwt, "user1");
+        when(ctx.getServices()).thenReturn(services);
         when(services.getSchemaService()).thenReturn(schemaService);
-        when(schemaService.deactivateSchema("user1", "schema-4")).thenReturn(schema);
+        when(schemaService.getSchema("schema-missing"))
+                .thenThrow(VdrException.notFound("schema", "schema-missing"));
 
-        final String result = contract.deactivateSchema(ctx, "schema-4", jwt);
-
-        assertEquals(JsonUtil.toCanonicalJson(schema), result);
-    }
-
-    /** Verifies schema deactivation maps unauthorized service errors to chaincode errors. */
-    @Test
-    void deactivateSchemaWrongOwnerUnauthorized() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-
-        stubSignerDid(jwt, "user2");
-        when(services.getSchemaService()).thenReturn(schemaService);
-        when(schemaService.deactivateSchema("user2", "schema-4"))
-                .thenThrow(VdrException.unauthorized("Unauthorized"));
-
-        assertThrows(
-                ChaincodeException.class, () -> contract.deactivateSchema(ctx, "schema-4", jwt));
+        assertThrows(ChaincodeException.class, () -> contract.getSchema(ctx, "schema-missing"));
     }
 
     /** Verifies credential definition creation returns canonical JSON response. */
@@ -386,201 +360,5 @@ class VdrContractTest {
         item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(crecord)));
         expected.add(item);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
-    }
-
-    /** Verifies credential definition deactivation succeeds for correct owner. */
-    @Test
-    void deactivateCredDefCorrectOwnerSucceeds() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-        final CredentialDefinitionRecord crecord = new CredentialDefinitionRecord();
-        crecord.setId("creddef-4");
-        crecord.setOwnerId("user1");
-        crecord.setStatus(RecordStatus.INACTIVE);
-
-        stubSignerDid(jwt, "user1");
-        when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
-        when(credentialDefinitionService.deactivateCredDef("user1", "creddef-4"))
-                .thenReturn(crecord);
-
-        final String result = contract.deactivateCredDef(ctx, "creddef-4", jwt);
-
-        assertEquals(JsonUtil.toCanonicalJson(crecord), result);
-    }
-
-    /** Verifies credential definition deactivation maps unauthorized errors. */
-    @Test
-    void deactivateCredDefWrongOwnerUnauthorized() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-
-        stubSignerDid(jwt, "user2");
-        when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
-        when(credentialDefinitionService.deactivateCredDef("user2", "creddef-4"))
-                .thenThrow(VdrException.unauthorized("Unauthorized"));
-
-        assertThrows(
-                ChaincodeException.class, () -> contract.deactivateCredDef(ctx, "creddef-4", jwt));
-    }
-
-    /** Verifies credential listing serializes registry entries as JSON array envelope. */
-    @Test
-    void listCredentialsReturnsEntryArray() {
-        final VdrContract contract = new VdrContract();
-        final CredentialRecord crecord = new CredentialRecord();
-        crecord.setId("cred-1");
-        crecord.setCredentialHash("hash");
-
-        when(ctx.getServices()).thenReturn(services);
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.listCredentials())
-                .thenReturn(List.of(new RegistryEntry<>("cred-1", crecord)));
-
-        final String result = contract.listCredentials(ctx);
-
-        final ArrayNode expected = JsonUtil.arrayNode();
-        final ObjectNode item = JsonUtil.objectNode();
-        item.put("id", "cred-1");
-        item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(crecord)));
-        expected.add(item);
-        assertEquals(JsonUtil.toCanonicalJson(expected), result);
-    }
-
-    /** Verifies credential issuance endpoint returns expected response envelope fields. */
-    @Test
-    void issueCredentialReturnsEnvelope() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-        final CredentialRecord crecord = new CredentialRecord();
-        crecord.setId("cred-1");
-        crecord.setCredentialHash("hash");
-        crecord.setIssuanceDate(123L);
-        crecord.setOwnerId("caller");
-        crecord.setStatus(RecordStatus.ACTIVE);
-
-        stubSignerDid(jwt, "caller");
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.issueCredential(
-                        "caller", TX_TIME, "cred-1", "creddef-1", "did:subject", "{}"))
-                .thenReturn(crecord);
-
-        final String result =
-                contract.issueCredential(ctx, "cred-1", "creddef-1", "did:subject", "{}", jwt);
-        final JsonNode json = JsonUtil.readTree(result);
-
-        assertEquals("cred-1", json.get("credentialId").asText());
-        assertEquals("hash", json.get("credentialHash").asText());
-        assertEquals(123L, json.get("issuanceDate").asLong());
-    }
-
-    /** Verifies issuance failure for inactive schema is mapped to chaincode error. */
-    @Test
-    void issueCredentialInactiveSchemaFails() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-
-        stubSignerDid(jwt, "caller");
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.issueCredential(
-                        "caller", TX_TIME, "cred-2", "creddef-1", "did:subject", "{}"))
-                .thenThrow(VdrException.invalid("schema 'schema-1' is not active"));
-
-        assertThrows(
-                ChaincodeException.class,
-                () ->
-                        contract.issueCredential(
-                                ctx, "cred-2", "creddef-1", "did:subject", "{}", jwt));
-    }
-
-    /** Verifies issuance failure for inactive credential definition maps correctly. */
-    @Test
-    void issueCredentialInactiveCredDefFails() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-
-        stubSignerDid(jwt, "caller");
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.issueCredential(
-                        "caller", TX_TIME, "cred-3", "creddef-2", "did:subject", "{}"))
-                .thenThrow(VdrException.invalid("creddef 'creddef-2' is not active"));
-
-        assertThrows(
-                ChaincodeException.class,
-                () ->
-                        contract.issueCredential(
-                                ctx, "cred-3", "creddef-2", "did:subject", "{}", jwt));
-    }
-
-    /** Verifies credential verification endpoint returns expected response envelope. */
-    @Test
-    void verifyCredentialReturnsEnvelope() {
-        final VdrContract contract = new VdrContract();
-        final CredentialRecord crecord = new CredentialRecord();
-        crecord.setId("cred-2");
-        crecord.setCredentialHash("hash");
-        crecord.setIssuanceDate(456L);
-        crecord.setSubjectDid("did:subject");
-        crecord.setStatus(RecordStatus.ACTIVE);
-
-        when(ctx.getServices()).thenReturn(services);
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.verifyCredential("cred-2", "{}")).thenReturn(crecord);
-
-        final String result = contract.verifyCredential(ctx, "cred-2", "{}");
-        final JsonNode json = JsonUtil.readTree(result);
-
-        assertEquals("cred-2", json.get("credentialId").asText());
-        assertEquals(true, json.get("verified").asBoolean());
-        assertEquals(456L, json.get("issuanceDate").asLong());
-        assertEquals("did:subject", json.get("subjectDid").asText());
-    }
-
-    /** Verifies verification errors from service layer are mapped to chaincode errors. */
-    @Test
-    void verifyCredentialWrapsVdrException() {
-        final VdrContract contract = new VdrContract();
-
-        when(ctx.getServices()).thenReturn(services);
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.verifyCredential("cred-1", "{}"))
-                .thenThrow(VdrException.invalid("bad credential"));
-
-        assertThrows(
-                ChaincodeException.class, () -> contract.verifyCredential(ctx, "cred-1", "{}"));
-    }
-
-    /** Verifies credential revocation endpoint returns canonical JSON response. */
-    @Test
-    void revokeCredentialReturnsCanonicalJson() {
-        final VdrContract contract = new VdrContract();
-        final String jwt = "jwt";
-        final CredentialRecord crecord = new CredentialRecord();
-        crecord.setId("cred-3");
-        crecord.setStatus(RecordStatus.REVOKED);
-
-        stubSignerDid(jwt, "caller");
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.revokeCredential("caller", "cred-3")).thenReturn(crecord);
-
-        final String result = contract.revokeCredential(ctx, "cred-3", jwt);
-
-        assertEquals(JsonUtil.toCanonicalJson(crecord), result);
-    }
-
-    /** Verifies credential lookup endpoint returns canonical JSON response. */
-    @Test
-    void getCredentialReturnsCanonicalJson() {
-        final VdrContract contract = new VdrContract();
-        final CredentialRecord crecord = new CredentialRecord();
-        crecord.setId("cred-4");
-        crecord.setCredentialHash("hash");
-
-        when(ctx.getServices()).thenReturn(services);
-        when(services.getCredentialService()).thenReturn(credentialService);
-        when(credentialService.getCredential("cred-4")).thenReturn(crecord);
-
-        final String result = contract.getCredential(ctx, "cred-4");
-
-        assertEquals(JsonUtil.toCanonicalJson(crecord), result);
     }
 }

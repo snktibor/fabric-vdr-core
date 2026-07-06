@@ -22,14 +22,3 @@ Feature: Credential Definition Lifecycle Management
         When I list all "credential definition" entries
         Then the transaction should be successful
         And the list should contain the "credential definition" with id "creddef:vdr:test-3"
-
-    Scenario: 4. Deactivate a credential definition
-        Given a "credential definition" with id "creddef:vdr:test-4" exists on the ledger
-        When I deactivate the "credential definition" with id "creddef:vdr:test-4"
-        Then the transaction should be successful
-        And the "credential definition" with id "creddef:vdr:test-4" is marked as "INACTIVE"
-
-    Scenario: 5. Reject credential definition deactivation with an invalid JWT
-        Given a "credential definition" with id "creddef:vdr:test-5" exists on the ledger
-        When I deactivate the "credential definition" with id "creddef:vdr:test-5" using an invalid JWT
-        Then the transaction should fail with an "authorization" error

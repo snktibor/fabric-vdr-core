@@ -5,8 +5,7 @@ package com.example.vdr.ledger;
  *
  * <p>These constants define deterministic namespace segments used by layer-4 registries when
  * creating Fabric composite keys. Centralizing them prevents accidental key collisions and keeps
- * storage conventions consistent across DID, schema, credential definition, and credential
- * entities.
+ * storage conventions consistent across DID, schema, and credential definition entities.
  */
 public final class LedgerNamespaces {
 
@@ -18,9 +17,6 @@ public final class LedgerNamespaces {
 
     /** Composite-key namespace for credential definition records. */
     public static final String CRED_DEF = "CREDDEF";
-
-    /** Composite-key namespace for issued credential records. */
-    public static final String CREDENTIAL = "CRED";
 
     /** Utility class constructor is private to prevent instantiation. */
     private LedgerNamespaces() {}

@@ -1,12 +1,10 @@
 package com.example.vdr.context;
 
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
-import com.example.vdr.ledger.CredentialRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import com.example.vdr.logic.AuthorizationService;
 import com.example.vdr.logic.CredentialDefinitionService;
-import com.example.vdr.logic.CredentialService;
 import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.SchemaService;
@@ -27,48 +25,31 @@ public class SsiServices {
     private final DidService didService;
     private final SchemaService schemaService;
     private final CredentialDefinitionService credentialDefinitionService;
-    private final CredentialService credentialService;
 
     /**
      * Builds the service graph for one transaction using transaction-scoped registries.
      *
      * <p>Cross-cutting concerns (authorization and validation) are instantiated once and shared by
-     * domain services so ownership and fail-fast checks remain consistent across DID, schema,
-     * credential definition, and credential flows.
+     * domain services so ownership and fail-fast checks remain consistent across DID, schema, and
+     * credential definition flows.
      *
      * @param didRegistry DID data access component for ledger reads/writes
      * @param schemaRegistry schema data access component for ledger reads/writes
      * @param credDefRegistry credential definition data access component
-     * @param credentialRegistry credential data access component
      */
     public SsiServices(
             final DidRegistry didRegistry,
             final SchemaRegistry schemaRegistry,
-            final CredentialDefinitionRegistry credDefRegistry,
-            final CredentialRegistry credentialRegistry) {
+            final CredentialDefinitionRegistry credDefRegistry) {
         // Cross-cutting services first, then domain services that depend on them.
         this.authorizationService = new AuthorizationService();
         this.validationService = new ValidationService();
         this.jwtValidator = new JwtValidator(didRegistry);
         this.didService = new DidService(didRegistry, authorizationService, validationService);
-        this.schemaService =
-                new SchemaService(
-                        schemaRegistry, didRegistry, authorizationService, validationService);
+        this.schemaService = new SchemaService(schemaRegistry, didRegistry, validationService);
         this.credentialDefinitionService =
                 new CredentialDefinitionService(
-                        credDefRegistry,
-                        schemaRegistry,
-                        didRegistry,
-                        authorizationService,
-                        validationService);
-        this.credentialService =
-                new CredentialService(
-                        credentialRegistry,
-                        credDefRegistry,
-                        schemaRegistry,
-                        didRegistry,
-                        authorizationService,
-                        validationService);
+                        credDefRegistry, schemaRegistry, didRegistry, validationService);
     }
 
     /**
@@ -105,14 +86,5 @@ public class SsiServices {
      */
     public CredentialDefinitionService getCredentialDefinitionService() {
         return credentialDefinitionService;
-    }
-
-    /**
-     * Exposes credential business operations to the contract layer.
-     *
-     * @return transaction-scoped {@link CredentialService}
-     */
-    public CredentialService getCredentialService() {
-        return credentialService;
     }
 }

@@ -2,7 +2,6 @@ package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.model.DidDocument;
-import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
@@ -234,35 +233,6 @@ public class ValidationService {
         if (value == null || !value.isTextual() || JsonUtil.trimToNull(value.asText()) == null) {
             throw VdrException.invalid(
                     sectionName + " must include non-empty textual field '" + fieldName + "'");
-        }
-    }
-
-    /**
-     * Validates that credential JSON fields are declared by the schema.
-     *
-     * <p>This guards against undeclared claims and keeps credential payloads constrained to the
-     * issuer-defined attribute model.
-     *
-     * @param credentialJson credential payload to validate
-     * @param schemaRecord schema definition that supplies allowed attribute names
-     * @throws VdrException if payload is not an object or includes undeclared fields
-     */
-    public void validateCredentialAgainstSchema(
-            final JsonNode credentialJson, final SchemaRecord schemaRecord) {
-        if (!credentialJson.isObject()) {
-            throw VdrException.invalid("credential must be a JSON object");
-        }
-
-        final java.util.Set<String> schemaAttrs =
-                new java.util.HashSet<>(schemaRecord.getAttrNames());
-        final java.util.Iterator<String> fieldNames = credentialJson.fieldNames();
-
-        while (fieldNames.hasNext()) {
-            final String fieldName = fieldNames.next();
-            if (!schemaAttrs.contains(fieldName)) {
-                throw VdrException.invalid(
-                        "credential field '" + fieldName + "' not defined in schema");
-            }
         }
     }
 }

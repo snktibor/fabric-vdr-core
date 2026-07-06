@@ -1,7 +1,6 @@
 package com.example.vdr.context;
 
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
-import com.example.vdr.ledger.CredentialRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import java.time.Instant;
@@ -21,7 +20,6 @@ public class SsiContext extends Context {
     private final DidRegistry didRegistry;
     private final SchemaRegistry schemaRegistry;
     private final CredentialDefinitionRegistry credDefRegistry;
-    private final CredentialRegistry credentialRegistry;
     // Service graph built on top of registries.
     private final SsiServices services;
 
@@ -37,9 +35,7 @@ public class SsiContext extends Context {
         this.didRegistry = new DidRegistry(stub);
         this.schemaRegistry = new SchemaRegistry(stub);
         this.credDefRegistry = new CredentialDefinitionRegistry(stub);
-        this.credentialRegistry = new CredentialRegistry(stub);
-        this.services =
-                new SsiServices(didRegistry, schemaRegistry, credDefRegistry, credentialRegistry);
+        this.services = new SsiServices(didRegistry, schemaRegistry, credDefRegistry);
     }
 
     /**
@@ -78,15 +74,6 @@ public class SsiContext extends Context {
      */
     public CredentialDefinitionRegistry getCredDefRegistry() {
         return credDefRegistry;
-    }
-
-    /**
-     * Accessor for the Credential registry (Layer 4).
-     *
-     * @return The {@link CredentialRegistry} instance.
-     */
-    public CredentialRegistry getCredentialRegistry() {
-        return credentialRegistry;
     }
 
     /**

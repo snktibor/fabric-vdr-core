@@ -44,11 +44,7 @@ class CredentialDefinitionServiceTest {
     void setUp() {
         credentialDefinitionService =
                 new CredentialDefinitionService(
-                        credDefRegistry,
-                        schemaRegistry,
-                        didRegistry,
-                        new AuthorizationService(),
-                        new ValidationService());
+                        credDefRegistry, schemaRegistry, didRegistry, new ValidationService());
     }
 
     /** Verifies newly created credential definitions persist signer DID ownership. */

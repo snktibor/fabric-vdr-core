@@ -38,12 +38,7 @@ class SchemaServiceTest {
     /** Initializes service under test with mocked registry dependencies. */
     @BeforeEach
     void setUp() {
-        schemaService =
-                new SchemaService(
-                        schemaRegistry,
-                        didRegistry,
-                        new AuthorizationService(),
-                        new ValidationService());
+        schemaService = new SchemaService(schemaRegistry, didRegistry, new ValidationService());
     }
 
     /** Verifies schema creation stores signer DID as owner and parsed attributes. */

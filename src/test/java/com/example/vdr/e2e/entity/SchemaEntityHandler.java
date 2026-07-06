@@ -1,6 +1,5 @@
 package com.example.vdr.e2e.entity;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.CryptoUtils;
@@ -64,38 +63,6 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
                             + " 'Given I hold a valid JWT for the DID ...'.");
         }
         submitCreate(rawId, issuerDid, jwt);
-    }
-
-    @Override
-    public void deactivate(final String rawId) {
-        final String schemaId = resolveId(rawId);
-        final String ownerDid = context.requireOwner(schemaId);
-        final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
-        final String jwt = CryptoUtils.buildDidJwt(ownerDid, keyPair);
-        executor.submitWithJwt("deactivateSchema", jwt, schemaId);
-    }
-
-    @Override
-    public void deactivateWithInvalidJwt(final String rawId) {
-        final String schemaId = resolveId(rawId);
-        executor.submitWithJwt("deactivateSchema", "not-a-valid-jwt", schemaId);
-    }
-
-    @Override
-    public void assertStatus(final String rawId, final String expectedStatus) {
-        final String schemaId = resolveId(rawId);
-        try {
-            final String response = executor.evaluate("getSchema", schemaId);
-            final String expected = "\"status\":\"" + expectedStatus.toUpperCase() + "\"";
-            assertTrue(
-                    response.contains(expected),
-                    () ->
-                            String.format(
-                                    "Expected schema '%s' to have status '%s', got: %s",
-                                    schemaId, expectedStatus.toUpperCase(), response));
-        } catch (Exception e) {
-            fail("Failed to query schema status for '" + schemaId + "': " + e.getMessage());
-        }
     }
 
     private void submitCreate(final String rawId, final String issuerDid, final String jwt) {

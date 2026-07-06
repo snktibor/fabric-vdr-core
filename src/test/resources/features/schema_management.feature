@@ -20,19 +20,8 @@ Feature: Schema Lifecycle Management
         Then the transaction should be successful
         And a "schema" with id "schema:vdr:test-3" should exist on the ledger
 
-    Scenario: 4. Deactivate a schema and reflect the new status
+    Scenario: 4. List schemas returns previously created entries
         Given a "schema" with id "schema:vdr:test-4" exists on the ledger
-        When I deactivate the "schema" with id "schema:vdr:test-4"
-        Then the transaction should be successful
-        And the "schema" with id "schema:vdr:test-4" is marked as "INACTIVE"
-
-    Scenario: 5. Reject schema deactivation with an invalid JWT
-        Given a "schema" with id "schema:vdr:test-5" exists on the ledger
-        When I deactivate the "schema" with id "schema:vdr:test-5" using an invalid JWT
-        Then the transaction should fail with an "authorization" error
-
-    Scenario: 6. List schemas returns previously created entries
-        Given a "schema" with id "schema:vdr:test-6" exists on the ledger
         When I list all "schema" entries
         Then the transaction should be successful
-        And the list should contain the "schema" with id "schema:vdr:test-6"
+        And the list should contain the "schema" with id "schema:vdr:test-4"

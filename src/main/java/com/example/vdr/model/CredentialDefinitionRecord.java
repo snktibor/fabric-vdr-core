@@ -6,9 +6,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * Model-layer DTO representing a credential definition ledger record.
  *
- * <p>The record captures issuer/schema linkage, definition metadata, owner attribution, and
- * lifecycle status. The {@code publicMetadata} field remains a {@link JsonNode} to preserve
- * structured yet flexible metadata without constraining clients to a rigid Java subtype.
+ * <p>The record captures issuer/schema linkage, definition metadata, and owner attribution.
+ * Published credential definitions are immutable per the AnonCreds specification. The {@code
+ * publicMetadata} field remains a {@link JsonNode} to preserve structured yet flexible metadata
+ * without constraining clients to a rigid Java subtype.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CredentialDefinitionRecord {
@@ -27,17 +28,15 @@ public class CredentialDefinitionRecord {
     private JsonNode publicMetadata;
     // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
-    // Lifecycle status tracked on ledger (ACTIVE, INACTIVE).
-    private RecordStatus status;
 
     /** Creates an empty record instance for JSON deserialization frameworks. */
     public CredentialDefinitionRecord() {}
 
     /**
-     * Creates a credential definition record initialized as active.
+     * Creates a credential definition record.
      *
-     * <p>Services use this constructor when persisting a newly created definition so ownership and
-     * lifecycle defaults are applied consistently.
+     * <p>Services use this constructor when persisting a newly created definition so ownership
+     * metadata is applied consistently.
      *
      * @param id unique credential definition identifier
      * @param issuerId issuer DID responsible for the definition
@@ -62,7 +61,6 @@ public class CredentialDefinitionRecord {
         this.tag = tag;
         this.publicMetadata = publicMetadata;
         this.ownerId = ownerId;
-        this.status = RecordStatus.ACTIVE; // Default status on creation
     }
 
     /**
@@ -189,23 +187,5 @@ public class CredentialDefinitionRecord {
      */
     public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;
-    }
-
-    /**
-     * Returns the lifecycle status tracked on ledger.
-     *
-     * @return current record status
-     */
-    public RecordStatus getStatus() {
-        return status;
-    }
-
-    /**
-     * Sets the lifecycle status used by append-only state transitions.
-     *
-     * @param status lifecycle status value
-     */
-    public void setStatus(final RecordStatus status) {
-        this.status = status;
     }
 }

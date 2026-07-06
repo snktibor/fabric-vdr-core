@@ -23,7 +23,6 @@ public class CredentialDefinitionService {
     private final CredentialDefinitionRegistry credDefRegistry;
     private final SchemaRegistry schemaRegistry;
     private final DidRegistry didRegistry;
-    private final AuthorizationService authorizationService;
     private final ValidationService validationService;
 
     /**
@@ -32,19 +31,16 @@ public class CredentialDefinitionService {
      * @param credDefRegistry registry used to persist credential definitions
      * @param schemaRegistry registry used to resolve referenced schemas
      * @param didRegistry registry used to resolve issuer DIDs
-     * @param authorizationService owner-check utility for write authorization
      * @param validationService fail-fast input and JSON validation utility
      */
     public CredentialDefinitionService(
             final CredentialDefinitionRegistry credDefRegistry,
             final SchemaRegistry schemaRegistry,
             final DidRegistry didRegistry,
-            final AuthorizationService authorizationService,
             final ValidationService validationService) {
         this.credDefRegistry = credDefRegistry;
         this.schemaRegistry = schemaRegistry;
         this.didRegistry = didRegistry;
-        this.authorizationService = authorizationService;
         this.validationService = validationService;
     }
 
@@ -140,38 +136,5 @@ public class CredentialDefinitionService {
      */
     public List<RegistryEntry<CredentialDefinitionRecord>> listCredDefs() {
         return credDefRegistry.listAll();
-    }
-
-    /**
-     * Performs append-only soft deactivation of a credential definition.
-     *
-     * <p>The caller must own the target record. The record is retained on ledger and only its
-     * status is transitioned to {@code INACTIVE}.
-     *
-     * @param signerDid DID resolved from verified JWT issuer claim
-     * @param id identifier of the credential definition to deactivate
-     * @return updated credential definition with inactive status
-     * @throws VdrException if record is missing or caller is not the owner
-     */
-    public CredentialDefinitionRecord deactivateCredDef(final String signerDid, final String id) {
-        final CredentialDefinitionRecord credDefRecord = getCredDef(id);
-        authorizationService.assertSignerOwnsEntity(
-                signerDid, credDefRecord.getOwnerId(), "creddef", credDefRecord.getId());
-        credDefRecord.setStatus(RecordStatus.INACTIVE);
-        credDefRegistry.put(credDefRecord.getId(), credDefRecord);
-        return credDefRecord;
-    }
-
-    /**
-     * Enforces ownership of a credential definition for the current caller.
-     *
-     * @param signerDid DID resolved from verified JWT issuer claim
-     * @param credDefRecord credential definition record under authorization check
-     * @throws VdrException if the caller is not the owner of the record
-     */
-    public void assertSignerOwnsCredDef(
-            final String signerDid, final CredentialDefinitionRecord credDefRecord) {
-        authorizationService.assertSignerOwnsEntity(
-                signerDid, credDefRecord.getOwnerId(), "creddef", credDefRecord.getId());
     }
 }

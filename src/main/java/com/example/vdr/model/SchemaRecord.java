@@ -6,8 +6,8 @@ import java.util.List;
 /**
  * Model-layer DTO representing a credential schema record on ledger.
  *
- * <p>The record stores issuer ownership, schema naming/versioning metadata, allowed credential
- * attributes, and lifecycle state used by append-only deactivation rules.
+ * <p>The record stores issuer ownership, schema naming/versioning metadata, and allowed credential
+ * attributes. Published schemas are immutable per the AnonCreds specification.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaRecord {
@@ -24,8 +24,6 @@ public class SchemaRecord {
     private List<String> attrNames;
     // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
-    // Lifecycle status tracked on ledger (ACTIVE, INACTIVE).
-    private RecordStatus status = RecordStatus.ACTIVE;
 
     /** Creates an empty schema instance for JSON deserialization frameworks. */
     public SchemaRecord() {}
@@ -161,23 +159,5 @@ public class SchemaRecord {
      */
     public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;
-    }
-
-    /**
-     * Returns the lifecycle status tracked on ledger.
-     *
-     * @return current record status
-     */
-    public RecordStatus getStatus() {
-        return status;
-    }
-
-    /**
-     * Sets the lifecycle status used by append-only transitions.
-     *
-     * @param status lifecycle status to assign
-     */
-    public void setStatus(final RecordStatus status) {
-        this.status = status;
     }
 }
