@@ -31,6 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CredentialDefinitionServiceTest {
 
+    private static final String CRED_DEF_ID = "creddef:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
     @Mock private CredentialDefinitionRegistry credDefRegistry;
 
     @Mock private SchemaRegistry schemaRegistry;
@@ -50,7 +52,7 @@ class CredentialDefinitionServiceTest {
     /** Verifies newly created credential definitions persist signer DID ownership. */
     @Test
     void createCredDefSetsOwner() {
-        when(credDefRegistry.exists("creddef-1")).thenReturn(false);
+        when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
         when(schemaRegistry.get("schema-1")).thenReturn(new SchemaRecord());
         final DidDocument issuer = new DidDocument();
         issuer.setId("did:issuer");
@@ -59,7 +61,7 @@ class CredentialDefinitionServiceTest {
 
         final String publicMetadata = "{\"type\":\"CL\"}";
         credentialDefinitionService.createCredDef(
-                "did:issuer", "creddef-1", "did:issuer", "schema-1", "CL", "TAG", publicMetadata);
+                "did:issuer", CRED_DEF_ID, "did:issuer", "schema-1", "CL", "TAG", publicMetadata);
 
         final ArgumentCaptor<CredentialDefinitionRecord> captor =
                 ArgumentCaptor.forClass(CredentialDefinitionRecord.class);
@@ -67,10 +69,28 @@ class CredentialDefinitionServiceTest {
         assertEquals("did:issuer", captor.getValue().getOwnerId());
     }
 
+    /**
+     * Verifies creation rejects a malformed (wrong-prefix / non-UUIDv7) id before ledger access.
+     */
+    @Test
+    void createCredDefRejectsMalformedId() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        credentialDefinitionService.createCredDef(
+                                "did:issuer",
+                                "creddef:vdr:not-a-uuid-v7",
+                                "did:issuer",
+                                "schema-1",
+                                "CL",
+                                "TAG",
+                                "{\"type\":\"CL\"}"));
+    }
+
     /** Verifies creation fails when the referenced schema does not exist. */
     @Test
     void createCredDefRejectsMissingSchema() {
-        when(credDefRegistry.exists("creddef-1")).thenReturn(false);
+        when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
         when(schemaRegistry.get("schema-1")).thenReturn(null);
 
         final String publicMetadata = "{\"type\":\"CL\"}";
@@ -79,7 +99,7 @@ class CredentialDefinitionServiceTest {
                 () ->
                         credentialDefinitionService.createCredDef(
                                 "did:issuer",
-                                "creddef-1",
+                                CRED_DEF_ID,
                                 "did:issuer",
                                 "schema-1",
                                 "CL",
@@ -95,7 +115,7 @@ class CredentialDefinitionServiceTest {
                 () ->
                         credentialDefinitionService.createCredDef(
                                 "did:other",
-                                "creddef-1",
+                                CRED_DEF_ID,
                                 "did:issuer",
                                 "schema-1",
                                 "CL",

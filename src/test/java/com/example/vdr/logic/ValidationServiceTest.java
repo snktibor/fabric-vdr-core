@@ -38,6 +38,37 @@ class ValidationServiceTest {
                 () -> validationService.requireMatchingIds("id", "other", "id"));
     }
 
+    /** Verifies a prefixed UUIDv7 identifier is accepted and returned trimmed. */
+    @Test
+    void requireValidEntityIdAcceptsPrefixedUuidV7() {
+        assertEquals(
+                "schema:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e",
+                validationService.requireValidEntityId(
+                        " schema:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e ", "schema:vdr:", "id"));
+    }
+
+    /** Verifies an id with the wrong prefix is rejected as a validation failure. */
+    @Test
+    void requireValidEntityIdRejectsWrongPrefix() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireValidEntityId(
+                                "creddef:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e",
+                                "schema:vdr:",
+                                "id"));
+    }
+
+    /** Verifies an id whose suffix is not a UUIDv7 is rejected as a validation failure. */
+    @Test
+    void requireValidEntityIdRejectsNonUuidV7() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireValidEntityId(
+                                "schema:vdr:not-a-uuid-v7", "schema:vdr:", "id"));
+    }
+
     /** Verifies object parsing helper rejects JSON arrays. */
     @Test
     void parseJsonObjectRejectsArray() {

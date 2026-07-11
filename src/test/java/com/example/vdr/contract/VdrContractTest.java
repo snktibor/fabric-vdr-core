@@ -14,10 +14,12 @@ import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.JwtPrincipal;
 import com.example.vdr.logic.JwtValidator;
+import com.example.vdr.logic.RevRegDefService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
+import com.example.vdr.model.RevRegDefRecord;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -52,6 +54,8 @@ class VdrContractTest {
     @Mock private SchemaService schemaService;
 
     @Mock private CredentialDefinitionService credentialDefinitionService;
+
+    @Mock private RevRegDefService revRegDefService;
 
     @Mock private JwtValidator jwtValidator;
 
@@ -358,6 +362,96 @@ class VdrContractTest {
         final ObjectNode item = JsonUtil.objectNode();
         item.put("id", "creddef-3");
         item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(crecord)));
+        expected.add(item);
+        assertEquals(JsonUtil.toCanonicalJson(expected), result);
+    }
+
+    /** Verifies revocation registry definition creation returns canonical JSON response. */
+    @Test
+    void createRevRegDefReturnsCanonicalJson() {
+        final VdrContract contract = new VdrContract();
+        final String jwt = "jwt";
+        final ObjectNode publicKeys = JsonUtil.objectNode();
+        publicKeys.put("revocationVerifyingKey", "key-1");
+        final RevRegDefRecord rrecord = new RevRegDefRecord();
+        rrecord.setId("revregdef-1");
+        rrecord.setIssuerId("did:issuer");
+        rrecord.setCredDefId("creddef-1");
+        rrecord.setType("ALLOSAUR");
+        rrecord.setPublicKeys(publicKeys);
+        rrecord.setMaxCredNum(100L);
+        rrecord.setOwnerId("caller");
+
+        stubSignerDid(jwt, "caller");
+        when(services.getRevRegDefService()).thenReturn(revRegDefService);
+        when(revRegDefService.createRevRegDef(
+                        "caller",
+                        "revregdef-1",
+                        "did:issuer",
+                        "creddef-1",
+                        "ALLOSAUR",
+                        "{\"revocationVerifyingKey\":\"key-1\"}",
+                        100L))
+                .thenReturn(rrecord);
+
+        final String result =
+                contract.createRevRegDef(
+                        ctx,
+                        "revregdef-1",
+                        "did:issuer",
+                        "creddef-1",
+                        "ALLOSAUR",
+                        "{\"revocationVerifyingKey\":\"key-1\"}",
+                        100L,
+                        jwt);
+
+        assertEquals(JsonUtil.toCanonicalJson(rrecord), result);
+    }
+
+    /** Verifies revocation registry definition lookup returns canonical JSON response. */
+    @Test
+    void getRevRegDefReturnsCanonicalJson() {
+        final VdrContract contract = new VdrContract();
+        final RevRegDefRecord rrecord = new RevRegDefRecord();
+        rrecord.setId("revregdef-2");
+        rrecord.setIssuerId("did:issuer");
+        rrecord.setCredDefId("creddef-1");
+        rrecord.setType("ALLOSAUR");
+        rrecord.setPublicKeys(JsonUtil.objectNode());
+        rrecord.setMaxCredNum(100L);
+
+        when(ctx.getServices()).thenReturn(services);
+        when(services.getRevRegDefService()).thenReturn(revRegDefService);
+        when(revRegDefService.getRevRegDef("revregdef-2")).thenReturn(rrecord);
+
+        final String result = contract.getRevRegDef(ctx, "revregdef-2");
+
+        assertEquals(JsonUtil.toCanonicalJson(rrecord), result);
+    }
+
+    /** Verifies revocation registry definition listing serializes registry entries correctly. */
+    @Test
+    void listRevRegDefsReturnsEntryArray() {
+        final VdrContract contract = new VdrContract();
+        final RevRegDefRecord rrecord = new RevRegDefRecord();
+        rrecord.setId("revregdef-3");
+        rrecord.setIssuerId("did:issuer");
+        rrecord.setCredDefId("creddef-1");
+        rrecord.setType("ALLOSAUR");
+        rrecord.setPublicKeys(JsonUtil.objectNode());
+        rrecord.setMaxCredNum(100L);
+
+        when(ctx.getServices()).thenReturn(services);
+        when(services.getRevRegDefService()).thenReturn(revRegDefService);
+        when(revRegDefService.listRevRegDefs())
+                .thenReturn(List.of(new RegistryEntry<>("revregdef-3", rrecord)));
+
+        final String result = contract.listRevRegDefs(ctx);
+
+        final ArrayNode expected = JsonUtil.arrayNode();
+        final ObjectNode item = JsonUtil.objectNode();
+        item.put("id", "revregdef-3");
+        item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(rrecord)));
         expected.add(item);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
     }

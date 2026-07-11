@@ -2,11 +2,13 @@ package com.example.vdr.context;
 
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
+import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import com.example.vdr.logic.AuthorizationService;
 import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.JwtValidator;
+import com.example.vdr.logic.RevRegDefService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.logic.ValidationService;
 
@@ -25,22 +27,25 @@ public class SsiServices {
     private final DidService didService;
     private final SchemaService schemaService;
     private final CredentialDefinitionService credentialDefinitionService;
+    private final RevRegDefService revRegDefService;
 
     /**
      * Builds the service graph for one transaction using transaction-scoped registries.
      *
      * <p>Cross-cutting concerns (authorization and validation) are instantiated once and shared by
-     * domain services so ownership and fail-fast checks remain consistent across DID, schema, and
-     * credential definition flows.
+     * domain services so ownership and fail-fast checks remain consistent across DID, schema,
+     * credential definition, and revocation registry definition flows.
      *
      * @param didRegistry DID data access component for ledger reads/writes
      * @param schemaRegistry schema data access component for ledger reads/writes
      * @param credDefRegistry credential definition data access component
+     * @param revRegDefRegistry revocation registry definition data access component
      */
     public SsiServices(
             final DidRegistry didRegistry,
             final SchemaRegistry schemaRegistry,
-            final CredentialDefinitionRegistry credDefRegistry) {
+            final CredentialDefinitionRegistry credDefRegistry,
+            final RevRegDefRegistry revRegDefRegistry) {
         // Cross-cutting services first, then domain services that depend on them.
         this.authorizationService = new AuthorizationService();
         this.validationService = new ValidationService();
@@ -50,6 +55,9 @@ public class SsiServices {
         this.credentialDefinitionService =
                 new CredentialDefinitionService(
                         credDefRegistry, schemaRegistry, didRegistry, validationService);
+        this.revRegDefService =
+                new RevRegDefService(
+                        revRegDefRegistry, credDefRegistry, didRegistry, validationService);
     }
 
     /**
@@ -86,5 +94,14 @@ public class SsiServices {
      */
     public CredentialDefinitionService getCredentialDefinitionService() {
         return credentialDefinitionService;
+    }
+
+    /**
+     * Exposes revocation registry definition business operations to the contract layer.
+     *
+     * @return transaction-scoped {@link RevRegDefService}
+     */
+    public RevRegDefService getRevRegDefService() {
+        return revRegDefService;
     }
 }

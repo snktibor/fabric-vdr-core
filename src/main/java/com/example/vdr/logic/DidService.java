@@ -48,6 +48,9 @@ public class DidService {
      * @throws VdrException if validation fails or the DID id already exists
      */
     public DidDocument createDid(final String id, final String didDocumentJson) {
+        // A DID id follows generic 'did:<method>:<method-specific-id>' syntax, not the constrained
+        // '<entity>:vdr:<UUIDv7>' URN enforced by requireValidEntityId, so only non-blankness is
+        // required here.
         final String normalizedId = validationService.requireNotBlank(id, "id");
         final DidDocument document =
                 validationService.parseJson(didDocumentJson, DidDocument.class);

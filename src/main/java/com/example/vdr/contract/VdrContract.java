@@ -5,6 +5,7 @@ import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
+import com.example.vdr.model.RevRegDefRecord;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -271,6 +272,79 @@ public class VdrContract implements ContractInterface {
                 () ->
                         toEntryList(
                                 ctx.getServices().getCredentialDefinitionService().listCredDefs()));
+    }
+
+    /**
+     * Creates a new Revocation Registry Definition on the ledger. A revocation registry definition
+     * publishes the parameters, capacity, and public cryptographic keys used to revoke credentials
+     * under the tails-free AnonCreds v2 (ALLOSAUR) scheme. It is linked to a credential definition
+     * and an issuer DID, owned by the transaction caller, and strictly immutable once created.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param id The unique identifier for the revocation registry definition.
+     * @param issuerId The DID of the issuer who owns this revocation registry definition.
+     * @param credDefId The ID of the credential definition this registry revokes against.
+     * @param type The revocation scheme identifier (AnonCreds v2 ALLOSAUR).
+     * @param publicKeysJson The public revocation keys associated with the definition as a JSON
+     *     object string.
+     * @param maxCredNum The maximum number of credentials the registry can track.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
+     * @return The canonical JSON representation of the created {@link RevRegDefRecord}.
+     * @throws ChaincodeException If validation fails, the credential definition or issuer DID is
+     *     missing or inconsistent, the issuer DID is not active, or the ID is duplicated.
+     */
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String createRevRegDef(
+            final SsiContext ctx,
+            final String id,
+            final String issuerId,
+            final String credDefId,
+            final String type,
+            final String publicKeysJson,
+            final long maxCredNum,
+            final String jwt) {
+        return execute(
+                () -> {
+                    final RevRegDefRecord revRegDefRecord =
+                            ctx.getServices()
+                                    .getRevRegDefService()
+                                    .createRevRegDef(
+                                            requireSignerDid(ctx, jwt),
+                                            id,
+                                            issuerId,
+                                            credDefId,
+                                            type,
+                                            publicKeysJson,
+                                            maxCredNum);
+                    return JsonUtil.toCanonicalJson(revRegDefRecord);
+                });
+    }
+
+    /**
+     * Retrieves an existing Revocation Registry Definition from the ledger by its ID.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param id The unique identifier of the revocation registry definition to retrieve.
+     * @return The canonical JSON representation of the {@link RevRegDefRecord}.
+     * @throws ChaincodeException If the revocation registry definition is not found.
+     */
+    @Transaction(intent = Transaction.TYPE.EVALUATE)
+    public String getRevRegDef(final SsiContext ctx, final String id) {
+        return execute(
+                () ->
+                        JsonUtil.toCanonicalJson(
+                                ctx.getServices().getRevRegDefService().getRevRegDef(id)));
+    }
+
+    /**
+     * Lists all registered Revocation Registry Definitions on the ledger.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @return A JSON array containing all revocation registry definition registry entries.
+     */
+    @Transaction(intent = Transaction.TYPE.EVALUATE)
+    public String listRevRegDefs(final SsiContext ctx) {
+        return execute(() -> toEntryList(ctx.getServices().getRevRegDefService().listRevRegDefs()));
     }
 
     /**

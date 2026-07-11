@@ -24,9 +24,12 @@ public class EntityHandlerRegistry {
                 new SchemaEntityHandler(executor, context, didHandler);
         final CredDefEntityHandler credDefHandler =
                 new CredDefEntityHandler(executor, context, didHandler, schemaHandler);
+        final RevRegDefEntityHandler revRegDefHandler =
+                new RevRegDefEntityHandler(executor, context, didHandler, credDefHandler);
         register(didHandler);
         register(schemaHandler);
         register(credDefHandler);
+        register(revRegDefHandler);
     }
 
     private void register(final EntityHandler handler) {

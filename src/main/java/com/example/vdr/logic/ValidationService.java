@@ -52,27 +52,22 @@ public class ValidationService {
      * @param expectedPrefix the required namespace prefix (e.g., {@code "did:vdr:"})
      * @param fieldName the logical name of the field
      * @return the trimmed, non-blank, and fully validated identifier string
-     * @throws VdrException if the input is null, empty, or whitespace only
-     * @throws IllegalArgumentException if the input does not start with the expected prefix, or if
-     *     the suffix is not a valid UUIDv7
+     * @throws VdrException if the input is null, empty, or whitespace only, does not start with the
+     *     expected prefix, or if the suffix is not a valid UUIDv7
      */
     public String requireValidEntityId(
             final String value, final String expectedPrefix, final String fieldName) {
         String normalized = requireNotBlank(value, fieldName);
 
         if (!normalized.startsWith(expectedPrefix)) {
-            throw new IllegalArgumentException(
-                    fieldName
-                            + " format is invalid. Must start with prefix '"
-                            + expectedPrefix
-                            + "'");
+            throw VdrException.invalid(
+                    fieldName + " format is invalid. Must match '" + expectedPrefix + "<UUIDv7>'");
         }
 
         String uuidPart = normalized.substring(expectedPrefix.length());
         if (!UUID_V7_PATTERN.matcher(uuidPart).matches()) {
-            throw new IllegalArgumentException(
-                    fieldName
-                            + " format is invalid. Must contain a valid UUIDv7 after the prefix.");
+            throw VdrException.invalid(
+                    fieldName + " format is invalid. Must match '" + expectedPrefix + "<UUIDv7>'");
         }
 
         return normalized;

@@ -29,6 +29,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SchemaServiceTest {
 
+    private static final String SCHEMA_ID = "schema:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
     @Mock private SchemaRegistry schemaRegistry;
 
     @Mock private DidRegistry didRegistry;
@@ -44,7 +46,7 @@ class SchemaServiceTest {
     /** Verifies schema creation stores signer DID as owner and parsed attributes. */
     @Test
     void createSchemaSetsOwner() {
-        when(schemaRegistry.exists("schema-1")).thenReturn(false);
+        when(schemaRegistry.exists(SCHEMA_ID)).thenReturn(false);
         final DidDocument issuer = new DidDocument();
         issuer.setId("did:issuer");
         issuer.setStatus(RecordStatus.ACTIVE);
@@ -52,7 +54,7 @@ class SchemaServiceTest {
 
         final String attrNamesJson = "[\"name\",\"degree\"]";
         schemaService.createSchema(
-                "did:issuer", "schema-1", "did:issuer", "name", "1.0", attrNamesJson);
+                "did:issuer", SCHEMA_ID, "did:issuer", "name", "1.0", attrNamesJson);
 
         final ArgumentCaptor<SchemaRecord> captor = ArgumentCaptor.forClass(SchemaRecord.class);
         verify(schemaRegistry).put(anyString(), captor.capture());
@@ -60,10 +62,27 @@ class SchemaServiceTest {
         assertEquals(List.of("name", "degree"), captor.getValue().getAttrNames());
     }
 
+    /**
+     * Verifies creation rejects a malformed (wrong-prefix / non-UUIDv7) id before ledger access.
+     */
+    @Test
+    void createSchemaRejectsMalformedId() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        schemaService.createSchema(
+                                "did:issuer",
+                                "schema:vdr:not-a-uuid-v7",
+                                "did:issuer",
+                                "name",
+                                "1.0",
+                                "[\"name\"]"));
+    }
+
     /** Verifies schema creation fails when issuer DID is not active. */
     @Test
     void createSchemaRejectsInactiveIssuer() {
-        when(schemaRegistry.exists("schema-1")).thenReturn(false);
+        when(schemaRegistry.exists(SCHEMA_ID)).thenReturn(false);
         final DidDocument issuer = new DidDocument();
         issuer.setId("did:issuer");
         issuer.setStatus(RecordStatus.INACTIVE);
@@ -75,7 +94,7 @@ class SchemaServiceTest {
                 () ->
                         schemaService.createSchema(
                                 "did:issuer",
-                                "schema-1",
+                                SCHEMA_ID,
                                 "did:issuer",
                                 "name",
                                 "1.0",
@@ -85,17 +104,12 @@ class SchemaServiceTest {
     /** Verifies schema creation rejects signer DID mismatched with issuer DID. */
     @Test
     void createSchemaRejectsSignerMismatch() {
-        // when(schemaRegistry.exists("schema-1")).thenReturn(false);
+        // when(schemaRegistry.exists(SCHEMA_ID)).thenReturn(false);
 
         assertThrows(
                 VdrException.class,
                 () ->
                         schemaService.createSchema(
-                                "did:other",
-                                "schema-1",
-                                "did:issuer",
-                                "name",
-                                "1.0",
-                                "[\"name\"]"));
+                                "did:other", SCHEMA_ID, "did:issuer", "name", "1.0", "[\"name\"]"));
     }
 }

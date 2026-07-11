@@ -61,7 +61,7 @@ public class SchemaService {
             final String name,
             final String version,
             final String attrNamesJson) {
-        final String normalizedId = validationService.requireNotBlank(id, "id");
+        final String normalizedId = validationService.requireValidEntityId(id, "schema:vdr:", "id");
         final String normalizedIssuerId = validationService.requireNotBlank(issuerId, "issuerId");
         final String normalizedName = validationService.requireNotBlank(name, "name");
         final String normalizedVersion = validationService.requireNotBlank(version, "version");
