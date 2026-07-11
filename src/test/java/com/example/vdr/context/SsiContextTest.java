@@ -35,5 +35,6 @@ class SsiContextTest {
         assertNotNull(ctx.getSchemaRegistry());
         assertNotNull(ctx.getCredDefRegistry());
         assertNotNull(ctx.getRevRegDefRegistry());
+        assertNotNull(ctx.getRevRegEntryRegistry());
     }
 }

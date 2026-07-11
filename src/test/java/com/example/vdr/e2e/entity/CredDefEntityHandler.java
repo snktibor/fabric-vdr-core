@@ -11,7 +11,7 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
 
     public static final String TYPE = "credential definition";
     private static final String DEFAULT_ISSUER_DID_SEED = "issuer-did";
-    private static final String DEFAULT_SCHEMA_SEED = "creddef-default-schema";
+    private static final String DEFAULT_SCHEMA_SEED = "schema:vdr:creddef-default";
 
     private final DidEntityHandler didHandler;
     private final SchemaEntityHandler schemaHandler;

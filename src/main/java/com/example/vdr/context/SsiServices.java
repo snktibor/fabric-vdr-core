@@ -3,12 +3,14 @@ package com.example.vdr.context;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
+import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import com.example.vdr.logic.AuthorizationService;
 import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.RevRegDefService;
+import com.example.vdr.logic.RevRegEntryService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.logic.ValidationService;
 
@@ -28,24 +30,27 @@ public class SsiServices {
     private final SchemaService schemaService;
     private final CredentialDefinitionService credentialDefinitionService;
     private final RevRegDefService revRegDefService;
+    private final RevRegEntryService revRegEntryService;
 
     /**
      * Builds the service graph for one transaction using transaction-scoped registries.
      *
      * <p>Cross-cutting concerns (authorization and validation) are instantiated once and shared by
      * domain services so ownership and fail-fast checks remain consistent across DID, schema,
-     * credential definition, and revocation registry definition flows.
+     * credential definition, and revocation registry flows.
      *
      * @param didRegistry DID data access component for ledger reads/writes
      * @param schemaRegistry schema data access component for ledger reads/writes
      * @param credDefRegistry credential definition data access component
      * @param revRegDefRegistry revocation registry definition data access component
+     * @param revRegEntryRegistry revocation registry entry data access component
      */
     public SsiServices(
             final DidRegistry didRegistry,
             final SchemaRegistry schemaRegistry,
             final CredentialDefinitionRegistry credDefRegistry,
-            final RevRegDefRegistry revRegDefRegistry) {
+            final RevRegDefRegistry revRegDefRegistry,
+            final RevRegEntryRegistry revRegEntryRegistry) {
         // Cross-cutting services first, then domain services that depend on them.
         this.authorizationService = new AuthorizationService();
         this.validationService = new ValidationService();
@@ -58,6 +63,8 @@ public class SsiServices {
         this.revRegDefService =
                 new RevRegDefService(
                         revRegDefRegistry, credDefRegistry, didRegistry, validationService);
+        this.revRegEntryService =
+                new RevRegEntryService(revRegEntryRegistry, revRegDefRegistry, validationService);
     }
 
     /**
@@ -103,5 +110,14 @@ public class SsiServices {
      */
     public RevRegDefService getRevRegDefService() {
         return revRegDefService;
+    }
+
+    /**
+     * Exposes revocation registry entry business operations to the contract layer.
+     *
+     * @return transaction-scoped {@link RevRegEntryService}
+     */
+    public RevRegEntryService getRevRegEntryService() {
+        return revRegEntryService;
     }
 }

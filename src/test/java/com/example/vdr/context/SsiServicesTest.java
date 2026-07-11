@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
+import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -24,14 +25,21 @@ class SsiServicesTest {
         final CredentialDefinitionRegistry credDefRegistry =
                 mock(CredentialDefinitionRegistry.class);
         final RevRegDefRegistry revRegDefRegistry = mock(RevRegDefRegistry.class);
+        final RevRegEntryRegistry revRegEntryRegistry = mock(RevRegEntryRegistry.class);
 
         final SsiServices services =
-                new SsiServices(didRegistry, schemaRegistry, credDefRegistry, revRegDefRegistry);
+                new SsiServices(
+                        didRegistry,
+                        schemaRegistry,
+                        credDefRegistry,
+                        revRegDefRegistry,
+                        revRegEntryRegistry);
 
         assertNotNull(services.getJwtValidator());
         assertNotNull(services.getDidService());
         assertNotNull(services.getSchemaService());
         assertNotNull(services.getCredentialDefinitionService());
         assertNotNull(services.getRevRegDefService());
+        assertNotNull(services.getRevRegEntryService());
     }
 }

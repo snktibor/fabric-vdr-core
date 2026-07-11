@@ -11,7 +11,7 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
 
     public static final String TYPE = "revocation registry definition";
     private static final String DEFAULT_ISSUER_DID_SEED = "issuer-did";
-    private static final String DEFAULT_CRED_DEF_SEED = "revregdef-default-creddef";
+    private static final String DEFAULT_CRED_DEF_SEED = "creddef:vdr:revregdef-default";
 
     private final DidEntityHandler didHandler;
     private final CredDefEntityHandler credDefHandler;

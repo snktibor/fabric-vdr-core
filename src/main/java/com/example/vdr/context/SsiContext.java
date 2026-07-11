@@ -3,6 +3,7 @@ package com.example.vdr.context;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
+import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
 import java.time.Instant;
 import org.hyperledger.fabric.contract.Context;
@@ -22,6 +23,7 @@ public class SsiContext extends Context {
     private final SchemaRegistry schemaRegistry;
     private final CredentialDefinitionRegistry credDefRegistry;
     private final RevRegDefRegistry revRegDefRegistry;
+    private final RevRegEntryRegistry revRegEntryRegistry;
     // Service graph built on top of registries.
     private final SsiServices services;
 
@@ -38,8 +40,14 @@ public class SsiContext extends Context {
         this.schemaRegistry = new SchemaRegistry(stub);
         this.credDefRegistry = new CredentialDefinitionRegistry(stub);
         this.revRegDefRegistry = new RevRegDefRegistry(stub);
+        this.revRegEntryRegistry = new RevRegEntryRegistry(stub);
         this.services =
-                new SsiServices(didRegistry, schemaRegistry, credDefRegistry, revRegDefRegistry);
+                new SsiServices(
+                        didRegistry,
+                        schemaRegistry,
+                        credDefRegistry,
+                        revRegDefRegistry,
+                        revRegEntryRegistry);
     }
 
     /**
@@ -87,6 +95,15 @@ public class SsiContext extends Context {
      */
     public RevRegDefRegistry getRevRegDefRegistry() {
         return revRegDefRegistry;
+    }
+
+    /**
+     * Accessor for the Revocation Registry Entry registry (Layer 4).
+     *
+     * @return The {@link RevRegEntryRegistry} instance.
+     */
+    public RevRegEntryRegistry getRevRegEntryRegistry() {
+        return revRegEntryRegistry;
     }
 
     /**

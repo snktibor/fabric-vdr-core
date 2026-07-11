@@ -6,6 +6,7 @@ import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RevRegDefRecord;
+import com.example.vdr.model.RevRegEntryRecord;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -345,6 +346,92 @@ public class VdrContract implements ContractInterface {
     @Transaction(intent = Transaction.TYPE.EVALUATE)
     public String listRevRegDefs(final SsiContext ctx) {
         return execute(() -> toEntryList(ctx.getServices().getRevRegDefService().listRevRegDefs()));
+    }
+
+    /**
+     * Creates the genesis Revocation Registry Entry for a revocation registry definition. The entry
+     * stores the opaque, off-chain-computed AnonCreds v2 (ALLOSAUR) accumulator value verbatim —
+     * never a bit-string of revoked indices — and is the only mutable record type in the VDR. Only
+     * the owner of the parent revocation registry definition may create it.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param id The unique identifier for the revocation registry entry.
+     * @param revRegDefId The ID of the parent revocation registry definition.
+     * @param accumValue The opaque genesis accumulator value computed off chain by the issuer.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
+     * @return The canonical JSON representation of the created {@link RevRegEntryRecord}.
+     * @throws ChaincodeException If validation fails, the parent revocation registry definition is
+     *     missing, the caller does not own it, or an entry already exists for it.
+     */
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String createRevRegEntry(
+            final SsiContext ctx,
+            final String id,
+            final String revRegDefId,
+            final String accumValue,
+            final String jwt) {
+        return execute(
+                () -> {
+                    final RevRegEntryRecord revRegEntryRecord =
+                            ctx.getServices()
+                                    .getRevRegEntryService()
+                                    .createRevRegEntry(
+                                            requireSignerDid(ctx, jwt),
+                                            id,
+                                            revRegDefId,
+                                            accumValue);
+                    return JsonUtil.toCanonicalJson(revRegEntryRecord);
+                });
+    }
+
+    /**
+     * Replaces the accumulator value of an existing Revocation Registry Entry in place. Each
+     * successful update increments the entry's audit version; concurrent submits against the same
+     * key are serialized by Fabric MVCC validation. Only the owner of the parent revocation
+     * registry definition may update the entry.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param revRegDefId The ID of the parent revocation registry definition whose entry to update.
+     * @param accumValue The opaque replacement accumulator value computed off chain by the issuer.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
+     * @return The canonical JSON representation of the updated {@link RevRegEntryRecord}.
+     * @throws ChaincodeException If validation fails, the entry or its parent definition is
+     *     missing, or the caller does not own the parent revocation registry definition.
+     */
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String updateRevRegEntry(
+            final SsiContext ctx,
+            final String revRegDefId,
+            final String accumValue,
+            final String jwt) {
+        return execute(
+                () ->
+                        JsonUtil.toCanonicalJson(
+                                ctx.getServices()
+                                        .getRevRegEntryService()
+                                        .updateRevRegEntry(
+                                                requireSignerDid(ctx, jwt),
+                                                revRegDefId,
+                                                accumValue)));
+    }
+
+    /**
+     * Retrieves the Revocation Registry Entry for a revocation registry definition.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param revRegDefId The ID of the parent revocation registry definition whose entry to
+     *     retrieve.
+     * @return The canonical JSON representation of the {@link RevRegEntryRecord}.
+     * @throws ChaincodeException If no entry exists for the revocation registry definition.
+     */
+    @Transaction(intent = Transaction.TYPE.EVALUATE)
+    public String getRevRegEntry(final SsiContext ctx, final String revRegDefId) {
+        return execute(
+                () ->
+                        JsonUtil.toCanonicalJson(
+                                ctx.getServices()
+                                        .getRevRegEntryService()
+                                        .getRevRegEntry(revRegDefId)));
     }
 
     /**

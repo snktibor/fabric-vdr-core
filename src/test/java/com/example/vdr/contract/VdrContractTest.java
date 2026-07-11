@@ -15,11 +15,13 @@ import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.JwtPrincipal;
 import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.RevRegDefService;
+import com.example.vdr.logic.RevRegEntryService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.RevRegDefRecord;
+import com.example.vdr.model.RevRegEntryRecord;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -56,6 +58,8 @@ class VdrContractTest {
     @Mock private CredentialDefinitionService credentialDefinitionService;
 
     @Mock private RevRegDefService revRegDefService;
+
+    @Mock private RevRegEntryService revRegEntryService;
 
     @Mock private JwtValidator jwtValidator;
 
@@ -454,5 +458,72 @@ class VdrContractTest {
         item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(rrecord)));
         expected.add(item);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
+    }
+
+    /** Verifies revocation registry entry creation returns canonical JSON response. */
+    @Test
+    void createRevRegEntryReturnsCanonicalJson() {
+        final VdrContract contract = new VdrContract();
+        final String jwt = "jwt";
+        final RevRegEntryRecord erecord = new RevRegEntryRecord();
+        erecord.setId("revregentry-1");
+        erecord.setRevRegDefId("revregdef-1");
+        erecord.setAccumValue("accum-genesis");
+        erecord.setVersion(0L);
+        erecord.setOwnerId("caller");
+
+        stubSignerDid(jwt, "caller");
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(revRegEntryService.createRevRegEntry(
+                        "caller", "revregentry-1", "revregdef-1", "accum-genesis"))
+                .thenReturn(erecord);
+
+        final String result =
+                contract.createRevRegEntry(
+                        ctx, "revregentry-1", "revregdef-1", "accum-genesis", jwt);
+
+        assertEquals(JsonUtil.toCanonicalJson(erecord), result);
+    }
+
+    /** Verifies revocation registry entry update returns canonical JSON response. */
+    @Test
+    void updateRevRegEntryReturnsCanonicalJson() {
+        final VdrContract contract = new VdrContract();
+        final String jwt = "jwt";
+        final RevRegEntryRecord erecord = new RevRegEntryRecord();
+        erecord.setId("revregentry-1");
+        erecord.setRevRegDefId("revregdef-1");
+        erecord.setAccumValue("accum-next");
+        erecord.setVersion(1L);
+        erecord.setOwnerId("caller");
+
+        stubSignerDid(jwt, "caller");
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(revRegEntryService.updateRevRegEntry("caller", "revregdef-1", "accum-next"))
+                .thenReturn(erecord);
+
+        final String result = contract.updateRevRegEntry(ctx, "revregdef-1", "accum-next", jwt);
+
+        assertEquals(JsonUtil.toCanonicalJson(erecord), result);
+        verify(revRegEntryService).updateRevRegEntry("caller", "revregdef-1", "accum-next");
+    }
+
+    /** Verifies revocation registry entry lookup returns canonical JSON response. */
+    @Test
+    void getRevRegEntryReturnsCanonicalJson() {
+        final VdrContract contract = new VdrContract();
+        final RevRegEntryRecord erecord = new RevRegEntryRecord();
+        erecord.setId("revregentry-2");
+        erecord.setRevRegDefId("revregdef-1");
+        erecord.setAccumValue("accum-genesis");
+        erecord.setVersion(0L);
+
+        when(ctx.getServices()).thenReturn(services);
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(revRegEntryService.getRevRegEntry("revregdef-1")).thenReturn(erecord);
+
+        final String result = contract.getRevRegEntry(ctx, "revregdef-1");
+
+        assertEquals(JsonUtil.toCanonicalJson(erecord), result);
     }
 }

@@ -6,7 +6,7 @@ package com.example.vdr.ledger;
  * <p>These constants define deterministic namespace segments used by layer-4 registries when
  * creating Fabric composite keys. Centralizing them prevents accidental key collisions and keeps
  * storage conventions consistent across DID, schema, credential definition, and revocation registry
- * definition entities.
+ * entities.
  */
 public final class LedgerNamespaces {
 
@@ -21,6 +21,9 @@ public final class LedgerNamespaces {
 
     /** Composite-key namespace for revocation registry definition records. */
     public static final String REV_REG_DEF = "REVREGDEF";
+
+    /** Composite-key namespace for revocation registry entry records. */
+    public static final String REV_REG_ENTRY = "REVREGENTRY";
 
     /** Utility class constructor is private to prevent instantiation. */
     private LedgerNamespaces() {}

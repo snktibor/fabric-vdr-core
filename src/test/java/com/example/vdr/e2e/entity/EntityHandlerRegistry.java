@@ -26,10 +26,13 @@ public class EntityHandlerRegistry {
                 new CredDefEntityHandler(executor, context, didHandler, schemaHandler);
         final RevRegDefEntityHandler revRegDefHandler =
                 new RevRegDefEntityHandler(executor, context, didHandler, credDefHandler);
+        final RevRegEntryEntityHandler revRegEntryHandler =
+                new RevRegEntryEntityHandler(executor, context, didHandler, revRegDefHandler);
         register(didHandler);
         register(schemaHandler);
         register(credDefHandler);
         register(revRegDefHandler);
+        register(revRegEntryHandler);
     }
 
     private void register(final EntityHandler handler) {
@@ -52,5 +55,10 @@ public class EntityHandlerRegistry {
     /** Direct accessor for the schema handler — useful for schema-specific steps. */
     public SchemaEntityHandler schema() {
         return (SchemaEntityHandler) get(SchemaEntityHandler.TYPE);
+    }
+
+    /** Direct accessor for the revocation registry entry handler — useful for accumulator steps. */
+    public RevRegEntryEntityHandler revRegEntry() {
+        return (RevRegEntryEntityHandler) get(RevRegEntryEntityHandler.TYPE);
     }
 }
