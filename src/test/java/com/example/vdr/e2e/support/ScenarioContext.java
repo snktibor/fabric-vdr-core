@@ -17,8 +17,7 @@ public class ScenarioContext {
 
     private Exception lastTransactionException;
     private String lastQueryResponse;
-    private String heldJwt;
-    private String heldJwtSubjectDid;
+    private String heldSigningDid;
 
     public Map<String, KeyPair> didKeys() {
         return didKeys;
@@ -90,16 +89,18 @@ public class ScenarioContext {
         this.lastQueryResponse = response;
     }
 
-    public String heldJwt() {
-        return heldJwt;
+    /**
+     * Returns the DID whose signing key the scenario explicitly holds, or {@code null}.
+     *
+     * <p>Tokens are scope-bound to one invocation, so a scenario can no longer hold a pre-minted
+     * JWT; it holds the signing identity and mints the token at submission time.
+     */
+    public String heldSigningDid() {
+        return heldSigningDid;
     }
 
-    public String heldJwtSubjectDid() {
-        return heldJwtSubjectDid;
-    }
-
-    public void holdJwt(final String subjectDid, final String jwt) {
-        this.heldJwtSubjectDid = subjectDid;
-        this.heldJwt = jwt;
+    /** Records the DID whose registered signing key later protected steps should sign with. */
+    public void holdSigningDid(final String did) {
+        this.heldSigningDid = did;
     }
 }

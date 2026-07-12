@@ -64,16 +64,14 @@ public class DidEntityHandler extends AbstractEntityHandler {
         final String updatedJson =
                 CryptoUtils.buildDidJson(
                         did, keyPair, "https://example.com/updated/" + System.currentTimeMillis());
-        final String jwt = CryptoUtils.buildDidJwt(did, keyPair);
-        executor.submitWithJwt("updateDid", jwt, did, updatedJson);
+        executor.submitSigned("updateDid", did, keyPair, did, updatedJson);
     }
 
     @Override
     public void deactivate(final String rawId) {
         final String did = resolveId(rawId);
         final KeyPair keyPair = context.requireDidKeyPair(did);
-        final String jwt = CryptoUtils.buildDidJwt(did, keyPair);
-        executor.submitWithJwt("deactivateDid", jwt, did);
+        executor.submitSigned("deactivateDid", did, keyPair, did);
     }
 
     @Override

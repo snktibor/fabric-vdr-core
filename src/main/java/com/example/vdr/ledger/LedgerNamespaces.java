@@ -25,6 +25,9 @@ public final class LedgerNamespaces {
     /** Composite-key namespace for revocation registry entry records. */
     public static final String REV_REG_ENTRY = "REVREGENTRY";
 
+    /** Composite-key namespace for consumed DID-JWT token id (nonce) records. */
+    public static final String JWT_NONCE = "JWTNONCE";
+
     /** Utility class constructor is private to prevent instantiation. */
     private LedgerNamespaces() {}
 }

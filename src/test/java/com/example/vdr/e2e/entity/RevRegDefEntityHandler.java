@@ -2,7 +2,6 @@ package com.example.vdr.e2e.entity;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.example.vdr.e2e.support.CryptoUtils;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
 import java.security.KeyPair;
@@ -50,10 +49,10 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
         context.recordOwner(revRegDefId, issuerDid);
 
         final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
-        final String jwt = CryptoUtils.buildDidJwt(issuerDid, keyPair);
-        executor.submitWithJwt(
+        executor.submitSigned(
                 "createRevRegDef",
-                jwt,
+                issuerDid,
+                keyPair,
                 revRegDefId,
                 issuerDid,
                 credDefId,
@@ -74,8 +73,8 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
     }
 
     private String ensureIssuerDid() {
-        if (context.heldJwtSubjectDid() != null) {
-            return context.heldJwtSubjectDid();
+        if (context.heldSigningDid() != null) {
+            return context.heldSigningDid();
         }
         if (!context.hasEffectiveId(DEFAULT_ISSUER_DID_SEED)) {
             didHandler.create(DEFAULT_ISSUER_DID_SEED);

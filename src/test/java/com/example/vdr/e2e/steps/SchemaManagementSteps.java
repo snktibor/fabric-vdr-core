@@ -12,13 +12,13 @@ public class SchemaManagementSteps {
         this.registry = registry;
     }
 
-    @When("I create a {string} with id {string} using my held JWT")
-    public void iCreateUsingHeldJwt(final String entityType, final String id) {
+    @When("I create a {string} with id {string} signed with my held key")
+    public void iCreateSignedWithHeldKey(final String entityType, final String id) {
         if (!"schema".equals(entityType)) {
             throw new IllegalArgumentException(
-                    "'using my held JWT' is currently only supported for schema; got: "
+                    "'signed with my held key' is currently only supported for schema; got: "
                             + entityType);
         }
-        registry.schema().createWithHeldJwt(id);
+        registry.schema().createWithHeldKey(id);
     }
 }

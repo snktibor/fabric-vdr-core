@@ -99,7 +99,8 @@ public class VdrContract implements ContractInterface {
                         JsonUtil.toCanonicalJson(
                                 ctx.getServices()
                                         .getDidService()
-                                        .deactivateDid(requireSignerDid(ctx, jwt), id)));
+                                        .deactivateDid(
+                                                requireSignerDid(ctx, jwt, "deactivateDid"), id)));
     }
 
     /**
@@ -121,7 +122,9 @@ public class VdrContract implements ContractInterface {
                                 ctx.getServices()
                                         .getDidService()
                                         .updateDid(
-                                                requireSignerDid(ctx, jwt), id, didDocumentJson)));
+                                                requireSignerDid(ctx, jwt, "updateDid"),
+                                                id,
+                                                didDocumentJson)));
     }
 
     /**
@@ -165,7 +168,7 @@ public class VdrContract implements ContractInterface {
                             ctx.getServices()
                                     .getSchemaService()
                                     .createSchema(
-                                            requireSignerDid(ctx, jwt),
+                                            requireSignerDid(ctx, jwt, "createSchema"),
                                             id,
                                             issuerId,
                                             name,
@@ -234,7 +237,7 @@ public class VdrContract implements ContractInterface {
                             ctx.getServices()
                                     .getCredentialDefinitionService()
                                     .createCredDef(
-                                            requireSignerDid(ctx, jwt),
+                                            requireSignerDid(ctx, jwt, "createCredDef"),
                                             id,
                                             issuerId,
                                             schemaId,
@@ -310,7 +313,7 @@ public class VdrContract implements ContractInterface {
                             ctx.getServices()
                                     .getRevRegDefService()
                                     .createRevRegDef(
-                                            requireSignerDid(ctx, jwt),
+                                            requireSignerDid(ctx, jwt, "createRevRegDef"),
                                             id,
                                             issuerId,
                                             credDefId,
@@ -376,7 +379,7 @@ public class VdrContract implements ContractInterface {
                             ctx.getServices()
                                     .getRevRegEntryService()
                                     .createRevRegEntry(
-                                            requireSignerDid(ctx, jwt),
+                                            requireSignerDid(ctx, jwt, "createRevRegEntry"),
                                             id,
                                             revRegDefId,
                                             accumValue);
@@ -410,7 +413,7 @@ public class VdrContract implements ContractInterface {
                                 ctx.getServices()
                                         .getRevRegEntryService()
                                         .updateRevRegEntry(
-                                                requireSignerDid(ctx, jwt),
+                                                requireSignerDid(ctx, jwt, "updateRevRegEntry"),
                                                 revRegDefId,
                                                 accumValue)));
     }
@@ -437,14 +440,27 @@ public class VdrContract implements ContractInterface {
     /**
      * Validates JWT and returns authenticated signer DID for submit transactions.
      *
+     * <p>The validator re-derives the token's transaction scope from the invocation itself: the
+     * plain method name plus the submitted arguments read from the stub. Every JWT-gated
+     * transaction takes the token as its final argument by convention; this is enforced here so the
+     * scope digest is always computed over exactly the non-JWT arguments the client submitted.
+     *
      * @param ctx transaction context with scoped service graph
      * @param jwt compact JWT token
+     * @param method plain transaction method name being invoked (no contract-name prefix)
      * @return signer DID resolved from validated token
      */
-    private String requireSignerDid(final SsiContext ctx, final String jwt) {
+    private String requireSignerDid(final SsiContext ctx, final String jwt, final String method) {
+        final List<String> parameters = ctx.getStub().getParameters();
+        final int lastIndex = parameters.size() - 1;
+        if (lastIndex < 0 || !parameters.get(lastIndex).equals(jwt)) {
+            throw VdrException.unauthorized(
+                    "authorization failed: jwt must be the final transaction argument");
+        }
+        final List<String> scopeArgs = parameters.subList(0, lastIndex);
         return ctx.getServices()
                 .getJwtValidator()
-                .validate(jwt, ctx.getTxTimestamp())
+                .validate(jwt, ctx.getTxTimestamp(), method, scopeArgs)
                 .getSignerDid();
     }
 

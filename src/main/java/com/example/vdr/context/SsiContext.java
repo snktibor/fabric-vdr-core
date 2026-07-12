@@ -2,6 +2,7 @@ package com.example.vdr.context;
 
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
+import com.example.vdr.ledger.JwtNonceRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
@@ -24,6 +25,7 @@ public class SsiContext extends Context {
     private final CredentialDefinitionRegistry credDefRegistry;
     private final RevRegDefRegistry revRegDefRegistry;
     private final RevRegEntryRegistry revRegEntryRegistry;
+    private final JwtNonceRegistry jwtNonceRegistry;
     // Service graph built on top of registries.
     private final SsiServices services;
 
@@ -41,21 +43,25 @@ public class SsiContext extends Context {
         this.credDefRegistry = new CredentialDefinitionRegistry(stub);
         this.revRegDefRegistry = new RevRegDefRegistry(stub);
         this.revRegEntryRegistry = new RevRegEntryRegistry(stub);
+        this.jwtNonceRegistry = new JwtNonceRegistry(stub);
         this.services =
                 new SsiServices(
                         didRegistry,
                         schemaRegistry,
                         credDefRegistry,
                         revRegDefRegistry,
-                        revRegEntryRegistry);
+                        revRegEntryRegistry,
+                        jwtNonceRegistry);
     }
 
     /**
-     * Returns the deterministic timestamp of the transaction. This timestamp is set by the Fabric
-     * ordering service and is guaranteed to be identical across all peers executing the
-     * transaction.
+     * Returns the deterministic timestamp of the transaction. The timestamp comes from the channel
+     * header of the transaction proposal, so it is chosen by the submitting client — identical
+     * across all endorsing peers, but NOT attested by the ordering service or peer clocks. It is
+     * therefore suitable for deterministic time-claim evaluation, while one-time-use token ids (not
+     * timestamps) provide the actual replay protection.
      *
-     * @return The {@link Instant} representing the transaction time.
+     * @return The {@link Instant} representing the client-declared transaction time.
      */
     public Instant getTxTimestamp() {
         return getStub().getTxTimestamp();
@@ -104,6 +110,15 @@ public class SsiContext extends Context {
      */
     public RevRegEntryRegistry getRevRegEntryRegistry() {
         return revRegEntryRegistry;
+    }
+
+    /**
+     * Accessor for the consumed JWT token id registry (Layer 4).
+     *
+     * @return The {@link JwtNonceRegistry} instance.
+     */
+    public JwtNonceRegistry getJwtNonceRegistry() {
+        return jwtNonceRegistry;
     }
 
     /**

@@ -2,7 +2,9 @@ package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.DidRegistry;
+import com.example.vdr.ledger.JwtNonceRegistry;
 import com.example.vdr.model.DidDocument;
+import com.example.vdr.model.JwtNonceRecord;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,12 +23,28 @@ import java.security.spec.ECPublicKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Deterministic DID-JWT validator for state-changing chaincode transactions.
  *
  * <p>Validation is fully ledger-local: issuer DID and verification keys are resolved only from
  * world state and never through external network calls.
+ *
+ * <p>Beyond signature and time-claim checks, accepted tokens must be bound to this deployment and
+ * to the exact invocation they authorize (see {@link JwtBinding}), and are one-time use:
+ *
+ * <ul>
+ *   <li>{@code aud} must contain {@link JwtBinding#AUDIENCE}, so tokens minted for other systems
+ *       are rejected even when signed with the same DID key.
+ *   <li>The {@value JwtBinding#TX_DIGEST_CLAIM} claim must match the digest of the invoked method
+ *       and its submitted arguments, so a token captured from one transaction (all submitted JWTs
+ *       are readable from the block store) cannot authorize a different operation.
+ *   <li>{@code jti} is mandatory and consumed into world state on success, so an identical token
+ *       cannot be replayed at all — including by a malicious client back-dating the client-supplied
+ *       transaction timestamp to re-enter the token's validity window.
+ * </ul>
  */
 public class JwtValidator {
 
@@ -37,24 +55,39 @@ public class JwtValidator {
     private static final long CLOCK_SKEW_SECONDS = 30L;
 
     private final DidRegistry didRegistry;
+    private final JwtNonceRegistry jwtNonceRegistry;
 
     /**
-     * Creates a validator backed by DID registry lookups.
+     * Creates a validator backed by ledger registry lookups.
      *
      * @param didRegistry DID registry used to resolve issuer key material
+     * @param jwtNonceRegistry registry recording consumed token ids for replay protection
      */
-    public JwtValidator(final DidRegistry didRegistry) {
+    public JwtValidator(final DidRegistry didRegistry, final JwtNonceRegistry jwtNonceRegistry) {
         this.didRegistry = didRegistry;
+        this.jwtNonceRegistry = jwtNonceRegistry;
     }
 
     /**
-     * Validates a DID-JWT token and returns the authenticated signer principal.
+     * Validates a DID-JWT token against the invoked transaction and returns the authenticated
+     * signer principal, consuming the token's {@code jti} so it cannot be used again.
+     *
+     * <p>This method writes a nonce record to world state and therefore must only run on SUBMIT
+     * transactions; read-only EVALUATE transactions take no JWT. The write is part of the
+     * transaction's write set: it persists only when the whole transaction commits, and Fabric MVCC
+     * invalidates the second of two concurrent submissions consuming the same token id.
      *
      * @param jwt compact JWT token
-     * @param txTimestamp deterministic Fabric transaction timestamp
+     * @param txTimestamp deterministic transaction timestamp from the client's channel header
+     * @param method plain transaction method name being invoked (no contract-name prefix)
+     * @param scopeArgs submitted transaction arguments in order, excluding the jwt argument
      * @return verified principal derived from token claims and ledger key material
      */
-    public JwtPrincipal validate(final String jwt, final Instant txTimestamp) {
+    public JwtPrincipal validate(
+            final String jwt,
+            final Instant txTimestamp,
+            final String method,
+            final List<String> scopeArgs) {
         final String token = JsonUtil.trimToNull(jwt);
         if (token == null) {
             throw unauthorized("missing jwt token");
@@ -81,8 +114,80 @@ public class JwtValidator {
 
         final JsonNode verificationMethod = resolveVerificationMethod(didDocument, keyId);
         final PublicKey publicKey = toPublicKey(verificationMethod, keyId);
-        verifySignedClaims(token, publicKey, issuerDid, txTimestamp);
+        final Claims verifiedClaims = verifySignedClaims(token, publicKey, issuerDid, txTimestamp);
+        requireAudience(verifiedClaims);
+        requireTransactionScope(verifiedClaims, method, scopeArgs);
+        consumeTokenId(verifiedClaims, issuerDid);
         return new JwtPrincipal(issuerDid, keyId);
+    }
+
+    /**
+     * Requires the verified {@code aud} claim to contain this deployment's audience identifier.
+     *
+     * @param verifiedClaims signature-verified token claims
+     * @throws com.example.vdr.exception.VdrException when the audience is missing or foreign
+     */
+    private void requireAudience(final Claims verifiedClaims) {
+        final Set<String> audience = verifiedClaims.getAudience();
+        if (audience == null || !audience.contains(JwtBinding.AUDIENCE)) {
+            throw unauthorized("jwt aud must contain '" + JwtBinding.AUDIENCE + "'");
+        }
+    }
+
+    /**
+     * Requires the verified transaction digest claim to match the invocation being authorized.
+     *
+     * <p>The expected digest is recomputed on chain from the invoked method name and the submitted
+     * arguments using the shared {@link JwtBinding} definition, so a token minted for one operation
+     * (or the same operation with different arguments) is rejected on any other.
+     *
+     * @param verifiedClaims signature-verified token claims
+     * @param method plain transaction method name being invoked
+     * @param scopeArgs submitted transaction arguments excluding the jwt argument
+     * @throws com.example.vdr.exception.VdrException when the digest claim is missing or does not
+     *     match the invocation
+     */
+    private void requireTransactionScope(
+            final Claims verifiedClaims, final String method, final List<String> scopeArgs) {
+        final String claimedDigest =
+                JsonUtil.trimToNull(verifiedClaims.get(JwtBinding.TX_DIGEST_CLAIM, String.class));
+        if (claimedDigest == null) {
+            throw unauthorized(
+                    "jwt must include the '" + JwtBinding.TX_DIGEST_CLAIM + "' scope claim");
+        }
+        final String expectedDigest = JwtBinding.transactionDigest(method, scopeArgs);
+        if (!expectedDigest.equals(claimedDigest)) {
+            throw unauthorized("jwt is not scoped to this transaction (method or args mismatch)");
+        }
+    }
+
+    /**
+     * Enforces one-time token use by consuming the mandatory {@code jti} claim into world state.
+     *
+     * <p>If a nonce record for this (issuer DID, jti) pair already exists the token was used before
+     * and the transaction is rejected as a replay. Otherwise the pair is recorded together with the
+     * token expiry, keeping records prunable once their replay window has closed. Fabric MVCC
+     * serializes concurrent submissions of the same pair: the absent-key read is part of the read
+     * set, so only the first commit survives validation.
+     *
+     * @param verifiedClaims signature-verified token claims (expiry known to be present)
+     * @param issuerDid verified issuer DID
+     * @throws com.example.vdr.exception.VdrException when {@code jti} is missing or already used
+     */
+    private void consumeTokenId(final Claims verifiedClaims, final String issuerDid) {
+        final String jti = JsonUtil.trimToNull(verifiedClaims.getId());
+        if (jti == null) {
+            throw unauthorized("jwt must include a jti claim");
+        }
+
+        final String nonceId = JwtBinding.nonceId(issuerDid, jti);
+        if (jwtNonceRegistry.exists(nonceId)) {
+            throw unauthorized("jwt token id has already been used (replay rejected)");
+        }
+
+        final long expiresAtEpochSeconds =
+                verifiedClaims.getExpiration().toInstant().getEpochSecond();
+        jwtNonceRegistry.put(nonceId, new JwtNonceRecord(issuerDid, jti, expiresAtEpochSeconds));
     }
 
     /**
@@ -102,10 +207,11 @@ public class JwtValidator {
      * @param publicKey public key resolved from the issuer DID document
      * @param expectedIssuer expected issuer DID that must match the token {@code iss}
      * @param txTimestamp deterministic Fabric transaction timestamp used for time checks
+     * @return signature-verified token claims for further deployment/scope/nonce checks
      * @throws com.example.vdr.exception.VdrException when signature, issuer, or claim validations
      *     fail (returned as an unauthorized error)
      */
-    private void verifySignedClaims(
+    private Claims verifySignedClaims(
             final String token,
             final PublicKey publicKey,
             final String expectedIssuer,
@@ -131,6 +237,7 @@ public class JwtValidator {
             if (verifiedClaims.getIssuedAt().toInstant().isAfter(maxNow)) {
                 throw unauthorized("jwt iat is in the future");
             }
+            return verifiedClaims;
         } catch (final SignatureException exception) {
             throw unauthorized("invalid jwt signature");
         } catch (final JwtException | IllegalArgumentException exception) {

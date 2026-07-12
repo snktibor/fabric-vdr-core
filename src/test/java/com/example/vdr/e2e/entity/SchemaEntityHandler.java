@@ -2,7 +2,6 @@ package com.example.vdr.e2e.entity;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.example.vdr.e2e.support.CryptoUtils;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
 import java.security.KeyPair;
@@ -39,8 +38,7 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
 
     @Override
     public void create(final String rawId) {
-        final String issuerDid = ensureIssuerDid();
-        submitCreate(rawId, issuerDid, signWithIssuer(issuerDid));
+        submitCreate(rawId, ensureIssuerDid());
     }
 
     @Override
@@ -53,25 +51,31 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
         }
     }
 
-    /** Creates a schema using a JWT pre-issued and stored in {@link ScenarioContext#heldJwt()}. */
-    public void createWithHeldJwt(final String rawId) {
-        final String issuerDid = context.heldJwtSubjectDid();
-        final String jwt = context.heldJwt();
-        if (jwt == null || issuerDid == null) {
+    /**
+     * Creates a schema signed with the key held via {@link ScenarioContext#heldSigningDid()}.
+     *
+     * <p>Tokens are scope-bound to a single invocation, so the scenario holds the signing identity
+     * rather than a pre-minted JWT; the token is minted at submission for this exact create.
+     */
+    public void createWithHeldKey(final String rawId) {
+        final String issuerDid = context.heldSigningDid();
+        if (issuerDid == null) {
             throw new IllegalStateException(
-                    "No held JWT in scenario context; precede this step with"
-                            + " 'Given I hold a valid JWT for the DID ...'.");
+                    "No held signing key in scenario context; precede this step with"
+                            + " 'Given I hold the signing key for the DID ...'.");
         }
-        submitCreate(rawId, issuerDid, jwt);
+        submitCreate(rawId, issuerDid);
     }
 
-    private void submitCreate(final String rawId, final String issuerDid, final String jwt) {
+    private void submitCreate(final String rawId, final String issuerDid) {
         final String schemaId = uniqueId(rawId);
         context.setEffectiveId(rawId, schemaId);
         context.recordOwner(schemaId, issuerDid);
-        executor.submitWithJwt(
+        final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
+        executor.submitSigned(
                 "createSchema",
-                jwt,
+                issuerDid,
+                keyPair,
                 schemaId,
                 issuerDid,
                 "Test Schema",
@@ -79,14 +83,9 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
                 "[\"attr1\", \"attr2\"]");
     }
 
-    private String signWithIssuer(final String issuerDid) {
-        final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
-        return CryptoUtils.buildDidJwt(issuerDid, keyPair);
-    }
-
     private String ensureIssuerDid() {
-        if (context.heldJwtSubjectDid() != null) {
-            return context.heldJwtSubjectDid();
+        if (context.heldSigningDid() != null) {
+            return context.heldSigningDid();
         }
         if (!context.hasEffectiveId(DEFAULT_ISSUER_DID_SEED)) {
             didHandler.create(DEFAULT_ISSUER_DID_SEED);

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
+import com.example.vdr.ledger.JwtNonceRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
@@ -26,6 +27,7 @@ class SsiServicesTest {
                 mock(CredentialDefinitionRegistry.class);
         final RevRegDefRegistry revRegDefRegistry = mock(RevRegDefRegistry.class);
         final RevRegEntryRegistry revRegEntryRegistry = mock(RevRegEntryRegistry.class);
+        final JwtNonceRegistry jwtNonceRegistry = mock(JwtNonceRegistry.class);
 
         final SsiServices services =
                 new SsiServices(
@@ -33,7 +35,8 @@ class SsiServicesTest {
                         schemaRegistry,
                         credDefRegistry,
                         revRegDefRegistry,
-                        revRegEntryRegistry);
+                        revRegEntryRegistry,
+                        jwtNonceRegistry);
 
         assertNotNull(services.getJwtValidator());
         assertNotNull(services.getDidService());

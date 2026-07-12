@@ -27,6 +27,8 @@ import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.hyperledger.fabric.shim.ChaincodeException;
 import org.hyperledger.fabric.shim.ChaincodeStub;
@@ -65,11 +67,24 @@ class VdrContractTest {
 
     @Mock private ChaincodeStub stub;
 
-    private void stubSignerDid(final String jwt, final String signerDid) {
+    /**
+     * Wires the JWT validation path for one protected invocation: the stub reports the submitted
+     * wire arguments (payload plus trailing jwt) and the validator expects the matching method name
+     * and jwt-less scope arguments.
+     */
+    private void stubSignerDid(
+            final String jwt,
+            final String signerDid,
+            final String method,
+            final String... payloadArgs) {
+        final List<String> wireParameters = new ArrayList<>(Arrays.asList(payloadArgs));
+        wireParameters.add(jwt);
+        when(ctx.getStub()).thenReturn(stub);
+        when(stub.getParameters()).thenReturn(wireParameters);
         when(ctx.getServices()).thenReturn(services);
         when(ctx.getTxTimestamp()).thenReturn(TX_TIME);
         when(services.getJwtValidator()).thenReturn(jwtValidator);
-        when(jwtValidator.validate(jwt, TX_TIME))
+        when(jwtValidator.validate(jwt, TX_TIME, method, Arrays.asList(payloadArgs)))
                 .thenReturn(new JwtPrincipal(signerDid, signerDid + "#key-1"));
     }
 
@@ -129,7 +144,7 @@ class VdrContractTest {
         document.setOwnerId("caller");
         document.setStatus(RecordStatus.INACTIVE);
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(jwt, "caller", "deactivateDid", "did:example:789");
         when(services.getDidService()).thenReturn(didService);
         when(didService.deactivateDid("caller", "did:example:789")).thenReturn(document);
 
@@ -150,7 +165,7 @@ class VdrContractTest {
         document.setOwnerId("caller");
         document.setStatus(RecordStatus.ACTIVE);
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(jwt, "caller", "updateDid", "did:example:999", didJson);
         when(services.getDidService()).thenReturn(didService);
         when(didService.updateDid("caller", "did:example:999", didJson)).thenReturn(document);
 
@@ -197,7 +212,15 @@ class VdrContractTest {
         schema.setAttrNames(List.of("name", "degree"));
         schema.setOwnerId("caller");
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(
+                jwt,
+                "caller",
+                "createSchema",
+                "schema-1",
+                "did:issuer",
+                "Degree",
+                "1.0",
+                "[\"name\",\"degree\"]");
         when(services.getSchemaService()).thenReturn(schemaService);
         when(schemaService.createSchema(
                         "caller",
@@ -296,7 +319,16 @@ class VdrContractTest {
         crecord.setPublicMetadata(metadata);
         crecord.setOwnerId("caller");
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(
+                jwt,
+                "caller",
+                "createCredDef",
+                "creddef-1",
+                "did:issuer",
+                "schema-1",
+                "BBS",
+                "TAG",
+                "{\"type\":\"BBS\"}");
         when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
         when(credentialDefinitionService.createCredDef(
                         "caller",
@@ -386,7 +418,16 @@ class VdrContractTest {
         rrecord.setMaxCredNum(100L);
         rrecord.setOwnerId("caller");
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(
+                jwt,
+                "caller",
+                "createRevRegDef",
+                "revregdef-1",
+                "did:issuer",
+                "creddef-1",
+                "ALLOSAUR",
+                "{\"revocationVerifyingKey\":\"key-1\"}",
+                "100");
         when(services.getRevRegDefService()).thenReturn(revRegDefService);
         when(revRegDefService.createRevRegDef(
                         "caller",
@@ -472,7 +513,13 @@ class VdrContractTest {
         erecord.setVersion(0L);
         erecord.setOwnerId("caller");
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(
+                jwt,
+                "caller",
+                "createRevRegEntry",
+                "revregentry-1",
+                "revregdef-1",
+                "accum-genesis");
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
         when(revRegEntryService.createRevRegEntry(
                         "caller", "revregentry-1", "revregdef-1", "accum-genesis"))
@@ -497,7 +544,7 @@ class VdrContractTest {
         erecord.setVersion(1L);
         erecord.setOwnerId("caller");
 
-        stubSignerDid(jwt, "caller");
+        stubSignerDid(jwt, "caller", "updateRevRegEntry", "revregdef-1", "accum-next");
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
         when(revRegEntryService.updateRevRegEntry("caller", "revregdef-1", "accum-next"))
                 .thenReturn(erecord);
@@ -506,6 +553,26 @@ class VdrContractTest {
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
         verify(revRegEntryService).updateRevRegEntry("caller", "revregdef-1", "accum-next");
+    }
+
+    /** Verifies the jwt-is-final-argument convention is enforced before validation. */
+    @Test
+    void protectedTransactionRejectsJwtNotInFinalPosition() {
+        final VdrContract contract = new VdrContract();
+
+        when(ctx.getServices()).thenReturn(services);
+        when(services.getDidService()).thenReturn(didService);
+        when(ctx.getStub()).thenReturn(stub);
+        // The submitted wire arguments do not end with the jwt parameter value.
+        when(stub.getParameters()).thenReturn(List.of("did:example:789", "unexpected-extra"));
+
+        final ChaincodeException exception =
+                assertThrows(
+                        ChaincodeException.class,
+                        () -> contract.deactivateDid(ctx, "did:example:789", "jwt"));
+        assertEquals(
+                "authorization failed: jwt must be the final transaction argument",
+                exception.getMessage());
     }
 
     /** Verifies revocation registry entry lookup returns canonical JSON response. */

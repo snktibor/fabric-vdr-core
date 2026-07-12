@@ -2,6 +2,7 @@ package com.example.vdr.context;
 
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
+import com.example.vdr.ledger.JwtNonceRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
@@ -44,17 +45,19 @@ public class SsiServices {
      * @param credDefRegistry credential definition data access component
      * @param revRegDefRegistry revocation registry definition data access component
      * @param revRegEntryRegistry revocation registry entry data access component
+     * @param jwtNonceRegistry consumed JWT token id data access component
      */
     public SsiServices(
             final DidRegistry didRegistry,
             final SchemaRegistry schemaRegistry,
             final CredentialDefinitionRegistry credDefRegistry,
             final RevRegDefRegistry revRegDefRegistry,
-            final RevRegEntryRegistry revRegEntryRegistry) {
+            final RevRegEntryRegistry revRegEntryRegistry,
+            final JwtNonceRegistry jwtNonceRegistry) {
         // Cross-cutting services first, then domain services that depend on them.
         this.authorizationService = new AuthorizationService();
         this.validationService = new ValidationService();
-        this.jwtValidator = new JwtValidator(didRegistry);
+        this.jwtValidator = new JwtValidator(didRegistry, jwtNonceRegistry);
         this.didService = new DidService(didRegistry, authorizationService, validationService);
         this.schemaService = new SchemaService(schemaRegistry, didRegistry, validationService);
         this.credentialDefinitionService =

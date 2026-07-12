@@ -3,7 +3,6 @@ package com.example.vdr.e2e.entity;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.example.vdr.e2e.support.CryptoUtils;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
 import java.security.KeyPair;
@@ -52,9 +51,13 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
 
         final String ownerDid = context.requireOwner(revRegDefId);
         final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
-        final String jwt = CryptoUtils.buildDidJwt(ownerDid, keyPair);
-        executor.submitWithJwt(
-                "createRevRegEntry", jwt, revRegEntryId, revRegDefId, GENESIS_ACCUM_VALUE);
+        executor.submitSigned(
+                "createRevRegEntry",
+                ownerDid,
+                keyPair,
+                revRegEntryId,
+                revRegDefId,
+                GENESIS_ACCUM_VALUE);
     }
 
     @Override
@@ -73,21 +76,22 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
         final String revRegDefId = resolveId(rawId);
         final String ownerDid = context.requireOwner(revRegDefId);
         final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
-        final String jwt = CryptoUtils.buildDidJwt(ownerDid, keyPair);
-        executor.submitWithJwt("updateRevRegEntry", jwt, revRegDefId, newAccumValue);
+        executor.submitSigned("updateRevRegEntry", ownerDid, keyPair, revRegDefId, newAccumValue);
     }
 
     /**
      * Submits an accumulator update signed by a validly registered, ACTIVE non-owner issuer DID so
      * the rejection provably occurs on the chaincode ownership check rather than on upstream JWT or
-     * DID resolution.
+     * DID resolution. The token is minted through the regular signed path — fresh jti, correct
+     * audience and a scope digest matching this exact invocation — so it clears every token-level
+     * check and can only fail on ownership.
      */
     public void updateAccumulatorWithUnauthorizedActor(final String rawId) {
         final String revRegDefId = resolveId(rawId);
         final String nonOwnerDid = ensureNonOwnerDid();
         final KeyPair keyPair = context.requireDidKeyPair(nonOwnerDid);
-        final String jwt = CryptoUtils.buildDidJwt(nonOwnerDid, keyPair);
-        executor.submitWithJwt("updateRevRegEntry", jwt, revRegDefId, UNAUTHORIZED_ACCUM_VALUE);
+        executor.submitSigned(
+                "updateRevRegEntry", nonOwnerDid, keyPair, revRegDefId, UNAUTHORIZED_ACCUM_VALUE);
     }
 
     /** Asserts the ledger entry currently carries the expected accumulator value and version. */

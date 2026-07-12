@@ -67,7 +67,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 82 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 97 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -198,8 +198,41 @@ Identity is two-level:
     currently required of *every* verification method in a DID document.
   - `iss` must equal the issuer DID, which must exist and be `ACTIVE` on the ledger;
     `iat`, `nbf` and `exp` are mandatory and checked against the transaction timestamp.
+  - Tokens are **deployment-bound, transaction-bound and one-time use**:
+    - `aud` must contain the fixed audience `vdr-network:vdrchaincode`.
+    - The `txd` claim must equal the base64url (unpadded) SHA-256 digest of the
+      length-prefixed method name and argument list of the exact invocation being
+      authorized — the plain method name (e.g. `createSchema`) followed by the submitted
+      string arguments in order, **excluding** the trailing `jwt` argument, each encoded
+      as 4-byte big-endian UTF-8 byte length + bytes. The single-sourced definition
+      (constants and digest code) is `com.example.vdr.logic.JwtBinding`. A token minted
+      for one operation, or for different arguments, is rejected on any other.
+    - `jti` is mandatory; each (issuer DID, `jti`) pair is accepted **once**. On success
+      it is consumed into the `JWTNONCE` world-state namespace (with the token expiry, so
+      entries are prunable by future housekeeping), and any later transaction presenting
+      the same pair fails as a replay. Fabric MVCC serializes concurrent submissions of
+      the same pair. The `jwt` must always be the transaction's final argument.
   - Mutations are **owner-gated**: the signer DID must match the `ownerId` recorded on
     the target object (for entries: on the parent revocation registry definition).
+
+### Trust model
+
+- **Open DID registration (intentional).** `createDid` takes no JWT: any channel member
+  may register any not-yet-taken DID id, and ownership is self-assigned first come,
+  first served (`ownerId` is the DID itself). Every other mutation is authorized against
+  this self-registered ownership via DID-JWT.
+- **Single-org endorsement (dev network).** The companion network defines one
+  organization (`Org1MSP`, two peers) with no explicit endorsement policy, so the
+  Fabric-level write gate is simply membership in `Org1`; the chaincode reads no MSP
+  attributes. The DID-JWT layer described above is the application-level authorization.
+- **Submitted JWTs are visible to the whole channel.** Every `jwt` argument is recorded
+  in the block store and readable by all channel members. Harvesting one is useless:
+  tokens are one-time (`jti` consumed on success) and scope-bound (`aud` + `txd`), so a
+  captured token cannot authorize any transaction — not even a repeat of the original.
+- **The transaction timestamp is client-supplied.** The timestamp used for the
+  `exp`/`nbf`/`iat` checks comes from the submitting client's channel header
+  (deterministic across peers, but not attested by orderer or peer clocks). Replay
+  protection therefore rests on the one-time `jti` consumption, not on token expiry.
 
 ## Error codes
 

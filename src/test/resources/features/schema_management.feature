@@ -14,9 +14,9 @@ Feature: Schema Lifecycle Management
         Then the transaction should be successful
         And a "schema" with id "schema:vdr:test-2" should exist on the ledger
 
-    Scenario: 3. Publish a schema using a pre-existing JWT
-        Given I hold a valid JWT for the DID "did:vdr:issuer-1"
-        When I create a "schema" with id "schema:vdr:test-3" using my held JWT
+    Scenario: 3. Publish a schema signed with an explicitly held issuer key
+        Given I hold the signing key for the DID "did:vdr:issuer-1"
+        When I create a "schema" with id "schema:vdr:test-3" signed with my held key
         Then the transaction should be successful
         And a "schema" with id "schema:vdr:test-3" should exist on the ledger
 

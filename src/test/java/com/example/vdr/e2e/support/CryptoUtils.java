@@ -1,6 +1,7 @@
 package com.example.vdr.e2e.support;
 
 import com.example.vdr.e2e.config.E2EConfig;
+import com.example.vdr.logic.JwtBinding;
 import io.jsonwebtoken.Jwts;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -11,6 +12,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /** Pure cryptographic helpers (key generation, DID document construction, JWT issuance). */
 public final class CryptoUtils {
@@ -73,8 +76,19 @@ public final class CryptoUtils {
                 + "}";
     }
 
-    /** Issues a self-signed ES256 JWT bound to {@code did}. */
-    public static String buildDidJwt(final String did, final KeyPair keyPair) {
+    /**
+     * Issues a self-signed ES256 JWT bound to {@code did} and scoped to exactly one invocation.
+     *
+     * <p>The token carries the claims the chaincode validator now requires: a fresh random {@code
+     * jti} (one-time use), the deployment audience, and the transaction digest over the method and
+     * payload arguments — all computed with the production {@link JwtBinding} definition so client
+     * and chaincode canonicalization cannot drift.
+     */
+    public static String buildDidJwt(
+            final String did,
+            final KeyPair keyPair,
+            final String method,
+            final List<String> payloadArgs) {
         final Instant now = Instant.now();
         return Jwts.builder()
                 .header()
@@ -83,6 +97,13 @@ public final class CryptoUtils {
                 .and()
                 .issuer(did)
                 .subject(did)
+                .id(UUID.randomUUID().toString())
+                .audience()
+                .add(JwtBinding.AUDIENCE)
+                .and()
+                .claim(
+                        JwtBinding.TX_DIGEST_CLAIM,
+                        JwtBinding.transactionDigest(method, payloadArgs))
                 .issuedAt(Date.from(now.minusSeconds(5)))
                 .notBefore(Date.from(now.minusSeconds(5)))
                 .expiration(Date.from(now.plusSeconds(E2EConfig.JWT_VALIDITY_SECONDS)))

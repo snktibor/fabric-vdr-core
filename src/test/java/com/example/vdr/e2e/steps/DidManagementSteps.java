@@ -1,10 +1,8 @@
 package com.example.vdr.e2e.steps;
 
 import com.example.vdr.e2e.entity.EntityHandlerRegistry;
-import com.example.vdr.e2e.support.CryptoUtils;
 import com.example.vdr.e2e.support.ScenarioContext;
 import io.cucumber.java.en.Given;
-import java.security.KeyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +19,13 @@ public class DidManagementSteps {
         this.context = context;
     }
 
-    @Given("I hold a valid JWT for the DID {string}")
-    public void iHoldAValidJwtForTheDid(final String didSeed) {
+    @Given("I hold the signing key for the DID {string}")
+    public void iHoldTheSigningKeyForTheDid(final String didSeed) {
         registry.did().existingOnLedger(didSeed);
         final String effectiveDid = context.resolveId(didSeed);
-        final KeyPair keyPair = context.requireDidKeyPair(effectiveDid);
-        context.holdJwt(effectiveDid, CryptoUtils.buildDidJwt(effectiveDid, keyPair));
-        LOGGER.info("Pre-existing JWT generated for {}.", effectiveDid);
+        // Verify the key material exists now so a later signing step cannot fail confusingly.
+        context.requireDidKeyPair(effectiveDid);
+        context.holdSigningDid(effectiveDid);
+        LOGGER.info("Holding signing key for {}.", effectiveDid);
     }
 }
