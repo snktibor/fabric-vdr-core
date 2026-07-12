@@ -52,7 +52,7 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
         final KeyPair keyPair = context.requireDidKeyPair(issuerDid);
         final String jwt = CryptoUtils.buildDidJwt(issuerDid, keyPair);
         executor.submitWithJwt(
-                "createCredDef", jwt, credDefId, issuerDid, schemaId, "CL", "tag-1", "{}");
+                "createCredDef", jwt, credDefId, issuerDid, schemaId, "BBS", "tag-1", "{}");
     }
 
     @Override

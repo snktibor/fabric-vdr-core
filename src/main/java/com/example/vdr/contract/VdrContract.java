@@ -209,7 +209,7 @@ public class VdrContract implements ContractInterface {
      * @param id The unique identifier for the credential definition.
      * @param issuerId The DID of the issuer who owns this credential definition.
      * @param schemaId The ID of the schema this credential definition adheres to.
-     * @param type The type of credential definition (e.g., "CL" for Camenisch-Lysyanskaya).
+     * @param type The type of credential definition (e.g., "BBS" for AnonCreds v2 BBS signatures).
      * @param tag An arbitrary tag for the credential definition.
      * @param publicMetadataJson Optional public metadata associated with the credential definition
      *     as a JSON string.
