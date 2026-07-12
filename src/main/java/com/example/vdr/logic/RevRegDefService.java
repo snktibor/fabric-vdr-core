@@ -1,16 +1,20 @@
 package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.ledger.RevRegDefRegistry;
+import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.RevRegDefRecord;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Layer-3 business service for revocation registry definition lifecycle operations.
@@ -26,6 +30,8 @@ public class RevRegDefService {
     private final CredentialDefinitionRegistry credDefRegistry;
     private final DidRegistry didRegistry;
     private final ValidationService validationService;
+    private final ChaincodeEventEmitter eventEmitter;
+    private final Instant txTimestamp;
 
     /**
      * Creates a revocation registry definition service with its required dependencies.
@@ -34,16 +40,22 @@ public class RevRegDefService {
      * @param credDefRegistry registry used to resolve referenced credential definitions
      * @param didRegistry registry used to resolve issuer DIDs
      * @param validationService fail-fast input and JSON validation utility
+     * @param eventEmitter chaincode event emitter for state-change notifications
+     * @param txTimestamp client-declared transaction time used for audit timestamps
      */
     public RevRegDefService(
             final RevRegDefRegistry revRegDefRegistry,
             final CredentialDefinitionRegistry credDefRegistry,
             final DidRegistry didRegistry,
-            final ValidationService validationService) {
+            final ValidationService validationService,
+            final ChaincodeEventEmitter eventEmitter,
+            final Instant txTimestamp) {
         this.revRegDefRegistry = revRegDefRegistry;
         this.credDefRegistry = credDefRegistry;
         this.didRegistry = didRegistry;
         this.validationService = validationService;
+        this.eventEmitter = eventEmitter;
+        this.txTimestamp = txTimestamp;
     }
 
     /**
@@ -126,7 +138,18 @@ public class RevRegDefService {
                         maxCredNum,
                         signerDid);
 
+        revRegDefRecord.setCreatedAt(txTimestamp.toString());
+
         revRegDefRegistry.put(normalizedId, revRegDefRecord);
+        eventEmitter.emit(
+                VdrEvents.REV_REG_DEF_CREATED,
+                Map.of(
+                        "id",
+                        normalizedId,
+                        "issuerId",
+                        normalizedIssuerId,
+                        "credDefId",
+                        normalizedCredDefId));
         return revRegDefRecord;
     }
 

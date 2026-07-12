@@ -2,9 +2,11 @@ package com.example.vdr.ledger;
 
 import com.example.vdr.util.JsonUtil;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.hyperledger.fabric.shim.ChaincodeStub;
 import org.hyperledger.fabric.shim.ledger.CompositeKey;
+import org.hyperledger.fabric.shim.ledger.KeyModification;
 import org.hyperledger.fabric.shim.ledger.KeyValue;
 import org.hyperledger.fabric.shim.ledger.QueryResultsIterator;
 
@@ -101,6 +103,43 @@ public abstract class BaseRegistry<T> {
                 results.add(new RegistryEntry<>(id, value));
             }
             return List.copyOf(results);
+        } finally {
+            closeQuietly(iterator);
+        }
+    }
+
+    /**
+     * Returns the full revision history of an entity key, oldest revision first.
+     *
+     * <p>Backed by {@code stub.getHistoryForKey}, which requires the peer's history database
+     * (enabled by default in Fabric). Fabric 2.x reports modifications newest-first; the result is
+     * reversed here so callers always receive chronological (oldest-first) order. Deletion
+     * tombstones are preserved as revisions with {@code deleted=true} and a {@code null} value —
+     * they are never parsed as records, so a future delete cannot surface as a malformed entity. An
+     * empty list means the key never existed.
+     *
+     * @param id The unique identifier for the entity.
+     * @return revision list in chronological order, possibly empty
+     */
+    public List<KeyRevision<T>> history(final String id) {
+        final List<KeyRevision<T>> revisions = new ArrayList<>();
+        QueryResultsIterator<KeyModification> iterator = null;
+        try {
+            iterator = stub.getHistoryForKey(compositeKey(id));
+            for (final KeyModification modification : iterator) {
+                final T value =
+                        modification.isDeleted()
+                                ? null
+                                : JsonUtil.fromJson(modification.getStringValue(), type);
+                revisions.add(
+                        new KeyRevision<>(
+                                modification.getTxId(),
+                                modification.getTimestamp(),
+                                modification.isDeleted(),
+                                value));
+            }
+            Collections.reverse(revisions);
+            return List.copyOf(revisions);
         } finally {
             closeQuietly(iterator);
         }

@@ -16,9 +16,10 @@ AnonCreds v2.
 > project targets the current reference implementation
 > ([`hyperledger/anoncreds-v2-rs`](https://github.com/hyperledger/anoncreds-v2-rs)) and
 > should be read as a *reference VDR for AnonCreds v2*, not a conformant implementation
-> of a finished standard. Today the chaincode provides CRUD-style registry operations
-> only: there are **no chaincode events, no history endpoint, no record timestamps and
-> no pagination** (the `list*` transactions return entire namespaces). `type` strings
+> of a finished standard. The chaincode provides registry CRUD plus chaincode events on
+> every state change, an accumulator history endpoint, and audit timestamps on records;
+> there is still **no pagination** (the `list*` transactions return entire namespaces).
+> `type` strings
 > (e.g. `"ALLOSAUR"` for revocation registries, `"BBS"` for credential definitions) are
 > stored verbatim but **not validated against an allowlist**, and the `accumValue` /
 > `publicKeys` payloads are opaque strings whose wire encoding is not yet specified.
@@ -30,6 +31,8 @@ AnonCreds v2.
 - [Unit tests](#unit-tests)
 - [End-to-end tests against a live network](#end-to-end-tests-against-a-live-network)
 - [Transaction reference](#transaction-reference)
+- [Chaincode events](#chaincode-events)
+- [Record timestamps](#record-timestamps)
 - [Identifiers](#identifiers)
 - [Authentication and authorization](#authentication-and-authorization)
 - [Error codes](#error-codes)
@@ -67,12 +70,12 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 97 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 107 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
 
-The E2E suite (18 Cucumber scenarios) drives the deployed chaincode through the Fabric
+The E2E suite (20 Cucumber scenarios) drives the deployed chaincode through the Fabric
 Gateway SDK. It expects the companion network repo,
 [`vdr-network`](../), with this repository checked out **inside** it:
 
@@ -165,9 +168,55 @@ definition's id.
 | `createRevRegEntry` | SUBMIT | `id`, `revRegDefId`, `accumValue` (opaque string), `jwt` | created entry record |
 | `updateRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue`, `jwt` | updated entry record (audit `version` incremented) |
 | `getRevRegEntry` | EVALUATE | `revRegDefId` | entry record |
+| `getRevRegEntryHistory` | EVALUATE | `revRegDefId` | JSON array of all entry revisions, **oldest first**: `{txId, timestamp, accumValue, version}` per revision (a hypothetical future deletion would appear as `{txId, timestamp, deleted:true}`); empty array if no entry was ever created |
 
-Clients that need to observe accumulator changes must currently **poll**
-`getRevRegEntry`; there is no event or history mechanism yet.
+Clients observe accumulator changes by subscribing to the
+[`RevRegEntryUpdated` chaincode event](#chaincode-events); `getRevRegEntryHistory`
+resolves the accumulator value that was current at a past point (entry updates
+overwrite the value in place, which ALLOSAUR witness/proof checks against historical
+accumulator states need).
+
+## Chaincode events
+
+Every `SUBMIT` transaction emits exactly one chaincode event (Fabric supports one event
+per transaction). Events are delivered to Gateway subscribers **with the committed
+block**: a transaction that fails endorsement or validation delivers nothing, so an
+observed event always reflects committed state. Payloads are canonical JSON (sorted
+keys, deterministic across endorsers).
+
+| Event | Emitted by | Payload |
+|---|---|---|
+| `DidCreated` | `createDid` | `{id}` |
+| `DidUpdated` | `updateDid` | `{id}` |
+| `DidDeactivated` | `deactivateDid` | `{id}` |
+| `SchemaCreated` | `createSchema` | `{id, issuerId}` |
+| `CredDefCreated` | `createCredDef` | `{id, issuerId, schemaId}` |
+| `RevRegDefCreated` | `createRevRegDef` | `{id, issuerId, credDefId}` |
+| `RevRegEntryCreated` | `createRevRegEntry` | `{revRegDefId, accumValue, version, txTime}` |
+| `RevRegEntryUpdated` | `updateRevRegEntry` | `{revRegDefId, accumValue, version, txTime}` |
+
+`RevRegEntryUpdated` is the event ALLOSAUR credential holders must subscribe to: after
+every accumulator change a holder has to refresh their witness or they can no longer
+produce a non-revocation proof. The payload carries the new accumulator value (a
+fixed-size digest) so no follow-up query is needed. `EVALUATE` transactions emit
+nothing.
+
+## Record timestamps
+
+Every record carries `createdAt`, and the two mutable record types (DID documents and
+revocation registry entries) also carry `updatedAt`, as ISO-8601 strings.
+
+> **Trust caveat.** These values (and the `txTime` in event payloads / `timestamp` in
+> history revisions) come from the submitting client's channel-header transaction
+> timestamp: deterministic across peers, but **chosen by the submitter and not attested
+> by the network**. They are audit metadata only — do not build freshness or ordering
+> guarantees on them. Ordering within a revocation registry is what the entry `version`
+> is for.
+
+Records written before timestamps were introduced have no stored value; reads return
+`"createdAt": null` (and `"updatedAt": null`) for them, and an update to such a record
+stamps `updatedAt` while leaving `createdAt` null rather than fabricating a creation
+time.
 
 ## Identifiers
 

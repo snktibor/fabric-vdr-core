@@ -1,10 +1,16 @@
 package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.ChaincodeEventEmitter;
+import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.RevRegEntryRegistry;
+import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.RevRegDefRecord;
 import com.example.vdr.model.RevRegEntryRecord;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Layer-3 business service for revocation registry entry lifecycle operations.
@@ -22,6 +28,8 @@ public class RevRegEntryService {
     private final RevRegEntryRegistry revRegEntryRegistry;
     private final RevRegDefRegistry revRegDefRegistry;
     private final ValidationService validationService;
+    private final ChaincodeEventEmitter eventEmitter;
+    private final Instant txTimestamp;
 
     /**
      * Creates a revocation registry entry service with its required dependencies.
@@ -29,14 +37,20 @@ public class RevRegEntryService {
      * @param revRegEntryRegistry registry used to persist revocation registry entries
      * @param revRegDefRegistry registry used to resolve parent revocation registry definitions
      * @param validationService fail-fast input and JSON validation utility
+     * @param eventEmitter chaincode event emitter for state-change notifications
+     * @param txTimestamp client-declared transaction time used for audit timestamps
      */
     public RevRegEntryService(
             final RevRegEntryRegistry revRegEntryRegistry,
             final RevRegDefRegistry revRegDefRegistry,
-            final ValidationService validationService) {
+            final ValidationService validationService,
+            final ChaincodeEventEmitter eventEmitter,
+            final Instant txTimestamp) {
         this.revRegEntryRegistry = revRegEntryRegistry;
         this.revRegDefRegistry = revRegDefRegistry;
         this.validationService = validationService;
+        this.eventEmitter = eventEmitter;
+        this.txTimestamp = txTimestamp;
     }
 
     /**
@@ -89,8 +103,11 @@ public class RevRegEntryService {
                         normalizedAccumValue,
                         0L,
                         parent.getOwnerId());
+        revRegEntryRecord.setCreatedAt(txTimeIso());
+        revRegEntryRecord.setUpdatedAt(txTimeIso());
 
         revRegEntryRegistry.put(normalizedRevRegDefId, revRegEntryRecord);
+        eventEmitter.emit(VdrEvents.REV_REG_ENTRY_CREATED, entryEventPayload(revRegEntryRecord));
         return revRegEntryRecord;
     }
 
@@ -131,8 +148,52 @@ public class RevRegEntryService {
 
         existing.setAccumValue(normalizedAccumValue);
         existing.setVersion(existing.getVersion() + 1);
+        existing.setUpdatedAt(txTimeIso());
         revRegEntryRegistry.put(normalizedRevRegDefId, existing);
+        eventEmitter.emit(VdrEvents.REV_REG_ENTRY_UPDATED, entryEventPayload(existing));
         return existing;
+    }
+
+    /**
+     * Returns the full accumulator revision history of a revocation registry entry, oldest first.
+     *
+     * <p>Backed by the peer's history index; each revision carries the writing transaction id, the
+     * client-declared transaction timestamp, and the entry state as of that write. An empty list
+     * means no entry was ever created for the definition. Deletion tombstones (none are produced
+     * today) surface as revisions flagged deleted with no record value.
+     *
+     * @param revRegDefId parent revocation registry definition identifier
+     * @return chronological revision list, possibly empty
+     * @throws VdrException if the identifier is blank
+     */
+    public List<KeyRevision<RevRegEntryRecord>> getRevRegEntryHistory(final String revRegDefId) {
+        final String normalizedRevRegDefId =
+                validationService.requireNotBlank(revRegDefId, "revRegDefId");
+        return revRegEntryRegistry.history(normalizedRevRegDefId);
+    }
+
+    /**
+     * Builds the accumulator event payload: everything an ALLOSAUR witness-refresh client needs in
+     * one delivery, without a follow-up query.
+     *
+     * @param record entry state after the mutation
+     * @return payload with revRegDefId, accumValue, version, and txTime
+     */
+    private Map<String, Object> entryEventPayload(final RevRegEntryRecord record) {
+        return Map.of(
+                "revRegDefId", record.getRevRegDefId(),
+                "accumValue", record.getAccumValue(),
+                "version", record.getVersion(),
+                "txTime", txTimeIso());
+    }
+
+    /**
+     * Renders the client-declared transaction time as an ISO-8601 string.
+     *
+     * @return ISO-8601 transaction time
+     */
+    private String txTimeIso() {
+        return txTimestamp.toString();
     }
 
     /**

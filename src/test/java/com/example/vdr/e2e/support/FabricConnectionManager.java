@@ -31,6 +31,7 @@ public class FabricConnectionManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(FabricConnectionManager.class);
 
     private Gateway gateway;
+    private Network network;
     private Contract contract;
     private ManagedChannel channel;
 
@@ -84,7 +85,7 @@ public class FabricConnectionManager {
                         .connection(channel)
                         .connect();
 
-        final Network network = gateway.getNetwork(E2EConfig.CHANNEL_NAME);
+        network = gateway.getNetwork(E2EConfig.CHANNEL_NAME);
         contract = network.getContract(E2EConfig.CHAINCODE_NAME, E2EConfig.CONTRACT_NAME);
 
         LOGGER.info(
@@ -100,6 +101,15 @@ public class FabricConnectionManager {
                     "Fabric Gateway is not connected; ensure the Background step ran.");
         }
         return contract;
+    }
+
+    /** Exposes the connected channel network, e.g. for chaincode event subscriptions. */
+    public Network network() {
+        if (network == null) {
+            throw new IllegalStateException(
+                    "Fabric Gateway is not connected; ensure the Background step ran.");
+        }
+        return network;
     }
 
     public void close() {
@@ -118,6 +128,7 @@ public class FabricConnectionManager {
             }
         }
         gateway = null;
+        network = null;
         contract = null;
         channel = null;
     }

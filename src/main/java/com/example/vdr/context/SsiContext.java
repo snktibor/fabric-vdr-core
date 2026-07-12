@@ -1,5 +1,6 @@
 package com.example.vdr.context;
 
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.JwtNonceRegistry;
@@ -51,7 +52,9 @@ public class SsiContext extends Context {
                         credDefRegistry,
                         revRegDefRegistry,
                         revRegEntryRegistry,
-                        jwtNonceRegistry);
+                        jwtNonceRegistry,
+                        new ChaincodeEventEmitter(stub),
+                        stub.getTxTimestamp());
     }
 
     /**

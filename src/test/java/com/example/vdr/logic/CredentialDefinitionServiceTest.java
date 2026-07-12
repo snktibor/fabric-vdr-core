@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
@@ -14,6 +15,7 @@ import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.SchemaRecord;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,8 @@ class CredentialDefinitionServiceTest {
 
     @Mock private DidRegistry didRegistry;
 
+    @Mock private ChaincodeEventEmitter eventEmitter;
+
     private CredentialDefinitionService credentialDefinitionService;
 
     /** Initializes service under test with mocked registries and real validators. */
@@ -46,7 +50,12 @@ class CredentialDefinitionServiceTest {
     void setUp() {
         credentialDefinitionService =
                 new CredentialDefinitionService(
-                        credDefRegistry, schemaRegistry, didRegistry, new ValidationService());
+                        credDefRegistry,
+                        schemaRegistry,
+                        didRegistry,
+                        new ValidationService(),
+                        eventEmitter,
+                        Instant.parse("2026-07-12T10:15:30Z"));
     }
 
     /** Verifies newly created credential definitions persist signer DID ownership. */

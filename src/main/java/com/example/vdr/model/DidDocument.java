@@ -26,6 +26,10 @@ public class DidDocument {
     private String ownerId;
     // Lifecycle status tracked on ledger.
     private RecordStatus status = RecordStatus.ACTIVE;
+    // Client-declared creation time (ISO-8601); audit metadata, set server-side.
+    private String createdAt;
+    // Client-declared last-mutation time (ISO-8601); audit metadata, set server-side.
+    private String updatedAt;
 
     /** Creates an empty DID document instance for JSON deserialization. */
     public DidDocument() {}
@@ -161,5 +165,50 @@ public class DidDocument {
      */
     public void setStatus(final RecordStatus status) {
         this.status = status;
+    }
+
+    /**
+     * Returns the creation timestamp recorded at registration (ISO-8601).
+     *
+     * <p>The value is the submitting client's channel-header transaction time: deterministic across
+     * peers but chosen by the submitter, not attested by the network. Audit metadata only — never
+     * build freshness or ordering guarantees on it. Any client-supplied value in the DID document
+     * payload is overwritten server-side. {@code null} for records written before timestamps were
+     * introduced.
+     *
+     * @return ISO-8601 creation time, or {@code null} for pre-timestamp records
+     */
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Sets the creation timestamp (service-controlled).
+     *
+     * @param createdAt ISO-8601 transaction time
+     */
+    public void setCreatedAt(final String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * Returns the last-mutation timestamp (ISO-8601), updated on update and deactivation.
+     *
+     * <p>Same trust caveat as {@link #getCreatedAt()}: client-declared channel-header time, audit
+     * metadata only. {@code null} for records written before timestamps were introduced.
+     *
+     * @return ISO-8601 last-mutation time, or {@code null} for pre-timestamp records
+     */
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    /**
+     * Sets the last-mutation timestamp (service-controlled).
+     *
+     * @param updatedAt ISO-8601 transaction time
+     */
+    public void setUpdatedAt(final String updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

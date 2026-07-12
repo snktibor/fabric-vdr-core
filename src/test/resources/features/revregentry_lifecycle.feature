@@ -23,3 +23,16 @@ Feature: Revocation Registry Entry Lifecycle Management
         When I update the accumulator of the "revocation registry entry" with id "revregentry:vdr:test-3" as an unauthorized actor
         Then the transaction should fail with an "Unauthorized" error
         And the "revocation registry entry" with id "revregentry:vdr:test-3" should have accumulator value "accum-genesis" and version 0
+
+    Scenario: 4. An accumulator update emits a chaincode event carrying the new value
+        Given a "revocation registry entry" with id "revregentry:vdr:test-4" exists on the ledger
+        When I update the accumulator of the "revocation registry entry" with id "revregentry:vdr:test-4" to "accum-after-event" while listening for chaincode events
+        Then the transaction should be successful
+        And a "RevRegEntryUpdated" chaincode event should be received with accumulator value "accum-after-event"
+
+    Scenario: 5. Accumulator history preserves overwritten values oldest first
+        Given a "revocation registry entry" with id "revregentry:vdr:test-5" exists on the ledger
+        When I update the accumulator of the "revocation registry entry" with id "revregentry:vdr:test-5" to "accum-second"
+        And I fetch the accumulator history of the "revocation registry entry" with id "revregentry:vdr:test-5"
+        Then the transaction should be successful
+        And the history should list accumulator value "accum-genesis" with version 0 before accumulator value "accum-second" with version 1

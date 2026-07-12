@@ -25,6 +25,10 @@ public class RevRegEntryRecord {
     private long version;
     // Recorded owner DID copied from the parent revocation registry definition.
     private String ownerId;
+    // Client-declared creation time (ISO-8601); audit metadata, set server-side.
+    private String createdAt;
+    // Client-declared last-mutation time (ISO-8601); audit metadata, set server-side.
+    private String updatedAt;
 
     /** Creates an empty record instance for JSON deserialization frameworks. */
     public RevRegEntryRecord() {}
@@ -142,5 +146,49 @@ public class RevRegEntryRecord {
      */
     public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    /**
+     * Returns the creation timestamp recorded at genesis (ISO-8601).
+     *
+     * <p>The value is the submitting client's channel-header transaction time: deterministic across
+     * peers but chosen by the submitter, not attested by the network. Audit metadata only — never
+     * build freshness or ordering guarantees on it; ordering of entry revisions is what {@code
+     * version} is for. {@code null} for records written before timestamps were introduced.
+     *
+     * @return ISO-8601 creation time, or {@code null} for pre-timestamp records
+     */
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Sets the creation timestamp (service-controlled).
+     *
+     * @param createdAt ISO-8601 transaction time
+     */
+    public void setCreatedAt(final String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * Returns the last accumulator-replacement timestamp (ISO-8601).
+     *
+     * <p>Same trust caveat as {@link #getCreatedAt()}: client-declared channel-header time, audit
+     * metadata only. {@code null} for records written before timestamps were introduced.
+     *
+     * @return ISO-8601 last-mutation time, or {@code null} for pre-timestamp records
+     */
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    /**
+     * Sets the last-mutation timestamp (service-controlled).
+     *
+     * @param updatedAt ISO-8601 transaction time
+     */
+    public void setUpdatedAt(final String updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

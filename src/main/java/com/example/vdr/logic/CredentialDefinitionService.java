@@ -1,16 +1,20 @@
 package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.ledger.SchemaRegistry;
+import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.SchemaRecord;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Layer-3 business service for credential definition lifecycle operations.
@@ -24,6 +28,8 @@ public class CredentialDefinitionService {
     private final SchemaRegistry schemaRegistry;
     private final DidRegistry didRegistry;
     private final ValidationService validationService;
+    private final ChaincodeEventEmitter eventEmitter;
+    private final Instant txTimestamp;
 
     /**
      * Creates a credential definition service with its required dependencies.
@@ -32,16 +38,22 @@ public class CredentialDefinitionService {
      * @param schemaRegistry registry used to resolve referenced schemas
      * @param didRegistry registry used to resolve issuer DIDs
      * @param validationService fail-fast input and JSON validation utility
+     * @param eventEmitter chaincode event emitter for state-change notifications
+     * @param txTimestamp client-declared transaction time used for audit timestamps
      */
     public CredentialDefinitionService(
             final CredentialDefinitionRegistry credDefRegistry,
             final SchemaRegistry schemaRegistry,
             final DidRegistry didRegistry,
-            final ValidationService validationService) {
+            final ValidationService validationService,
+            final ChaincodeEventEmitter eventEmitter,
+            final Instant txTimestamp) {
         this.credDefRegistry = credDefRegistry;
         this.schemaRegistry = schemaRegistry;
         this.didRegistry = didRegistry;
         this.validationService = validationService;
+        this.eventEmitter = eventEmitter;
+        this.txTimestamp = txTimestamp;
     }
 
     /**
@@ -110,7 +122,18 @@ public class CredentialDefinitionService {
                         publicMetadata,
                         signerDid);
 
+        credDefRecord.setCreatedAt(txTimestamp.toString());
+
         credDefRegistry.put(normalizedId, credDefRecord);
+        eventEmitter.emit(
+                VdrEvents.CRED_DEF_CREATED,
+                Map.of(
+                        "id",
+                        normalizedId,
+                        "issuerId",
+                        normalizedIssuerId,
+                        "schemaId",
+                        normalizedSchemaId));
         return credDefRecord;
     }
 

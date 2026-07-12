@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.example.vdr.context.SsiContext;
 import com.example.vdr.context.SsiServices;
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.DidService;
@@ -553,6 +554,51 @@ class VdrContractTest {
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
         verify(revRegEntryService).updateRevRegEntry("caller", "revregdef-1", "accum-next");
+    }
+
+    /** Verifies entry history serializes revisions oldest-first with tombstones flagged. */
+    @Test
+    void getRevRegEntryHistoryReturnsRevisionArray() {
+        final VdrContract contract = new VdrContract();
+        final RevRegEntryRecord genesis = new RevRegEntryRecord();
+        genesis.setAccumValue("accum-genesis");
+        genesis.setVersion(0L);
+        final RevRegEntryRecord updated = new RevRegEntryRecord();
+        updated.setAccumValue("accum-next");
+        updated.setVersion(1L);
+        final Instant firstTime = Instant.parse("2026-07-12T10:00:00Z");
+        final Instant secondTime = Instant.parse("2026-07-12T11:00:00Z");
+
+        when(ctx.getServices()).thenReturn(services);
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(revRegEntryService.getRevRegEntryHistory("revregdef-1"))
+                .thenReturn(
+                        List.of(
+                                new KeyRevision<>("tx-1", firstTime, false, genesis),
+                                new KeyRevision<>("tx-2", secondTime, false, updated),
+                                new KeyRevision<>("tx-3", secondTime, true, null)));
+
+        final String result = contract.getRevRegEntryHistory(ctx, "revregdef-1");
+
+        final ArrayNode expected = JsonUtil.arrayNode();
+        final ObjectNode first = JsonUtil.objectNode();
+        first.put("txId", "tx-1");
+        first.put("timestamp", firstTime.toString());
+        first.put("accumValue", "accum-genesis");
+        first.put("version", 0L);
+        expected.add(first);
+        final ObjectNode second = JsonUtil.objectNode();
+        second.put("txId", "tx-2");
+        second.put("timestamp", secondTime.toString());
+        second.put("accumValue", "accum-next");
+        second.put("version", 1L);
+        expected.add(second);
+        final ObjectNode third = JsonUtil.objectNode();
+        third.put("txId", "tx-3");
+        third.put("timestamp", secondTime.toString());
+        third.put("deleted", true);
+        expected.add(third);
+        assertEquals(JsonUtil.toCanonicalJson(expected), result);
     }
 
     /** Verifies the jwt-is-final-argument convention is enforced before validation. */

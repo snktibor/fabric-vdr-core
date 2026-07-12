@@ -1,5 +1,6 @@
 package com.example.vdr.context;
 
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.JwtNonceRegistry;
@@ -14,6 +15,7 @@ import com.example.vdr.logic.RevRegDefService;
 import com.example.vdr.logic.RevRegEntryService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.logic.ValidationService;
+import java.time.Instant;
 
 /**
  * Per-transaction dependency container that wires SSI business services.
@@ -46,6 +48,8 @@ public class SsiServices {
      * @param revRegDefRegistry revocation registry definition data access component
      * @param revRegEntryRegistry revocation registry entry data access component
      * @param jwtNonceRegistry consumed JWT token id data access component
+     * @param eventEmitter chaincode event emitter shared by all mutating services
+     * @param txTimestamp client-declared transaction time shared by all mutating services
      */
     public SsiServices(
             final DidRegistry didRegistry,
@@ -53,21 +57,46 @@ public class SsiServices {
             final CredentialDefinitionRegistry credDefRegistry,
             final RevRegDefRegistry revRegDefRegistry,
             final RevRegEntryRegistry revRegEntryRegistry,
-            final JwtNonceRegistry jwtNonceRegistry) {
+            final JwtNonceRegistry jwtNonceRegistry,
+            final ChaincodeEventEmitter eventEmitter,
+            final Instant txTimestamp) {
         // Cross-cutting services first, then domain services that depend on them.
         this.authorizationService = new AuthorizationService();
         this.validationService = new ValidationService();
         this.jwtValidator = new JwtValidator(didRegistry, jwtNonceRegistry);
-        this.didService = new DidService(didRegistry, authorizationService, validationService);
-        this.schemaService = new SchemaService(schemaRegistry, didRegistry, validationService);
+        this.didService =
+                new DidService(
+                        didRegistry,
+                        authorizationService,
+                        validationService,
+                        eventEmitter,
+                        txTimestamp);
+        this.schemaService =
+                new SchemaService(
+                        schemaRegistry, didRegistry, validationService, eventEmitter, txTimestamp);
         this.credentialDefinitionService =
                 new CredentialDefinitionService(
-                        credDefRegistry, schemaRegistry, didRegistry, validationService);
+                        credDefRegistry,
+                        schemaRegistry,
+                        didRegistry,
+                        validationService,
+                        eventEmitter,
+                        txTimestamp);
         this.revRegDefService =
                 new RevRegDefService(
-                        revRegDefRegistry, credDefRegistry, didRegistry, validationService);
+                        revRegDefRegistry,
+                        credDefRegistry,
+                        didRegistry,
+                        validationService,
+                        eventEmitter,
+                        txTimestamp);
         this.revRegEntryService =
-                new RevRegEntryService(revRegEntryRegistry, revRegDefRegistry, validationService);
+                new RevRegEntryService(
+                        revRegEntryRegistry,
+                        revRegDefRegistry,
+                        validationService,
+                        eventEmitter,
+                        txTimestamp);
     }
 
     /**

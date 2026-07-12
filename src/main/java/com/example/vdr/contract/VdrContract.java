@@ -2,6 +2,7 @@ package com.example.vdr.contract;
 
 import com.example.vdr.context.SsiContext;
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
@@ -435,6 +436,51 @@ public class VdrContract implements ContractInterface {
                                 ctx.getServices()
                                         .getRevRegEntryService()
                                         .getRevRegEntry(revRegDefId)));
+    }
+
+    /**
+     * Returns the accumulator revision history of a Revocation Registry Entry, oldest first. A
+     * verifier can use this to resolve the accumulator value that was current at a given point in
+     * time, since entry updates overwrite the value in place.
+     *
+     * <p>Each array element carries {@code txId}, {@code timestamp} (the writing client's declared
+     * transaction time — audit metadata, not attested), {@code accumValue} and {@code version}.
+     * Should a future revision ever delete the entry, that revision is rendered as {@code
+     * {"deleted":true}} with txId and timestamp but no record fields. An empty array means no entry
+     * was ever created for the definition.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param revRegDefId The ID of the parent revocation registry definition whose entry history to
+     *     retrieve.
+     * @return A canonical JSON array of revisions in chronological (oldest-first) order.
+     */
+    @Transaction(intent = Transaction.TYPE.EVALUATE)
+    public String getRevRegEntryHistory(final SsiContext ctx, final String revRegDefId) {
+        return execute(
+                () -> {
+                    final List<KeyRevision<RevRegEntryRecord>> revisions =
+                            ctx.getServices()
+                                    .getRevRegEntryService()
+                                    .getRevRegEntryHistory(revRegDefId);
+                    final ArrayNode results = JsonUtil.arrayNode();
+                    for (final KeyRevision<RevRegEntryRecord> revision : revisions) {
+                        final ObjectNode item = JsonUtil.objectNode();
+                        item.put("txId", revision.getTxId());
+                        item.put(
+                                "timestamp",
+                                revision.getTimestamp() == null
+                                        ? null
+                                        : revision.getTimestamp().toString());
+                        if (revision.isDeleted()) {
+                            item.put("deleted", true);
+                        } else {
+                            item.put("accumValue", revision.getValue().getAccumValue());
+                            item.put("version", revision.getValue().getVersion());
+                        }
+                        results.add(item);
+                    }
+                    return JsonUtil.toCanonicalJson(results);
+                });
     }
 
     /**

@@ -1,11 +1,15 @@
 package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RegistryEntry;
+import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Layer-3 business service for DID document lifecycle management.
@@ -19,6 +23,8 @@ public class DidService {
     private final DidRegistry didRegistry;
     private final AuthorizationService authorizationService;
     private final ValidationService validationService;
+    private final ChaincodeEventEmitter eventEmitter;
+    private final Instant txTimestamp;
 
     /**
      * Creates a DID service with transaction-scoped dependencies.
@@ -26,14 +32,20 @@ public class DidService {
      * @param didRegistry registry used to persist and fetch DID documents
      * @param authorizationService owner authorization utility
      * @param validationService fail-fast validation utility
+     * @param eventEmitter chaincode event emitter for state-change notifications
+     * @param txTimestamp client-declared transaction time used for audit timestamps
      */
     public DidService(
             final DidRegistry didRegistry,
             final AuthorizationService authorizationService,
-            final ValidationService validationService) {
+            final ValidationService validationService,
+            final ChaincodeEventEmitter eventEmitter,
+            final Instant txTimestamp) {
         this.didRegistry = didRegistry;
         this.authorizationService = authorizationService;
         this.validationService = validationService;
+        this.eventEmitter = eventEmitter;
+        this.txTimestamp = txTimestamp;
     }
 
     /**
@@ -65,7 +77,11 @@ public class DidService {
 
         document.setOwnerId(document.getId());
         document.setStatus(RecordStatus.ACTIVE);
+        // Timestamps are service-controlled: any client-supplied values are overwritten.
+        document.setCreatedAt(txTimeIso());
+        document.setUpdatedAt(txTimeIso());
         didRegistry.put(normalizedId, document);
+        eventEmitter.emit(VdrEvents.DID_CREATED, didEventPayload(normalizedId));
         return document;
     }
 
@@ -110,7 +126,9 @@ public class DidService {
         authorizationService.assertSignerOwnsEntity(
                 signerDid, document.getOwnerId(), "did", document.getId());
         document.setStatus(RecordStatus.INACTIVE);
+        document.setUpdatedAt(txTimeIso());
         didRegistry.put(document.getId(), document);
+        eventEmitter.emit(VdrEvents.DID_DEACTIVATED, didEventPayload(document.getId()));
         return document;
     }
 
@@ -145,7 +163,12 @@ public class DidService {
 
         updated.setOwnerId(existing.getOwnerId());
         updated.setStatus(existing.getStatus());
+        // Preserve the original creation time (client-supplied values are overwritten); records
+        // written before timestamps existed keep a null createdAt rather than a fabricated one.
+        updated.setCreatedAt(existing.getCreatedAt());
+        updated.setUpdatedAt(txTimeIso());
         didRegistry.put(normalizedId, updated);
+        eventEmitter.emit(VdrEvents.DID_UPDATED, didEventPayload(normalizedId));
         return updated;
     }
 
@@ -163,5 +186,24 @@ public class DidService {
         if (document.getStatus() != RecordStatus.ACTIVE) {
             throw VdrException.invalid("did '" + didId + "' is not active");
         }
+    }
+
+    /**
+     * Builds the lean DID lifecycle event payload.
+     *
+     * @param id DID identifier the event refers to
+     * @return payload carrying the DID id
+     */
+    private Map<String, Object> didEventPayload(final String id) {
+        return Map.of("id", id);
+    }
+
+    /**
+     * Renders the client-declared transaction time as an ISO-8601 string.
+     *
+     * @return ISO-8601 transaction time
+     */
+    private String txTimeIso() {
+        return txTimestamp.toString();
     }
 }

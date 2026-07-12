@@ -1,13 +1,17 @@
 package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.ledger.SchemaRegistry;
+import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.SchemaRecord;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Layer-3 business service for schema publication and lookup.
@@ -21,6 +25,8 @@ public class SchemaService {
     private final SchemaRegistry schemaRegistry;
     private final DidRegistry didRegistry;
     private final ValidationService validationService;
+    private final ChaincodeEventEmitter eventEmitter;
+    private final Instant txTimestamp;
 
     /**
      * Creates a schema service with required registries and cross-cutting utilities.
@@ -28,14 +34,20 @@ public class SchemaService {
      * @param schemaRegistry registry used for schema persistence
      * @param didRegistry registry used to resolve issuer DIDs
      * @param validationService fail-fast validation utility
+     * @param eventEmitter chaincode event emitter for state-change notifications
+     * @param txTimestamp client-declared transaction time used for audit timestamps
      */
     public SchemaService(
             final SchemaRegistry schemaRegistry,
             final DidRegistry didRegistry,
-            final ValidationService validationService) {
+            final ValidationService validationService,
+            final ChaincodeEventEmitter eventEmitter,
+            final Instant txTimestamp) {
         this.schemaRegistry = schemaRegistry;
         this.didRegistry = didRegistry;
         this.validationService = validationService;
+        this.eventEmitter = eventEmitter;
+        this.txTimestamp = txTimestamp;
     }
 
     /**
@@ -94,7 +106,12 @@ public class SchemaService {
                         attrNames,
                         signerDid);
 
+        schemaRecord.setCreatedAt(txTimestamp.toString());
+
         schemaRegistry.put(normalizedId, schemaRecord);
+        eventEmitter.emit(
+                VdrEvents.SCHEMA_CREATED,
+                Map.of("id", normalizedId, "issuerId", normalizedIssuerId));
         return schemaRecord;
     }
 

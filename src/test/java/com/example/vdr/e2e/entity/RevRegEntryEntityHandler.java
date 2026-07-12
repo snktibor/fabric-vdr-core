@@ -94,6 +94,18 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
                 "updateRevRegEntry", nonOwnerDid, keyPair, revRegDefId, UNAUTHORIZED_ACCUM_VALUE);
     }
 
+    /** Evaluates the entry's accumulator history and stores the response for later assertions. */
+    public void fetchHistory(final String rawId) {
+        final String revRegDefId = resolveId(rawId);
+        context.setLastQueryResponse(null);
+        context.setLastTransactionException(null);
+        try {
+            context.setLastQueryResponse(executor.evaluate("getRevRegEntryHistory", revRegDefId));
+        } catch (Exception e) {
+            context.setLastTransactionException(e);
+        }
+    }
+
     /** Asserts the ledger entry currently carries the expected accumulator value and version. */
     public void assertAccumulator(
             final String rawId, final String expectedAccumValue, final long expectedVersion) {

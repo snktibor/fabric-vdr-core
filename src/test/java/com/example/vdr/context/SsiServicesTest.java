@@ -3,12 +3,14 @@ package com.example.vdr.context;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
 import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.JwtNonceRegistry;
 import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.RevRegEntryRegistry;
 import com.example.vdr.ledger.SchemaRegistry;
+import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,6 +30,7 @@ class SsiServicesTest {
         final RevRegDefRegistry revRegDefRegistry = mock(RevRegDefRegistry.class);
         final RevRegEntryRegistry revRegEntryRegistry = mock(RevRegEntryRegistry.class);
         final JwtNonceRegistry jwtNonceRegistry = mock(JwtNonceRegistry.class);
+        final ChaincodeEventEmitter eventEmitter = mock(ChaincodeEventEmitter.class);
 
         final SsiServices services =
                 new SsiServices(
@@ -36,7 +39,9 @@ class SsiServicesTest {
                         credDefRegistry,
                         revRegDefRegistry,
                         revRegEntryRegistry,
-                        jwtNonceRegistry);
+                        jwtNonceRegistry,
+                        eventEmitter,
+                        Instant.parse("2026-07-12T10:15:30Z"));
 
         assertNotNull(services.getJwtValidator());
         assertNotNull(services.getDidService());

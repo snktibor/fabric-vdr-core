@@ -18,6 +18,8 @@ public class ScenarioContext {
     private Exception lastTransactionException;
     private String lastQueryResponse;
     private String heldSigningDid;
+    private String lastChaincodeEventName;
+    private String lastChaincodeEventPayload;
 
     public Map<String, KeyPair> didKeys() {
         return didKeys;
@@ -102,5 +104,19 @@ public class ScenarioContext {
     /** Records the DID whose registered signing key later protected steps should sign with. */
     public void holdSigningDid(final String did) {
         this.heldSigningDid = did;
+    }
+
+    /** Records (or clears, with nulls) the last matching chaincode event received. */
+    public void recordChaincodeEvent(final String name, final String payload) {
+        this.lastChaincodeEventName = name;
+        this.lastChaincodeEventPayload = payload;
+    }
+
+    public String lastChaincodeEventName() {
+        return lastChaincodeEventName;
+    }
+
+    public String lastChaincodeEventPayload() {
+        return lastChaincodeEventPayload;
     }
 }

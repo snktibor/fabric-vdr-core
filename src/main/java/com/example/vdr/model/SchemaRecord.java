@@ -24,6 +24,8 @@ public class SchemaRecord {
     private List<String> attrNames;
     // Recorded owner DID resolved from verified JWT signer.
     private String ownerId;
+    // Client-declared creation time (ISO-8601); audit metadata, set server-side.
+    private String createdAt;
 
     /** Creates an empty schema instance for JSON deserialization frameworks. */
     public SchemaRecord() {}
@@ -159,5 +161,28 @@ public class SchemaRecord {
      */
     public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    /**
+     * Returns the creation timestamp recorded at publication (ISO-8601).
+     *
+     * <p>The value is the submitting client's channel-header transaction time: deterministic across
+     * peers but chosen by the submitter, not attested by the network. Audit metadata only — never
+     * build freshness or ordering guarantees on it. {@code null} for records written before
+     * timestamps were introduced.
+     *
+     * @return ISO-8601 creation time, or {@code null} for pre-timestamp records
+     */
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Sets the creation timestamp (service-controlled).
+     *
+     * @param createdAt ISO-8601 transaction time
+     */
+    public void setCreatedAt(final String createdAt) {
+        this.createdAt = createdAt;
     }
 }
