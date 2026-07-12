@@ -1,42 +1,26 @@
 #!/bin/sh
+# Pre-commit hook: format check + unit tests.
+#
+# This file is a template; git does not run it from .github/. Install it with:
+#   cp .github/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# or point git at this directory:
+#   git config core.hooksPath .github/hooks
+#
+# Bypass in a hurry with: git commit --no-verify
 
-echo "======================================================"
-echo "⏳ PRE-COMMIT: Calling WSL for Format Check & Tests..."
-echo "======================================================"
+set -e
+cd "$(git rev-parse --show-toplevel)"
 
-# STEP 1: Code Formatting Check in Ubuntu
-echo "🧹 1/2: Running Spotless formatting check..."
-wsl -d Ubuntu -e bash -c "cd /home/sinti/chaincodes/chaincode-vdr-java && mvn spotless:check"
-
-# Save the result of the Spotless check (0 = success, 1 = failure)
-FORMAT_RESULT=$?
-
-if [ $FORMAT_RESULT -ne 0 ]; then
-  echo "======================================================"
-  echo "❌ FORMATTING ERROR! Your code does not match the style guide."
-  echo "The VS Code commit has been ABORTED!"
-  echo "ACTION REQUIRED: Please run 'mvn spotless:apply' to fix the files."
-  echo "======================================================"
+echo "pre-commit: mvn spotless:check"
+if ! mvn -q spotless:check; then
+  echo "pre-commit: formatting errors — run 'mvn spotless:apply' and re-stage." >&2
   exit 1
 fi
 
-# STEP 2: Running Tests in Ubuntu
-echo "🧪 2/2: Running Maven Unit Tests..."
-wsl -d Ubuntu -e bash -c "cd /home/sinti/chaincodes/chaincode-vdr-java && mvn test -q"
-
-# Save the result of the tests (0 = success, 1 = failure)
-TEST_RESULT=$?
-
-if [ $TEST_RESULT -ne 0 ]; then
-  echo "======================================================"
-  echo "❌ TEST FAILED! Maven tests failed in Ubuntu."
-  echo "The VS Code commit has been ABORTED!"
-  echo "TIP: If you are in a hurry and want to force save, use the Bypass (No Verify) option."
-  echo "======================================================"
+echo "pre-commit: mvn test"
+if ! mvn -q test; then
+  echo "pre-commit: unit tests failed." >&2
   exit 1
 fi
 
-echo "======================================================"
-echo "✅ All green! Code is strictly formatted and tested. Commit successful."
-echo "======================================================"
-exit 0
+echo "pre-commit: OK"
