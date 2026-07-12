@@ -40,7 +40,7 @@ AnonCreds v2.
 
 | Tool | Version | Notes |
 |---|---|---|
-| JDK | **17** | The build targets Java 17 (`maven.compiler.release=17`); the unit-test toolchain also requires a JDK 17 runtime. |
+| JDK | **17** | The build targets Java 17 (`maven.compiler.release=17`); the unit-test toolchain also requires a JDK 17 runtime (the pinned JaCoCo 0.8.12 agent cannot read newer JDKs' class files). |
 | Maven | 3.9+ | |
 | Docker | recent | Only needed for the end-to-end suite (Docker Desktop or OrbStack; Apple Silicon works — see the network repo). |
 
