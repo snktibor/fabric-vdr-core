@@ -286,12 +286,12 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final ObjectNode metadata = JsonUtil.objectNode();
-        metadata.put("type", "CL");
+        metadata.put("type", "BBS");
         final CredentialDefinitionRecord crecord = new CredentialDefinitionRecord();
         crecord.setId("creddef-1");
         crecord.setIssuerId("did:issuer");
         crecord.setSchemaId("schema-1");
-        crecord.setType("CL");
+        crecord.setType("BBS");
         crecord.setTag("TAG");
         crecord.setPublicMetadata(metadata);
         crecord.setOwnerId("caller");
@@ -303,9 +303,9 @@ class VdrContractTest {
                         "creddef-1",
                         "did:issuer",
                         "schema-1",
-                        "CL",
+                        "BBS",
                         "TAG",
-                        "{\"type\":\"CL\"}"))
+                        "{\"type\":\"BBS\"}"))
                 .thenReturn(crecord);
 
         final String result =
@@ -314,9 +314,9 @@ class VdrContractTest {
                         "creddef-1",
                         "did:issuer",
                         "schema-1",
-                        "CL",
+                        "BBS",
                         "TAG",
-                        "{\"type\":\"CL\"}",
+                        "{\"type\":\"BBS\"}",
                         jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(crecord), result);
@@ -330,7 +330,7 @@ class VdrContractTest {
         crecord.setId("creddef-2");
         crecord.setIssuerId("did:issuer");
         crecord.setSchemaId("schema-1");
-        crecord.setType("CL");
+        crecord.setType("BBS");
         crecord.setTag("TAG");
         crecord.setPublicMetadata(JsonUtil.objectNode());
 
@@ -351,7 +351,7 @@ class VdrContractTest {
         crecord.setId("creddef-3");
         crecord.setIssuerId("did:issuer");
         crecord.setSchemaId("schema-1");
-        crecord.setType("CL");
+        crecord.setType("BBS");
         crecord.setTag("TAG");
         crecord.setPublicMetadata(JsonUtil.objectNode());
 

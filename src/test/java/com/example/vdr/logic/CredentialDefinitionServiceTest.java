@@ -59,9 +59,9 @@ class CredentialDefinitionServiceTest {
         issuer.setStatus(RecordStatus.ACTIVE);
         when(didRegistry.get("did:issuer")).thenReturn(issuer);
 
-        final String publicMetadata = "{\"type\":\"CL\"}";
+        final String publicMetadata = "{\"type\":\"BBS\"}";
         credentialDefinitionService.createCredDef(
-                "did:issuer", CRED_DEF_ID, "did:issuer", "schema-1", "CL", "TAG", publicMetadata);
+                "did:issuer", CRED_DEF_ID, "did:issuer", "schema-1", "BBS", "TAG", publicMetadata);
 
         final ArgumentCaptor<CredentialDefinitionRecord> captor =
                 ArgumentCaptor.forClass(CredentialDefinitionRecord.class);
@@ -82,9 +82,9 @@ class CredentialDefinitionServiceTest {
                                 "creddef:vdr:not-a-uuid-v7",
                                 "did:issuer",
                                 "schema-1",
-                                "CL",
+                                "BBS",
                                 "TAG",
-                                "{\"type\":\"CL\"}"));
+                                "{\"type\":\"BBS\"}"));
     }
 
     /** Verifies creation fails when the referenced schema does not exist. */
@@ -93,7 +93,7 @@ class CredentialDefinitionServiceTest {
         when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
         when(schemaRegistry.get("schema-1")).thenReturn(null);
 
-        final String publicMetadata = "{\"type\":\"CL\"}";
+        final String publicMetadata = "{\"type\":\"BBS\"}";
         assertThrows(
                 VdrException.class,
                 () ->
@@ -102,7 +102,7 @@ class CredentialDefinitionServiceTest {
                                 CRED_DEF_ID,
                                 "did:issuer",
                                 "schema-1",
-                                "CL",
+                                "BBS",
                                 "TAG",
                                 publicMetadata));
     }
@@ -118,8 +118,8 @@ class CredentialDefinitionServiceTest {
                                 CRED_DEF_ID,
                                 "did:issuer",
                                 "schema-1",
-                                "CL",
+                                "BBS",
                                 "TAG",
-                                "{\"type\":\"CL\"}"));
+                                "{\"type\":\"BBS\"}"));
     }
 }
