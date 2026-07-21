@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.example.vdr.TestVectors;
 import com.example.vdr.e2e.entity.EntityHandlerRegistry;
 import com.example.vdr.e2e.entity.RevRegEntryEntityHandler;
 import com.example.vdr.e2e.support.ChaincodeEventProbe;
@@ -55,7 +56,8 @@ public class RevRegEntrySteps {
 
     @Then("a {string} chaincode event should be received with accumulator value {string}")
     public void aChaincodeEventShouldBeReceived(
-            final String expectedEventName, final String expectedAccumValue) {
+            final String expectedEventName, final String expectedAccumAlias) {
+        final String expectedAccumValue = TestVectors.accumValue(expectedAccumAlias);
         assertNotNull(
                 context.lastChaincodeEventName(),
                 () ->
@@ -79,10 +81,12 @@ public class RevRegEntrySteps {
             "the history should list accumulator value {string} with version {long} before"
                     + " accumulator value {string} with version {long}")
     public void theHistoryShouldListInOrder(
-            final String earlierAccumValue,
+            final String earlierAccumAlias,
             final long earlierVersion,
-            final String laterAccumValue,
+            final String laterAccumAlias,
             final long laterVersion) {
+        final String earlierAccumValue = TestVectors.accumValue(earlierAccumAlias);
+        final String laterAccumValue = TestVectors.accumValue(laterAccumAlias);
         final String history = context.lastQueryResponse();
         assertNotNull(history, "No history response captured; run the fetch step first.");
         final int earlierIndex = history.indexOf("\"accumValue\":\"" + earlierAccumValue + "\"");

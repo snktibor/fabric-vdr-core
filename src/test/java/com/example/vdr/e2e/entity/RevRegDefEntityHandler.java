@@ -2,8 +2,10 @@ package com.example.vdr.e2e.entity;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.example.vdr.TestVectors;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
+import com.example.vdr.logic.VdrTypes;
 import java.security.KeyPair;
 
 public class RevRegDefEntityHandler extends AbstractEntityHandler {
@@ -56,8 +58,8 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
                 revRegDefId,
                 issuerDid,
                 credDefId,
-                "ALLOSAUR",
-                "{}",
+                VdrTypes.REV_REG_VB20_V1,
+                TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                 "1000");
     }
 

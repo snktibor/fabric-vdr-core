@@ -85,7 +85,8 @@ public class CredentialDefinitionService {
                 validationService.requireValidEntityId(id, "creddef:vdr:", "id");
         final String normalizedIssuerId = validationService.requireNotBlank(issuerId, "issuerId");
         final String normalizedSchemaId = validationService.requireNotBlank(schemaId, "schemaId");
-        final String normalizedType = validationService.requireNotBlank(type, "type");
+        final String normalizedType =
+                validationService.requireAllowedType(type, VdrTypes.CRED_DEF_TYPES, "type");
         final String normalizedTag = validationService.requireNotBlank(tag, "tag");
         final JsonNode publicMetadata =
                 validationService.parseJsonObject(publicMetadataJson, "publicMetadata");

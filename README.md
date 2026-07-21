@@ -8,9 +8,10 @@ The registry stores the public objects an AnonCreds ecosystem needs — DID docu
 schemas, credential definitions, revocation registry definitions and revocation
 registry entries — in five separate world-state namespaces. It deliberately stores
 **no credentials and no per-holder revocation data** (no revoked-index lists, no tails
-files): revocation state is a single opaque accumulator value published by the issuer,
-in line with the tails-free accumulator approach (e.g. ALLOSAUR) targeted by
-AnonCreds v2.
+files): revocation state is a single accumulator value published by the issuer — a
+**VB20 pairing-based accumulator** (Vitto–Biryukov,
+[eprint 2020/777](https://eprint.iacr.org/2020/777)), the tails-free scheme the
+AnonCreds v2 reference implementation actually ships.
 
 > **Status / scope honesty.** AnonCreds v2 is **not a finalised specification**; this
 > project targets the current reference implementation
@@ -19,10 +20,11 @@ AnonCreds v2.
 > of a finished standard. The chaincode provides registry CRUD plus chaincode events on
 > every state change, an accumulator history endpoint, and audit timestamps on records;
 > there is still **no pagination** (the `list*` transactions return entire namespaces).
-> `type` strings
-> (e.g. `"ALLOSAUR"` for revocation registries, `"BBS"` for credential definitions) are
-> stored verbatim but **not validated against an allowlist**, and the `accumValue` /
-> `publicKeys` payloads are opaque strings whose wire encoding is not yet specified.
+> `type` values are allowlisted and `accumValue`/`publicKeys` are format-validated —
+> see [Wire encodings and type identifiers](#wire-encodings-and-type-identifiers) for
+> exactly what is (and is not) guaranteed. Note the naming: the reference implements
+> the VB20 accumulator; ALLOSAUR (eprint 2022/1362) is an unimplemented multi-party
+> witness-update layer on top of it, and this VDR deliberately does not claim it.
 
 ## Contents
 
@@ -31,6 +33,7 @@ AnonCreds v2.
 - [Unit tests](#unit-tests)
 - [End-to-end tests against a live network](#end-to-end-tests-against-a-live-network)
 - [Transaction reference](#transaction-reference)
+- [Wire encodings and type identifiers](#wire-encodings-and-type-identifiers)
 - [Chaincode events](#chaincode-events)
 - [Record timestamps](#record-timestamps)
 - [Identifiers](#identifiers)
@@ -70,7 +73,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 107 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 115 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -145,7 +148,7 @@ transactions are unauthenticated reads. The `list*` transactions return a JSON a
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createCredDef` | SUBMIT | `id`, `issuerId`, `schemaId`, `type` (e.g. `"BBS"`), `tag`, `publicMetadataJson` (JSON object), `jwt` | created credential definition record |
+| `createCredDef` | SUBMIT | `id`, `issuerId`, `schemaId`, `type` (allowlisted, see [below](#wire-encodings-and-type-identifiers)), `tag`, `publicMetadataJson` (JSON object), `jwt` | created credential definition record |
 | `getCredDef` | EVALUATE | `id` | credential definition record |
 | `listCredDefs` | EVALUATE | — | array of all credential definition entries |
 
@@ -153,7 +156,7 @@ transactions are unauthenticated reads. The `list*` transactions return a JSON a
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createRevRegDef` | SUBMIT | `id`, `issuerId`, `credDefId`, `type` (e.g. `"ALLOSAUR"`), `publicKeysJson` (JSON object), `maxCredNum` (number), `jwt` | created revocation registry definition record |
+| `createRevRegDef` | SUBMIT | `id`, `issuerId`, `credDefId`, `type` (allowlisted), `publicKeysJson` (exact shape, see [below](#wire-encodings-and-type-identifiers)), `maxCredNum` (number), `jwt` | created revocation registry definition record |
 | `getRevRegDef` | EVALUATE | `id` | revocation registry definition record |
 | `listRevRegDefs` | EVALUATE | — | array of all revocation registry definition entries |
 
@@ -165,7 +168,7 @@ definition's id.
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createRevRegEntry` | SUBMIT | `id`, `revRegDefId`, `accumValue` (opaque string), `jwt` | created entry record |
+| `createRevRegEntry` | SUBMIT | `id`, `revRegDefId`, `accumValue` (compressed G1 hex, see [below](#wire-encodings-and-type-identifiers)), `jwt` | created entry record |
 | `updateRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue`, `jwt` | updated entry record (audit `version` incremented) |
 | `getRevRegEntry` | EVALUATE | `revRegDefId` | entry record |
 | `getRevRegEntryHistory` | EVALUATE | `revRegDefId` | JSON array of all entry revisions, **oldest first**: `{txId, timestamp, accumValue, version}` per revision (a hypothetical future deletion would appear as `{txId, timestamp, deleted:true}`); empty array if no entry was ever created |
@@ -173,8 +176,63 @@ definition's id.
 Clients observe accumulator changes by subscribing to the
 [`RevRegEntryUpdated` chaincode event](#chaincode-events); `getRevRegEntryHistory`
 resolves the accumulator value that was current at a past point (entry updates
-overwrite the value in place, which ALLOSAUR witness/proof checks against historical
+overwrite the value in place, which VB20 witness/proof checks against historical
 accumulator states need).
+
+## Wire encodings and type identifiers
+
+### Type allowlist
+
+`type` values are validated against an allowlist (never a blocklist), so retired or
+foreign scheme names — e.g. the AnonCreds v1 `CL_ACCUM` — are illegal by construction:
+
+| Field | Legal values |
+|---|---|
+| `CredDef.type` | `ANONCREDS_V2/BBS/1.0`, `ANONCREDS_V2/PS/1.0` |
+| `RevRegDef.type` | `ANONCREDS_V2/VB20/1.0` |
+
+These identifiers are **invented by this VDR** (`<family>/<scheme-token>/<version>`):
+the reference implementation defines no wire-level scheme constant — its statements
+are serde-tagged by Rust type name and its only scheme strings are transcript
+domain-separation labels. The scheme tokens are the reference's module names
+(`credx::knox::bbs`, `::ps`, `::accumulator::vb20`), the only stable names it offers.
+If the specification later canonicalizes identifiers, they can be added to the
+allowlist alongside these (single-sourced in `com.example.vdr.logic.VdrTypes`).
+
+### accumValue
+
+The VB20 accumulator is a **BLS12-381 G1 point**. On the wire and on the ledger it is
+the 48-byte ZCash-format compressed encoding (big-endian x-coordinate; flag bits in
+the most significant byte: `0x80` compressed, `0x40` infinity, `0x20` y-sign) written
+as **exactly 96 lowercase hex characters** (`^[0-9a-f]{96}$`). This is byte-identical
+to what the reference implementation's own JSON serialization produces for
+`vb20::Accumulator` (credx 0.2.1 → blstrs_plus 0.8.18 serde, which is test-vector
+pinned and identical across both blsful backends) — an anoncreds-v2-rs client can
+consume the value with `serde_json` directly, no adapter.
+
+### publicKeys
+
+Exactly one field, nothing else:
+
+```json
+{"revocationVerifyingKey": "<192 lowercase hex characters>"}
+```
+
+The value is the VB20 accumulator verifying key — a **BLS12-381 G2 point** in 96-byte
+compressed form (the reference's `IssuerPublic.revocation_verifying_key`). Payloads
+with missing, extra, or non-string fields are rejected.
+
+### Validation scope (what the chaincode does and does not check)
+
+On-chain validation is **format-only**: length, lowercase-hex charset, the compression
+flag must be set, and the identity element (infinity flag) is rejected outright — an
+accumulator or verifying key is never legitimately the identity. Uppercase, `0x`
+prefixes, base64, and uncompressed encodings are all rejected so canonical ledger JSON
+stays byte-stable. The chaincode does **not** verify on-curve or subgroup membership —
+that requires a pairing library it deliberately does not carry; the reference
+deserializer enforces membership client-side on every read. The normative layer is the
+**compressed byte encoding**; lowercase hex is this registry's textual projection of
+those bytes, chosen to match the reference serde exactly.
 
 ## Chaincode events
 
@@ -195,7 +253,8 @@ keys, deterministic across endorsers).
 | `RevRegEntryCreated` | `createRevRegEntry` | `{revRegDefId, accumValue, version, txTime}` |
 | `RevRegEntryUpdated` | `updateRevRegEntry` | `{revRegDefId, accumValue, version, txTime}` |
 
-`RevRegEntryUpdated` is the event ALLOSAUR credential holders must subscribe to: after
+`RevRegEntryUpdated` is the event holders of VB20-accumulator-backed credentials must
+subscribe to: after
 every accumulator change a holder has to refresh their witness or they can no longer
 produce a non-revocation proof. The payload carries the new accumulator value (a
 fixed-size digest) so no follow-up query is needed. `EVALUATE` transactions emit

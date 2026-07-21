@@ -3,6 +3,7 @@ package com.example.vdr.e2e.entity;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.example.vdr.TestVectors;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
 import java.security.KeyPair;
@@ -12,8 +13,10 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
     public static final String TYPE = "revocation registry entry";
     private static final String DEFAULT_REV_REG_DEF_SEED = "revregdef:vdr:revregentry-default";
     private static final String NON_OWNER_DID_SEED = "revregentry-non-owner-did";
-    private static final String GENESIS_ACCUM_VALUE = "accum-genesis";
-    private static final String UNAUTHORIZED_ACCUM_VALUE = "accum-unauthorized";
+    // Genuine compressed G1 vectors; Gherkin refers to them via TestVectors aliases.
+    private static final String GENESIS_ACCUM_VALUE = TestVectors.accumValue("accum-genesis");
+    private static final String UNAUTHORIZED_ACCUM_VALUE =
+            TestVectors.accumValue("accum-unauthorized");
 
     private final DidEntityHandler didHandler;
     private final RevRegDefEntityHandler revRegDefHandler;
@@ -71,12 +74,20 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
         }
     }
 
-    /** Submits an accumulator update signed by the recorded owner of the parent definition. */
-    public void updateAccumulator(final String rawId, final String newAccumValue) {
+    /**
+     * Submits an accumulator update signed by the recorded owner of the parent definition. The
+     * {@code newAccumAlias} is a Gherkin alias resolved to a genuine compressed G1 vector.
+     */
+    public void updateAccumulator(final String rawId, final String newAccumAlias) {
         final String revRegDefId = resolveId(rawId);
         final String ownerDid = context.requireOwner(revRegDefId);
         final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
-        executor.submitSigned("updateRevRegEntry", ownerDid, keyPair, revRegDefId, newAccumValue);
+        executor.submitSigned(
+                "updateRevRegEntry",
+                ownerDid,
+                keyPair,
+                revRegDefId,
+                TestVectors.accumValue(newAccumAlias));
     }
 
     /**
@@ -108,8 +119,9 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
 
     /** Asserts the ledger entry currently carries the expected accumulator value and version. */
     public void assertAccumulator(
-            final String rawId, final String expectedAccumValue, final long expectedVersion) {
+            final String rawId, final String expectedAccumAlias, final long expectedVersion) {
         final String revRegDefId = resolveId(rawId);
+        final String expectedAccumValue = TestVectors.accumValue(expectedAccumAlias);
         try {
             final String response = executor.evaluate(getterTxName(), revRegDefId);
             // JSON keys are case-sensitive; canonical serialization renders version as a number.

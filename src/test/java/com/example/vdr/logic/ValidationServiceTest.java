@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.example.vdr.TestVectors;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.util.JsonUtil;
 import com.fasterxml.jackson.databind.node.TextNode;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -138,5 +140,128 @@ class ValidationServiceTest {
                                         + "}}")));
 
         assertDoesNotThrow(() -> validationService.validateDidDocumentShape(document));
+    }
+
+    /** Verifies allowlisted type values pass and foreign values are rejected. */
+    @Test
+    void requireAllowedTypeEnforcesAllowlist() {
+        final Set<String> allowed = VdrTypes.REV_REG_DEF_TYPES;
+
+        assertEquals(
+                VdrTypes.REV_REG_VB20_V1,
+                validationService.requireAllowedType(
+                        " " + VdrTypes.REV_REG_VB20_V1 + " ", allowed, "type"));
+
+        final VdrException v1Construct =
+                assertThrows(
+                        VdrException.class,
+                        () -> validationService.requireAllowedType("CL_ACCUM", allowed, "type"));
+        assertEquals("INVALID_ARGUMENT", v1Construct.getErrorCode());
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireAllowedType("ALLOSAUR", allowed, "type"));
+    }
+
+    /** Verifies the canonical compressed G1 form is accepted and every variant is rejected. */
+    @Test
+    void requireCompressedG1HexAcceptsCanonicalFormOnly() {
+        assertEquals(
+                TestVectors.G1_GENERATOR,
+                validationService.requireCompressedG1Hex(TestVectors.G1_GENERATOR, "accumValue"));
+
+        // Uppercase, prefixes, wrong lengths, non-hex, base64.
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireCompressedG1Hex(
+                                TestVectors.G1_GENERATOR.toUpperCase(), "accumValue"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireCompressedG1Hex(
+                                "0x" + TestVectors.G1_GENERATOR, "accumValue"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireCompressedG1Hex(
+                                TestVectors.G1_GENERATOR.substring(2), "accumValue"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireCompressedG1Hex(
+                                TestVectors.G1_GENERATOR + TestVectors.G1_GENERATOR, "accumValue"));
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireCompressedG1Hex("not-hex", "accumValue"));
+
+        // Compression flag missing (uncompressed-style flag byte).
+        final String uncompressedFlag = "17" + TestVectors.G1_GENERATOR.substring(2);
+        final VdrException noFlag =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                validationService.requireCompressedG1Hex(
+                                        uncompressedFlag, "accumValue"));
+        assertEquals("INVALID_ARGUMENT", noFlag.getErrorCode());
+
+        // The identity element (infinity flag) is rejected outright.
+        final String identity = "c0" + "0".repeat(94);
+        final VdrException identityRejected =
+                assertThrows(
+                        VdrException.class,
+                        () -> validationService.requireCompressedG1Hex(identity, "accumValue"));
+        assertEquals("INVALID_ARGUMENT", identityRejected.getErrorCode());
+    }
+
+    /** Verifies the compressed G2 checks mirror G1 at 192 hex characters. */
+    @Test
+    void requireCompressedG2HexAcceptsCanonicalFormOnly() {
+        assertEquals(
+                TestVectors.G2_GENERATOR,
+                validationService.requireCompressedG2Hex(TestVectors.G2_GENERATOR, "key"));
+
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireCompressedG2Hex(TestVectors.G1_GENERATOR, "key"));
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireCompressedG2Hex("c0" + "0".repeat(190), "key"));
+    }
+
+    /** Verifies the publicKeys object must contain exactly the verifying key field. */
+    @Test
+    void requireRevocationPublicKeysEnforcesExactShape() {
+        assertDoesNotThrow(
+                () ->
+                        validationService.requireRevocationPublicKeys(
+                                TestVectors.REVOCATION_PUBLIC_KEYS_JSON, "publicKeys"));
+
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireRevocationPublicKeys("{}", "publicKeys"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireRevocationPublicKeys(
+                                "{\"otherKey\":\"" + TestVectors.G2_GENERATOR + "\"}",
+                                "publicKeys"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireRevocationPublicKeys(
+                                "{\"revocationVerifyingKey\":\""
+                                        + TestVectors.G2_GENERATOR
+                                        + "\",\"extra\":1}",
+                                "publicKeys"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireRevocationPublicKeys(
+                                "{\"revocationVerifyingKey\":\"not-a-point\"}", "publicKeys"));
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireRevocationPublicKeys(
+                                "{\"revocationVerifyingKey\":42}", "publicKeys"));
     }
 }

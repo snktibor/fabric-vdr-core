@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
+import com.example.vdr.logic.VdrTypes;
 import java.security.KeyPair;
 
 public class CredDefEntityHandler extends AbstractEntityHandler {
@@ -56,7 +57,7 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
                 credDefId,
                 issuerDid,
                 schemaId,
-                "BBS",
+                VdrTypes.CRED_DEF_BBS_V1,
                 "tag-1",
                 "{}");
     }

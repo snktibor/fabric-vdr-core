@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.vdr.TestVectors;
 import com.example.vdr.context.SsiContext;
 import com.example.vdr.context.SsiServices;
 import com.example.vdr.exception.VdrException;
@@ -18,6 +19,7 @@ import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.RevRegDefService;
 import com.example.vdr.logic.RevRegEntryService;
 import com.example.vdr.logic.SchemaService;
+import com.example.vdr.logic.VdrTypes;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RecordStatus;
@@ -315,7 +317,7 @@ class VdrContractTest {
         crecord.setId("creddef-1");
         crecord.setIssuerId("did:issuer");
         crecord.setSchemaId("schema-1");
-        crecord.setType("BBS");
+        crecord.setType(VdrTypes.CRED_DEF_BBS_V1);
         crecord.setTag("TAG");
         crecord.setPublicMetadata(metadata);
         crecord.setOwnerId("caller");
@@ -327,7 +329,7 @@ class VdrContractTest {
                 "creddef-1",
                 "did:issuer",
                 "schema-1",
-                "BBS",
+                VdrTypes.CRED_DEF_BBS_V1,
                 "TAG",
                 "{\"type\":\"BBS\"}");
         when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
@@ -336,7 +338,7 @@ class VdrContractTest {
                         "creddef-1",
                         "did:issuer",
                         "schema-1",
-                        "BBS",
+                        VdrTypes.CRED_DEF_BBS_V1,
                         "TAG",
                         "{\"type\":\"BBS\"}"))
                 .thenReturn(crecord);
@@ -347,7 +349,7 @@ class VdrContractTest {
                         "creddef-1",
                         "did:issuer",
                         "schema-1",
-                        "BBS",
+                        VdrTypes.CRED_DEF_BBS_V1,
                         "TAG",
                         "{\"type\":\"BBS\"}",
                         jwt);
@@ -363,7 +365,7 @@ class VdrContractTest {
         crecord.setId("creddef-2");
         crecord.setIssuerId("did:issuer");
         crecord.setSchemaId("schema-1");
-        crecord.setType("BBS");
+        crecord.setType(VdrTypes.CRED_DEF_BBS_V1);
         crecord.setTag("TAG");
         crecord.setPublicMetadata(JsonUtil.objectNode());
 
@@ -384,7 +386,7 @@ class VdrContractTest {
         crecord.setId("creddef-3");
         crecord.setIssuerId("did:issuer");
         crecord.setSchemaId("schema-1");
-        crecord.setType("BBS");
+        crecord.setType(VdrTypes.CRED_DEF_BBS_V1);
         crecord.setTag("TAG");
         crecord.setPublicMetadata(JsonUtil.objectNode());
 
@@ -409,12 +411,12 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final ObjectNode publicKeys = JsonUtil.objectNode();
-        publicKeys.put("revocationVerifyingKey", "key-1");
+        publicKeys.put("revocationVerifyingKey", TestVectors.G2_GENERATOR);
         final RevRegDefRecord rrecord = new RevRegDefRecord();
         rrecord.setId("revregdef-1");
         rrecord.setIssuerId("did:issuer");
         rrecord.setCredDefId("creddef-1");
-        rrecord.setType("ALLOSAUR");
+        rrecord.setType(VdrTypes.REV_REG_VB20_V1);
         rrecord.setPublicKeys(publicKeys);
         rrecord.setMaxCredNum(100L);
         rrecord.setOwnerId("caller");
@@ -426,8 +428,8 @@ class VdrContractTest {
                 "revregdef-1",
                 "did:issuer",
                 "creddef-1",
-                "ALLOSAUR",
-                "{\"revocationVerifyingKey\":\"key-1\"}",
+                VdrTypes.REV_REG_VB20_V1,
+                TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                 "100");
         when(services.getRevRegDefService()).thenReturn(revRegDefService);
         when(revRegDefService.createRevRegDef(
@@ -435,8 +437,8 @@ class VdrContractTest {
                         "revregdef-1",
                         "did:issuer",
                         "creddef-1",
-                        "ALLOSAUR",
-                        "{\"revocationVerifyingKey\":\"key-1\"}",
+                        VdrTypes.REV_REG_VB20_V1,
+                        TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                         100L))
                 .thenReturn(rrecord);
 
@@ -446,8 +448,8 @@ class VdrContractTest {
                         "revregdef-1",
                         "did:issuer",
                         "creddef-1",
-                        "ALLOSAUR",
-                        "{\"revocationVerifyingKey\":\"key-1\"}",
+                        VdrTypes.REV_REG_VB20_V1,
+                        TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                         100L,
                         jwt);
 
@@ -462,7 +464,7 @@ class VdrContractTest {
         rrecord.setId("revregdef-2");
         rrecord.setIssuerId("did:issuer");
         rrecord.setCredDefId("creddef-1");
-        rrecord.setType("ALLOSAUR");
+        rrecord.setType(VdrTypes.REV_REG_VB20_V1);
         rrecord.setPublicKeys(JsonUtil.objectNode());
         rrecord.setMaxCredNum(100L);
 
@@ -483,7 +485,7 @@ class VdrContractTest {
         rrecord.setId("revregdef-3");
         rrecord.setIssuerId("did:issuer");
         rrecord.setCredDefId("creddef-1");
-        rrecord.setType("ALLOSAUR");
+        rrecord.setType(VdrTypes.REV_REG_VB20_V1);
         rrecord.setPublicKeys(JsonUtil.objectNode());
         rrecord.setMaxCredNum(100L);
 
@@ -510,7 +512,7 @@ class VdrContractTest {
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
         erecord.setId("revregentry-1");
         erecord.setRevRegDefId("revregdef-1");
-        erecord.setAccumValue("accum-genesis");
+        erecord.setAccumValue(TestVectors.G1_GENERATOR);
         erecord.setVersion(0L);
         erecord.setOwnerId("caller");
 
@@ -520,15 +522,15 @@ class VdrContractTest {
                 "createRevRegEntry",
                 "revregentry-1",
                 "revregdef-1",
-                "accum-genesis");
+                TestVectors.G1_GENERATOR);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
         when(revRegEntryService.createRevRegEntry(
-                        "caller", "revregentry-1", "revregdef-1", "accum-genesis"))
+                        "caller", "revregentry-1", "revregdef-1", TestVectors.G1_GENERATOR))
                 .thenReturn(erecord);
 
         final String result =
                 contract.createRevRegEntry(
-                        ctx, "revregentry-1", "revregdef-1", "accum-genesis", jwt);
+                        ctx, "revregentry-1", "revregdef-1", TestVectors.G1_GENERATOR, jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
     }
@@ -541,19 +543,21 @@ class VdrContractTest {
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
         erecord.setId("revregentry-1");
         erecord.setRevRegDefId("revregdef-1");
-        erecord.setAccumValue("accum-next");
+        erecord.setAccumValue(TestVectors.G1_TIMES_2);
         erecord.setVersion(1L);
         erecord.setOwnerId("caller");
 
-        stubSignerDid(jwt, "caller", "updateRevRegEntry", "revregdef-1", "accum-next");
+        stubSignerDid(jwt, "caller", "updateRevRegEntry", "revregdef-1", TestVectors.G1_TIMES_2);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
-        when(revRegEntryService.updateRevRegEntry("caller", "revregdef-1", "accum-next"))
+        when(revRegEntryService.updateRevRegEntry("caller", "revregdef-1", TestVectors.G1_TIMES_2))
                 .thenReturn(erecord);
 
-        final String result = contract.updateRevRegEntry(ctx, "revregdef-1", "accum-next", jwt);
+        final String result =
+                contract.updateRevRegEntry(ctx, "revregdef-1", TestVectors.G1_TIMES_2, jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
-        verify(revRegEntryService).updateRevRegEntry("caller", "revregdef-1", "accum-next");
+        verify(revRegEntryService)
+                .updateRevRegEntry("caller", "revregdef-1", TestVectors.G1_TIMES_2);
     }
 
     /** Verifies entry history serializes revisions oldest-first with tombstones flagged. */
@@ -561,10 +565,10 @@ class VdrContractTest {
     void getRevRegEntryHistoryReturnsRevisionArray() {
         final VdrContract contract = new VdrContract();
         final RevRegEntryRecord genesis = new RevRegEntryRecord();
-        genesis.setAccumValue("accum-genesis");
+        genesis.setAccumValue(TestVectors.G1_GENERATOR);
         genesis.setVersion(0L);
         final RevRegEntryRecord updated = new RevRegEntryRecord();
-        updated.setAccumValue("accum-next");
+        updated.setAccumValue(TestVectors.G1_TIMES_2);
         updated.setVersion(1L);
         final Instant firstTime = Instant.parse("2026-07-12T10:00:00Z");
         final Instant secondTime = Instant.parse("2026-07-12T11:00:00Z");
@@ -584,13 +588,13 @@ class VdrContractTest {
         final ObjectNode first = JsonUtil.objectNode();
         first.put("txId", "tx-1");
         first.put("timestamp", firstTime.toString());
-        first.put("accumValue", "accum-genesis");
+        first.put("accumValue", TestVectors.G1_GENERATOR);
         first.put("version", 0L);
         expected.add(first);
         final ObjectNode second = JsonUtil.objectNode();
         second.put("txId", "tx-2");
         second.put("timestamp", secondTime.toString());
-        second.put("accumValue", "accum-next");
+        second.put("accumValue", TestVectors.G1_TIMES_2);
         second.put("version", 1L);
         expected.add(second);
         final ObjectNode third = JsonUtil.objectNode();
@@ -628,7 +632,7 @@ class VdrContractTest {
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
         erecord.setId("revregentry-2");
         erecord.setRevRegDefId("revregdef-1");
-        erecord.setAccumValue("accum-genesis");
+        erecord.setAccumValue(TestVectors.G1_GENERATOR);
         erecord.setVersion(0L);
 
         when(ctx.getServices()).thenReturn(services);

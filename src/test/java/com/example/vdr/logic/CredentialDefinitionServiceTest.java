@@ -70,7 +70,13 @@ class CredentialDefinitionServiceTest {
 
         final String publicMetadata = "{\"type\":\"BBS\"}";
         credentialDefinitionService.createCredDef(
-                "did:issuer", CRED_DEF_ID, "did:issuer", "schema-1", "BBS", "TAG", publicMetadata);
+                "did:issuer",
+                CRED_DEF_ID,
+                "did:issuer",
+                "schema-1",
+                VdrTypes.CRED_DEF_BBS_V1,
+                "TAG",
+                publicMetadata);
 
         final ArgumentCaptor<CredentialDefinitionRecord> captor =
                 ArgumentCaptor.forClass(CredentialDefinitionRecord.class);
@@ -91,7 +97,7 @@ class CredentialDefinitionServiceTest {
                                 "creddef:vdr:not-a-uuid-v7",
                                 "did:issuer",
                                 "schema-1",
-                                "BBS",
+                                VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 "{\"type\":\"BBS\"}"));
     }
@@ -111,7 +117,7 @@ class CredentialDefinitionServiceTest {
                                 CRED_DEF_ID,
                                 "did:issuer",
                                 "schema-1",
-                                "BBS",
+                                VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 publicMetadata));
     }
@@ -127,8 +133,26 @@ class CredentialDefinitionServiceTest {
                                 CRED_DEF_ID,
                                 "did:issuer",
                                 "schema-1",
-                                "BBS",
+                                VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 "{\"type\":\"BBS\"}"));
+    }
+
+    /** Verifies non-allowlisted credential definition types are rejected. */
+    @Test
+    void createCredDefRejectsUnknownType() {
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                credentialDefinitionService.createCredDef(
+                                        "did:issuer",
+                                        CRED_DEF_ID,
+                                        "did:issuer",
+                                        "schema-1",
+                                        "CL",
+                                        "TAG",
+                                        "{}"));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
     }
 }

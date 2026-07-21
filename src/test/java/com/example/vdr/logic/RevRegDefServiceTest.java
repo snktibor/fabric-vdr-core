@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.vdr.TestVectors;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
@@ -71,13 +72,13 @@ class RevRegDefServiceTest {
         issuer.setStatus(RecordStatus.ACTIVE);
         when(didRegistry.get("did:issuer")).thenReturn(issuer);
 
-        final String publicKeys = "{\"revocationVerifyingKey\":\"key-1\"}";
+        final String publicKeys = TestVectors.REVOCATION_PUBLIC_KEYS_JSON;
         revRegDefService.createRevRegDef(
                 "did:issuer",
                 REV_REG_DEF_ID,
                 "did:issuer",
                 "creddef-1",
-                "ALLOSAUR",
+                VdrTypes.REV_REG_VB20_V1,
                 publicKeys,
                 100L);
 
@@ -101,8 +102,8 @@ class RevRegDefServiceTest {
                                 "revregdef:vdr:not-a-uuid-v7",
                                 "did:issuer",
                                 "creddef-1",
-                                "ALLOSAUR",
-                                "{\"revocationVerifyingKey\":\"key-1\"}",
+                                VdrTypes.REV_REG_VB20_V1,
+                                TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                 100L));
     }
 
@@ -112,7 +113,7 @@ class RevRegDefServiceTest {
         when(revRegDefRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
         when(credDefRegistry.get("creddef-1")).thenReturn(null);
 
-        final String publicKeys = "{\"revocationVerifyingKey\":\"key-1\"}";
+        final String publicKeys = TestVectors.REVOCATION_PUBLIC_KEYS_JSON;
         assertThrows(
                 VdrException.class,
                 () ->
@@ -121,7 +122,7 @@ class RevRegDefServiceTest {
                                 REV_REG_DEF_ID,
                                 "did:issuer",
                                 "creddef-1",
-                                "ALLOSAUR",
+                                VdrTypes.REV_REG_VB20_V1,
                                 publicKeys,
                                 100L));
     }
@@ -137,8 +138,8 @@ class RevRegDefServiceTest {
                                 REV_REG_DEF_ID,
                                 "did:issuer",
                                 "creddef-1",
-                                "ALLOSAUR",
-                                "{\"revocationVerifyingKey\":\"key-1\"}",
+                                VdrTypes.REV_REG_VB20_V1,
+                                TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                 100L));
     }
 
@@ -158,8 +159,46 @@ class RevRegDefServiceTest {
                                 REV_REG_DEF_ID,
                                 "did:issuer",
                                 "creddef-1",
-                                "ALLOSAUR",
-                                "{\"revocationVerifyingKey\":\"key-1\"}",
+                                VdrTypes.REV_REG_VB20_V1,
+                                TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                 100L));
+    }
+
+    /** Verifies non-allowlisted revocation scheme identifiers are rejected. */
+    @Test
+    void createRevRegDefRejectsUnknownType() {
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegDefService.createRevRegDef(
+                                        "did:issuer",
+                                        REV_REG_DEF_ID,
+                                        "did:issuer",
+                                        "creddef-1",
+                                        "CL_ACCUM",
+                                        TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
+                                        100L));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
+    }
+
+    /** Verifies public keys payloads with extra fields are rejected. */
+    @Test
+    void createRevRegDefRejectsExtraPublicKeyFields() {
+        final String extraField =
+                "{\"revocationVerifyingKey\":\"" + TestVectors.G2_GENERATOR + "\",\"other\":\"x\"}";
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegDefService.createRevRegDef(
+                                        "did:issuer",
+                                        REV_REG_DEF_ID,
+                                        "did:issuer",
+                                        "creddef-1",
+                                        VdrTypes.REV_REG_VB20_V1,
+                                        extraField,
+                                        100L));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
     }
 }

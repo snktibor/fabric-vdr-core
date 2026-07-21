@@ -22,6 +22,21 @@ public class ValidationService {
             java.util.regex.Pattern.compile(
                     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
 
+    // Compressed BLS12-381 points in ZCash encoding, as lowercase hex: G1 = 48 bytes / 96 chars,
+    // G2 = 96 bytes / 192 chars. Lowercase-only keeps ledger JSON byte-stable; base64, 0x-prefixed,
+    // uppercase, and uncompressed forms all fail these patterns.
+    private static final java.util.regex.Pattern G1_COMPRESSED_HEX =
+            java.util.regex.Pattern.compile("^[0-9a-f]{96}$");
+    private static final java.util.regex.Pattern G2_COMPRESSED_HEX =
+            java.util.regex.Pattern.compile("^[0-9a-f]{192}$");
+    // ZCash flag bits carried in the most significant byte of the encoding.
+    private static final int FLAG_COMPRESSED = 0x80;
+    private static final int FLAG_INFINITY = 0x40;
+    private static final int HEX_RADIX = 16;
+
+    /** Required (and only permitted) field of the revocation registry definition public keys. */
+    static final String REVOCATION_VERIFYING_KEY_FIELD = "revocationVerifyingKey";
+
     /**
      * Normalizes a text field and rejects blank or null values.
      *
@@ -158,6 +173,139 @@ public class ValidationService {
         }
 
         return List.copyOf(values);
+    }
+
+    /**
+     * Requires a {@code type} value to be one of the allowlisted identifiers.
+     *
+     * <p>An allowlist (never a blocklist) keeps retired or foreign scheme names — e.g. AnonCreds v1
+     * constructs like {@code CL_ACCUM} — illegal by construction. See {@link VdrTypes} for where
+     * the legal identifiers come from.
+     *
+     * @param value raw type value
+     * @param allowedTypes legal identifiers for the entity being validated
+     * @param fieldName logical field name for error reporting
+     * @return trimmed, allowlisted type value
+     * @throws VdrException if the value is blank or not allowlisted
+     */
+    public String requireAllowedType(
+            final String value, final Set<String> allowedTypes, final String fieldName) {
+        final String normalized = requireNotBlank(value, fieldName);
+        if (!allowedTypes.contains(normalized)) {
+            throw VdrException.invalid(
+                    fieldName
+                            + " must be one of "
+                            + new java.util.TreeSet<>(allowedTypes)
+                            + " but was '"
+                            + normalized
+                            + "'");
+        }
+        return normalized;
+    }
+
+    /**
+     * Requires a compressed BLS12-381 G1 point in canonical wire form: exactly 96 lowercase hex
+     * characters encoding the 48-byte ZCash compressed representation.
+     *
+     * <p>Validation is FORMAT-ONLY: length, charset, and flag-bit sanity (the compression bit must
+     * be set; the point-at-infinity/identity is rejected outright, which also covers the rule that
+     * an infinity encoding must be all zeroes). On-curve and subgroup membership are deliberately
+     * not checked — that requires a pairing library the chaincode does not carry, and the AnonCreds
+     * v2 reference deserializer enforces membership client-side on every read.
+     *
+     * @param value raw accumulator value
+     * @param fieldName logical field name for error reporting
+     * @return validated lowercase hex value
+     * @throws VdrException if the value is not a canonical compressed non-identity G1 encoding
+     */
+    public String requireCompressedG1Hex(final String value, final String fieldName) {
+        return requireCompressedPointHex(value, G1_COMPRESSED_HEX, "G1", 96, fieldName);
+    }
+
+    /**
+     * Requires a compressed BLS12-381 G2 point in canonical wire form: exactly 192 lowercase hex
+     * characters encoding the 96-byte ZCash compressed representation.
+     *
+     * <p>Same format-only validation scope as {@link #requireCompressedG1Hex}.
+     *
+     * @param value raw key value
+     * @param fieldName logical field name for error reporting
+     * @return validated lowercase hex value
+     * @throws VdrException if the value is not a canonical compressed non-identity G2 encoding
+     */
+    public String requireCompressedG2Hex(final String value, final String fieldName) {
+        return requireCompressedPointHex(value, G2_COMPRESSED_HEX, "G2", 192, fieldName);
+    }
+
+    /**
+     * Parses and validates the revocation registry definition public keys object.
+     *
+     * <p>The object must contain exactly one field, {@value #REVOCATION_VERIFYING_KEY_FIELD},
+     * holding the VB20 accumulator verifying key as a compressed BLS12-381 G2 point in canonical
+     * hex form. Unknown or extra fields are rejected rather than stored, keeping the ledger payload
+     * fully specified.
+     *
+     * @param json raw public keys JSON payload
+     * @param fieldName logical field name for error reporting
+     * @return parsed and validated JSON object node
+     * @throws VdrException if the payload is not an object with exactly the required field or the
+     *     key value is not a canonical compressed G2 encoding
+     */
+    public JsonNode requireRevocationPublicKeys(final String json, final String fieldName) {
+        final JsonNode node = parseJsonObject(json, fieldName);
+        if (node.size() != 1 || !node.has(REVOCATION_VERIFYING_KEY_FIELD)) {
+            throw VdrException.invalid(
+                    fieldName
+                            + " must contain exactly one field '"
+                            + REVOCATION_VERIFYING_KEY_FIELD
+                            + "'");
+        }
+        final JsonNode key = node.get(REVOCATION_VERIFYING_KEY_FIELD);
+        if (!key.isTextual()) {
+            throw VdrException.invalid(
+                    fieldName + "." + REVOCATION_VERIFYING_KEY_FIELD + " must be a string");
+        }
+        requireCompressedG2Hex(key.asText(), fieldName + "." + REVOCATION_VERIFYING_KEY_FIELD);
+        return node;
+    }
+
+    /**
+     * Shared format check for compressed BLS12-381 point encodings.
+     *
+     * @param value raw input value
+     * @param pattern lowercase hex pattern of the expected length
+     * @param groupName group label for error messages (G1 or G2)
+     * @param hexLength expected number of hex characters
+     * @param fieldName logical field name for error reporting
+     * @return validated value
+     * @throws VdrException on any format violation
+     */
+    private String requireCompressedPointHex(
+            final String value,
+            final java.util.regex.Pattern pattern,
+            final String groupName,
+            final int hexLength,
+            final String fieldName) {
+        final String normalized = requireNotBlank(value, fieldName);
+        if (!pattern.matcher(normalized).matches()) {
+            throw VdrException.invalid(
+                    fieldName
+                            + " must be a compressed BLS12-381 "
+                            + groupName
+                            + " point as exactly "
+                            + hexLength
+                            + " lowercase hex characters");
+        }
+        final int flagByte = Integer.parseInt(normalized.substring(0, 2), HEX_RADIX);
+        if ((flagByte & FLAG_COMPRESSED) == 0) {
+            throw VdrException.invalid(
+                    fieldName + " must use the compressed " + groupName + " encoding");
+        }
+        if ((flagByte & FLAG_INFINITY) != 0) {
+            throw VdrException.invalid(
+                    fieldName + " must not be the " + groupName + " identity element");
+        }
+        return normalized;
     }
 
     /**
