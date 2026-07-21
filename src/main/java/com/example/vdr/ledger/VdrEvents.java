@@ -33,9 +33,9 @@ public final class VdrEvents {
 
     /**
      * Emitted when a revocation registry entry's accumulator value is replaced. This is the event
-     * ALLOSAUR credential holders must watch: after every accumulator change they need to refresh
-     * their witness or they can no longer produce a non-revocation proof. The payload carries the
-     * new accumulator value so a subscriber needs no follow-up query.
+     * holders of VB20-accumulator-backed credentials must watch: after every accumulator change
+     * they need to refresh their witness or they can no longer produce a non-revocation proof. The
+     * payload carries the new accumulator value so a subscriber needs no follow-up query.
      */
     public static final String REV_REG_ENTRY_UPDATED = "RevRegEntryUpdated";
 

@@ -17,11 +17,12 @@ import java.util.Map;
  *
  * <p>This pure Java service orchestrates validation, owner-only authorization, and referential
  * integrity checks while delegating all ledger I/O to injected registries from the data-access
- * layer. The entry stores the opaque, off-chain-computed AnonCreds v2 (ALLOSAUR) accumulator value
- * verbatim: no accumulator cryptography is performed on chain and the value is never parsed. The
- * entry is the only mutable VDR record; each update replaces the accumulator value in place and
- * increments the audit {@code version}. Fabric MVCC validation serializes concurrent submits to the
- * same key, so the version is auditable metadata rather than a concurrency guard.
+ * layer. The entry stores the off-chain-computed VB20 accumulator value (Vitto–Biryukov, eprint
+ * 2020/777; a compressed BLS12-381 G1 point in canonical hex form) verbatim after format
+ * validation: no accumulator cryptography is performed on chain. The entry is the only mutable VDR
+ * record; each update replaces the accumulator value in place and increments the audit {@code
+ * version}. Fabric MVCC validation serializes concurrent submits to the same key, so the version is
+ * auditable metadata rather than a concurrency guard.
  */
 public class RevRegEntryService {
 
@@ -65,7 +66,8 @@ public class RevRegEntryService {
      * @param signerDid DID resolved from verified JWT issuer claim
      * @param id unique identifier for the revocation registry entry
      * @param revRegDefId parent revocation registry definition identifier
-     * @param accumValue opaque genesis accumulator value computed off chain
+     * @param accumValue genesis accumulator value computed off chain (compressed BLS12-381 G1 point
+     *     as 96 lowercase hex characters)
      * @return created and persisted revocation registry entry record with version 0
      * @throws VdrException if validation fails, the parent definition is missing, the signer does
      *     not own the parent definition, or an entry already exists for the definition
@@ -80,7 +82,7 @@ public class RevRegEntryService {
         final String normalizedRevRegDefId =
                 validationService.requireNotBlank(revRegDefId, "revRegDefId");
         final String normalizedAccumValue =
-                validationService.requireNotBlank(accumValue, "accumValue");
+                validationService.requireCompressedG1Hex(accumValue, "accumValue");
 
         final RevRegDefRecord parent = revRegDefRegistry.get(normalizedRevRegDefId);
         if (parent == null) {
@@ -119,7 +121,8 @@ public class RevRegEntryService {
      *
      * @param signerDid DID resolved from verified JWT issuer claim
      * @param revRegDefId parent revocation registry definition identifier
-     * @param newAccumValue opaque replacement accumulator value computed off chain
+     * @param newAccumValue replacement accumulator value computed off chain (compressed BLS12-381
+     *     G1 point as 96 lowercase hex characters)
      * @return updated and persisted revocation registry entry record
      * @throws VdrException if validation fails, the entry or its parent definition is missing, or
      *     the signer does not own the parent definition
@@ -129,7 +132,7 @@ public class RevRegEntryService {
         final String normalizedRevRegDefId =
                 validationService.requireNotBlank(revRegDefId, "revRegDefId");
         final String normalizedAccumValue =
-                validationService.requireNotBlank(newAccumValue, "accumValue");
+                validationService.requireCompressedG1Hex(newAccumValue, "accumValue");
 
         final RevRegEntryRecord existing = revRegEntryRegistry.get(normalizedRevRegDefId);
         if (existing == null) {
@@ -173,8 +176,8 @@ public class RevRegEntryService {
     }
 
     /**
-     * Builds the accumulator event payload: everything an ALLOSAUR witness-refresh client needs in
-     * one delivery, without a follow-up query.
+     * Builds the accumulator event payload: everything a VB20 witness-refresh client needs in one
+     * delivery, without a follow-up query.
      *
      * @param record entry state after the mutation
      * @return payload with revRegDefId, accumValue, version, and txTime

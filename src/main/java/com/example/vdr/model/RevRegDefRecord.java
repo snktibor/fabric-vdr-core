@@ -7,10 +7,10 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Model-layer DTO representing a revocation registry definition ledger record.
  *
  * <p>The record captures issuer/credential-definition linkage, revocation capacity, and the public
- * cryptographic keys of the tails-free AnonCreds v2 (ALLOSAUR) revocation scheme. Published
- * revocation registry definitions are immutable per the AnonCreds specification. The {@code
- * publicKeys} field remains a {@link JsonNode} to preserve structured yet flexible key material
- * without constraining clients to a rigid Java subtype.
+ * cryptographic keys of the tails-free VB20 accumulator revocation scheme. Published revocation
+ * registry definitions are immutable per the AnonCreds specification. The {@code publicKeys} field
+ * remains a {@link JsonNode} to preserve structured yet flexible key material without constraining
+ * clients to a rigid Java subtype.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RevRegDefRecord {
@@ -21,7 +21,7 @@ public class RevRegDefRecord {
     private String issuerId;
     // Credential definition this registry revokes against.
     private String credDefId;
-    // Revocation scheme identifier (AnonCreds v2 ALLOSAUR).
+    // Allowlisted revocation scheme identifier (ANONCREDS_V2/VB20/1.0).
     private String type;
     // Public cryptographic revocation keys for verifiers (JSON).
     private JsonNode publicKeys;
@@ -44,7 +44,7 @@ public class RevRegDefRecord {
      * @param id unique revocation registry definition identifier
      * @param issuerId issuer DID responsible for the definition
      * @param credDefId referenced credential definition identifier
-     * @param type revocation scheme identifier (AnonCreds v2 ALLOSAUR)
+     * @param type allowlisted revocation scheme identifier
      * @param publicKeys public cryptographic revocation keys exposed to verifiers
      * @param maxCredNum maximum number of credentials the registry can track
      * @param ownerId signer DID recorded as owner

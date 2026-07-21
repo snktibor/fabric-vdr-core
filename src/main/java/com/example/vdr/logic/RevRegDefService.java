@@ -21,8 +21,9 @@ import java.util.Map;
  *
  * <p>This pure Java service orchestrates validation, ownership policy, and referential integrity
  * checks while delegating all ledger I/O to injected registries from the data-access layer.
- * Published revocation registry definitions follow the tails-free AnonCreds v2 (ALLOSAUR)
- * revocation scheme and are immutable once created: no update or deactivation transitions exist.
+ * Published revocation registry definitions follow the tails-free VB20 accumulator revocation
+ * scheme (Vitto–Biryukov, eprint 2020/777, as implemented by the AnonCreds v2 reference) and are
+ * immutable once created: no update or deactivation transitions exist.
  */
 public class RevRegDefService {
 
@@ -71,7 +72,8 @@ public class RevRegDefService {
      * @param id unique identifier for the revocation registry definition
      * @param issuerId issuer DID associated with the definition
      * @param credDefId referenced credential definition identifier
-     * @param type revocation scheme identifier (AnonCreds v2 ALLOSAUR)
+     * @param type revocation scheme identifier; must be allowlisted (see {@link
+     *     VdrTypes#REV_REG_DEF_TYPES})
      * @param publicKeysJson public revocation keys JSON object for the definition
      * @param maxCredNum maximum number of credentials the registry can track
      * @return created and persisted revocation registry definition record
@@ -91,8 +93,10 @@ public class RevRegDefService {
         final String normalizedIssuerId = validationService.requireNotBlank(issuerId, "issuerId");
         final String normalizedCredDefId =
                 validationService.requireNotBlank(credDefId, "credDefId");
-        final String normalizedType = validationService.requireNotBlank(type, "type");
-        final JsonNode publicKeys = validationService.parseJsonObject(publicKeysJson, "publicKeys");
+        final String normalizedType =
+                validationService.requireAllowedType(type, VdrTypes.REV_REG_DEF_TYPES, "type");
+        final JsonNode publicKeys =
+                validationService.requireRevocationPublicKeys(publicKeysJson, "publicKeys");
         if (maxCredNum <= 0) {
             throw VdrException.invalid("maxCredNum must be greater than zero");
         }

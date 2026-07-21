@@ -213,7 +213,8 @@ public class VdrContract implements ContractInterface {
      * @param id The unique identifier for the credential definition.
      * @param issuerId The DID of the issuer who owns this credential definition.
      * @param schemaId The ID of the schema this credential definition adheres to.
-     * @param type The type of credential definition (e.g., "BBS" for AnonCreds v2 BBS signatures).
+     * @param type The credential definition type; must be allowlisted (see {@link
+     *     com.example.vdr.logic.VdrTypes#CRED_DEF_TYPES}).
      * @param tag An arbitrary tag for the credential definition.
      * @param publicMetadataJson Optional public metadata associated with the credential definition
      *     as a JSON string.
@@ -282,16 +283,19 @@ public class VdrContract implements ContractInterface {
     /**
      * Creates a new Revocation Registry Definition on the ledger. A revocation registry definition
      * publishes the parameters, capacity, and public cryptographic keys used to revoke credentials
-     * under the tails-free AnonCreds v2 (ALLOSAUR) scheme. It is linked to a credential definition
-     * and an issuer DID, owned by the transaction caller, and strictly immutable once created.
+     * under the tails-free AnonCreds v2 VB20 accumulator scheme. It is linked to a credential
+     * definition and an issuer DID, owned by the transaction caller, and strictly immutable once
+     * created.
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier for the revocation registry definition.
      * @param issuerId The DID of the issuer who owns this revocation registry definition.
      * @param credDefId The ID of the credential definition this registry revokes against.
-     * @param type The revocation scheme identifier (AnonCreds v2 ALLOSAUR).
-     * @param publicKeysJson The public revocation keys associated with the definition as a JSON
-     *     object string.
+     * @param type The revocation scheme identifier; must be allowlisted (see {@link
+     *     com.example.vdr.logic.VdrTypes#REV_REG_DEF_TYPES}).
+     * @param publicKeysJson The public revocation keys JSON object; exactly one field
+     *     'revocationVerifyingKey' holding a compressed BLS12-381 G2 point as 192 lowercase hex
+     *     characters.
      * @param maxCredNum The maximum number of credentials the registry can track.
      * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the created {@link RevRegDefRecord}.
@@ -354,14 +358,15 @@ public class VdrContract implements ContractInterface {
 
     /**
      * Creates the genesis Revocation Registry Entry for a revocation registry definition. The entry
-     * stores the opaque, off-chain-computed AnonCreds v2 (ALLOSAUR) accumulator value verbatim —
-     * never a bit-string of revoked indices — and is the only mutable record type in the VDR. Only
-     * the owner of the parent revocation registry definition may create it.
+     * stores the off-chain-computed VB20 accumulator value (a compressed BLS12-381 G1 point in
+     * canonical hex form) — never a bit-string of revoked indices — and is the only mutable record
+     * type in the VDR. Only the owner of the parent revocation registry definition may create it.
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier for the revocation registry entry.
      * @param revRegDefId The ID of the parent revocation registry definition.
-     * @param accumValue The opaque genesis accumulator value computed off chain by the issuer.
+     * @param accumValue The genesis accumulator value computed off chain by the issuer: a
+     *     compressed BLS12-381 G1 point as exactly 96 lowercase hex characters.
      * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the created {@link RevRegEntryRecord}.
      * @throws ChaincodeException If validation fails, the parent revocation registry definition is
@@ -396,7 +401,8 @@ public class VdrContract implements ContractInterface {
      *
      * @param ctx The custom SSI transaction context.
      * @param revRegDefId The ID of the parent revocation registry definition whose entry to update.
-     * @param accumValue The opaque replacement accumulator value computed off chain by the issuer.
+     * @param accumValue The replacement accumulator value computed off chain by the issuer: a
+     *     compressed BLS12-381 G1 point as exactly 96 lowercase hex characters.
      * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the updated {@link RevRegEntryRecord}.
      * @throws ChaincodeException If validation fails, the entry or its parent definition is

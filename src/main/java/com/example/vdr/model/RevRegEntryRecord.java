@@ -6,11 +6,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * Model-layer DTO representing a revocation registry entry ledger record.
  *
  * <p>The record holds the current cryptographic accumulator value for exactly one revocation
- * registry definition under the tails-free AnonCreds v2 (ALLOSAUR) revocation scheme. The {@code
- * accumValue} field is an opaque, off-chain-computed digest stored verbatim: the chaincode never
- * parses it and never derives it. There is deliberately no bit-string or status-list field, which
- * would reintroduce a correlatable v1 construct. Unlike other VDR records, the entry is mutable:
- * each revocation replaces the accumulator value in place and increments the audit {@code version}.
+ * registry definition under the tails-free VB20 accumulator revocation scheme. The {@code
+ * accumValue} field is the off-chain-computed compressed BLS12-381 G1 accumulator point in
+ * canonical lowercase-hex form, stored verbatim after format validation: the chaincode never
+ * performs accumulator cryptography on it. There is deliberately no bit-string or status-list
+ * field, which would reintroduce a correlatable v1 construct. Unlike other VDR records, the entry
+ * is mutable: each revocation replaces the accumulator value in place and increments the audit
+ * {@code version}.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RevRegEntryRecord {
@@ -19,7 +21,7 @@ public class RevRegEntryRecord {
     private String id;
     // Parent revocation registry definition this entry belongs to.
     private String revRegDefId;
-    // Opaque off-chain-computed accumulator value, stored verbatim.
+    // Off-chain-computed compressed G1 accumulator point (lowercase hex), stored verbatim.
     private String accumValue;
     // Monotonically increasing audit counter; 0 at genesis, +1 per update.
     private long version;
@@ -41,7 +43,7 @@ public class RevRegEntryRecord {
      *
      * @param id unique revocation registry entry identifier
      * @param revRegDefId parent revocation registry definition identifier
-     * @param accumValue opaque accumulator value submitted by the issuer
+     * @param accumValue accumulator value submitted by the issuer (compressed G1 point as hex)
      * @param version monotonically increasing audit counter
      * @param ownerId owner DID copied from the parent revocation registry definition
      */
@@ -95,7 +97,7 @@ public class RevRegEntryRecord {
     }
 
     /**
-     * Returns the opaque accumulator value currently published for verifiers.
+     * Returns the accumulator value currently published for verifiers.
      *
      * @return verbatim off-chain-computed accumulator value
      */
@@ -104,7 +106,7 @@ public class RevRegEntryRecord {
     }
 
     /**
-     * Sets the opaque accumulator value published for verifiers.
+     * Sets the accumulator value published for verifiers.
      *
      * @param accumValue verbatim off-chain-computed accumulator value
      */
