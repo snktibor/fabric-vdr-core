@@ -58,13 +58,12 @@ public class RevRegEntryService {
      * Creates and stores the genesis revocation registry entry for a definition.
      *
      * <p>The method enforces deterministic preconditions before persistence: required input fields,
-     * UUIDv7-based id format, parent revocation registry definition existence, owner-only
-     * authorization against the parent's recorded owner, and one-entry-per-definition uniqueness.
-     * The {@code signerDid} argument is resolved from the verified DID-JWT upstream by the contract
-     * layer; no token verification happens here.
+     * parent revocation registry definition existence, owner-only authorization against the
+     * parent's recorded owner, and one-entry-per-definition uniqueness. The {@code signerDid}
+     * argument is resolved from the verified DID-JWT upstream by the contract layer; no token
+     * verification happens here.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
-     * @param id unique identifier for the revocation registry entry
      * @param revRegDefId parent revocation registry definition identifier
      * @param accumValue genesis accumulator value computed off chain (compressed BLS12-381 G1 point
      *     as 96 lowercase hex characters)
@@ -73,12 +72,7 @@ public class RevRegEntryService {
      *     not own the parent definition, or an entry already exists for the definition
      */
     public RevRegEntryRecord createRevRegEntry(
-            final String signerDid,
-            final String id,
-            final String revRegDefId,
-            final String accumValue) {
-        final String normalizedId =
-                validationService.requireValidEntityId(id, "revregentry:vdr:", "id");
+            final String signerDid, final String revRegDefId, final String accumValue) {
         final String normalizedRevRegDefId =
                 validationService.requireNotBlank(revRegDefId, "revRegDefId");
         final String normalizedAccumValue =
@@ -99,12 +93,7 @@ public class RevRegEntryService {
         }
 
         final RevRegEntryRecord revRegEntryRecord =
-                new RevRegEntryRecord(
-                        normalizedId,
-                        normalizedRevRegDefId,
-                        normalizedAccumValue,
-                        0L,
-                        parent.getOwnerId());
+                new RevRegEntryRecord(normalizedRevRegDefId, normalizedAccumValue, 0L);
         revRegEntryRecord.setCreatedAt(txTimeIso());
         revRegEntryRecord.setUpdatedAt(txTimeIso());
 

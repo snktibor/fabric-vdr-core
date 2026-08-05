@@ -363,8 +363,8 @@ public class VdrContract implements ContractInterface {
      * type in the VDR. Only the owner of the parent revocation registry definition may create it.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the revocation registry entry.
-     * @param revRegDefId The ID of the parent revocation registry definition.
+     * @param revRegDefId The ID of the parent revocation registry definition, which is also the
+     *     entry's own identity: exactly one entry exists per definition.
      * @param accumValue The genesis accumulator value computed off chain by the issuer: a
      *     compressed BLS12-381 G1 point as exactly 96 lowercase hex characters.
      * @param jwt The JWT token containing the issuer claim for authentication and authorization.
@@ -375,7 +375,6 @@ public class VdrContract implements ContractInterface {
     @Transaction(intent = Transaction.TYPE.SUBMIT)
     public String createRevRegEntry(
             final SsiContext ctx,
-            final String id,
             final String revRegDefId,
             final String accumValue,
             final String jwt) {
@@ -386,7 +385,6 @@ public class VdrContract implements ContractInterface {
                                     .getRevRegEntryService()
                                     .createRevRegEntry(
                                             requireSignerDid(ctx, jwt, "createRevRegEntry"),
-                                            id,
                                             revRegDefId,
                                             accumValue);
                     return JsonUtil.toCanonicalJson(revRegEntryRecord);

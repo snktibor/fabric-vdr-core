@@ -13,20 +13,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * field, which would reintroduce a correlatable v1 construct. Unlike other VDR records, the entry
  * is mutable: each revocation replaces the accumulator value in place and increments the audit
  * {@code version}.
+ *
+ * <p>The entry carries no identifier and no owner of its own. It exists one-to-one with its parent
+ * revocation registry definition, so {@code revRegDefId} is both its identity and its storage key,
+ * and every authorization decision reads the owner recorded on that parent definition.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RevRegEntryRecord {
 
-    // Revocation registry entry identifier.
-    private String id;
     // Parent revocation registry definition this entry belongs to.
     private String revRegDefId;
     // Off-chain-computed compressed G1 accumulator point (lowercase hex), stored verbatim.
     private String accumValue;
     // Monotonically increasing audit counter; 0 at genesis, +1 per update.
     private long version;
-    // Recorded owner DID copied from the parent revocation registry definition.
-    private String ownerId;
     // Client-declared creation time (ISO-8601); audit metadata, set server-side.
     private String createdAt;
     // Client-declared last-mutation time (ISO-8601); audit metadata, set server-side.
@@ -38,44 +38,18 @@ public class RevRegEntryRecord {
     /**
      * Creates a revocation registry entry record.
      *
-     * <p>Services use this constructor when persisting the genesis entry so ownership metadata is
-     * copied consistently from the parent revocation registry definition.
+     * <p>Services use this constructor when persisting the genesis entry; the audit timestamps are
+     * applied afterwards from the transaction context.
      *
-     * @param id unique revocation registry entry identifier
      * @param revRegDefId parent revocation registry definition identifier
      * @param accumValue accumulator value submitted by the issuer (compressed G1 point as hex)
      * @param version monotonically increasing audit counter
-     * @param ownerId owner DID copied from the parent revocation registry definition
      */
     public RevRegEntryRecord(
-            final String id,
-            final String revRegDefId,
-            final String accumValue,
-            final long version,
-            final String ownerId) {
-        this.id = id;
+            final String revRegDefId, final String accumValue, final long version) {
         this.revRegDefId = revRegDefId;
         this.accumValue = accumValue;
         this.version = version;
-        this.ownerId = ownerId;
-    }
-
-    /**
-     * Returns the revocation registry entry identifier.
-     *
-     * @return revocation registry entry id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Updates the record identifier, typically during JSON binding.
-     *
-     * @param id revocation registry entry identifier to assign
-     */
-    public void setId(final String id) {
-        this.id = id;
     }
 
     /**
@@ -130,24 +104,6 @@ public class RevRegEntryRecord {
      */
     public void setVersion(final long version) {
         this.version = version;
-    }
-
-    /**
-     * Returns the owner DID recorded for authorization checks.
-     *
-     * @return owner DID string
-     */
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    /**
-     * Sets the owner DID recorded for authorization checks.
-     *
-     * @param ownerId owner DID value
-     */
-    public void setOwnerId(final String ownerId) {
-        this.ownerId = ownerId;
     }
 
     /**
