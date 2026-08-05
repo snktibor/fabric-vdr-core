@@ -100,6 +100,20 @@ public class VdrException extends RuntimeException {
     }
 
     /**
+     * Creates an exception for a chaincode invariant that only a code defect can break.
+     *
+     * <p>Unlike the other factories this one never reflects caller input: it marks a condition the
+     * contract's own logic must uphold, failing the transaction outright rather than letting the
+     * violation pass silently.
+     *
+     * @param message description of the violated invariant
+     * @return a {@link VdrException} with {@code INTERNAL} error code
+     */
+    public static VdrException internal(final String message) {
+        return new VdrException("INTERNAL", message);
+    }
+
+    /**
      * Returns the stable domain error code associated with this exception.
      *
      * <p>Contract responses can use this value to keep client-side error handling deterministic

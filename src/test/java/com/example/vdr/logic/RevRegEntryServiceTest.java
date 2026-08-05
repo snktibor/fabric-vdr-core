@@ -104,7 +104,7 @@ class RevRegEntryServiceTest {
         assertEquals("revregdef-1", payload.get("revRegDefId"));
         assertEquals(GENESIS_ACCUM, payload.get("accumValue"));
         assertEquals(0L, payload.get("version"));
-        assertEquals(TX_TIME.toString(), payload.get("txTime"));
+        assertEquals(3, payload.size());
     }
 
     /** Verifies creation fails when the parent revocation registry definition does not exist. */
@@ -181,7 +181,7 @@ class RevRegEntryServiceTest {
         assertEquals("revregdef-1", payload.get("revRegDefId"));
         assertEquals(NEXT_ACCUM, payload.get("accumValue"));
         assertEquals(1L, payload.get("version"));
-        assertEquals(TX_TIME.toString(), payload.get("txTime"));
+        assertEquals(3, payload.size());
     }
 
     /** Verifies updates from a non-owner signer are rejected without any ledger write. */

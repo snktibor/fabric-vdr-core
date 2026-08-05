@@ -168,15 +168,19 @@ public class RevRegEntryService {
      * Builds the accumulator event payload: everything a VB20 witness-refresh client needs in one
      * delivery, without a follow-up query.
      *
+     * <p>No timestamp is carried. The only time value available on chain is the submitter's
+     * unattested channel-header time, which a subscriber receiving it "from the chain" would
+     * reasonably mistake for network-attested; {@code version} orders entry states and subscribers
+     * observe delivery themselves.
+     *
      * @param record entry state after the mutation
-     * @return payload with revRegDefId, accumValue, version, and txTime
+     * @return payload with revRegDefId, accumValue, and version
      */
     private Map<String, Object> entryEventPayload(final RevRegEntryRecord record) {
         return Map.of(
                 "revRegDefId", record.getRevRegDefId(),
                 "accumValue", record.getAccumValue(),
-                "version", record.getVersion(),
-                "txTime", txTimeIso());
+                "version", record.getVersion());
     }
 
     /**
