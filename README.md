@@ -73,7 +73,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 115 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 114 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -172,7 +172,7 @@ definition, so the parent's id addresses it unambiguously.
 | `createRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue` (compressed G1 hex, see [below](#wire-encodings-and-type-identifiers)), `jwt` | created entry record |
 | `updateRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue`, `jwt` | updated entry record (audit `version` incremented) |
 | `getRevRegEntry` | EVALUATE | `revRegDefId` | entry record |
-| `getRevRegEntryHistory` | EVALUATE | `revRegDefId` | JSON array of all entry revisions, **oldest first**: `{txId, timestamp, accumValue, version}` per revision (a hypothetical future deletion would appear as `{txId, timestamp, deleted:true}`); empty array if no entry was ever created |
+| `getRevRegEntryHistory` | EVALUATE | `revRegDefId` | JSON array of all entry revisions, **oldest first**, every element the same shape: `{txId, timestamp, deleted, accumValue, version}` (a hypothetical future deletion sets `deleted: true` and both record fields to `null`); empty array if no entry was ever created |
 
 Clients observe accumulator changes by subscribing to the
 [`RevRegEntryUpdated` chaincode event](#chaincode-events); `getRevRegEntryHistory`
@@ -238,10 +238,11 @@ those bytes, chosen to match the reference serde exactly.
 ## Chaincode events
 
 Every `SUBMIT` transaction emits exactly one chaincode event (Fabric supports one event
-per transaction). Events are delivered to Gateway subscribers **with the committed
-block**: a transaction that fails endorsement or validation delivers nothing, so an
-observed event always reflects committed state. Payloads are canonical JSON (sorted
-keys, deterministic across endorsers).
+per transaction, and a second `setEvent` would silently replace the first — the emitter
+is one-shot and fails the transaction rather than allow that). Events are delivered to
+Gateway subscribers **with the committed block**: a transaction that fails endorsement
+or validation delivers nothing, so an observed event always reflects committed state.
+Payloads are canonical JSON (sorted keys, deterministic across endorsers).
 
 | Event | Emitted by | Payload |
 |---|---|---|
@@ -251,32 +252,33 @@ keys, deterministic across endorsers).
 | `SchemaCreated` | `createSchema` | `{id, issuerId}` |
 | `CredDefCreated` | `createCredDef` | `{id, issuerId, schemaId}` |
 | `RevRegDefCreated` | `createRevRegDef` | `{id, issuerId, credDefId}` |
-| `RevRegEntryCreated` | `createRevRegEntry` | `{revRegDefId, accumValue, version, txTime}` |
-| `RevRegEntryUpdated` | `updateRevRegEntry` | `{revRegDefId, accumValue, version, txTime}` |
+| `RevRegEntryCreated` | `createRevRegEntry` | `{revRegDefId, accumValue, version}` |
+| `RevRegEntryUpdated` | `updateRevRegEntry` | `{revRegDefId, accumValue, version}` |
 
 `RevRegEntryUpdated` is the event holders of VB20-accumulator-backed credentials must
 subscribe to: after
 every accumulator change a holder has to refresh their witness or they can no longer
 produce a non-revocation proof. The payload carries the new accumulator value (a
-fixed-size digest) so no follow-up query is needed. `EVALUATE` transactions emit
-nothing.
+fixed-size digest) so no follow-up query is needed. It carries no timestamp: the only
+time value available on chain is the submitter's unattested channel-header time, which
+a subscriber receiving it "from the chain" would reasonably mistake for network-attested
+— `version` orders entry states, and subscribers observe delivery themselves.
+`EVALUATE` transactions emit nothing.
 
 ## Record timestamps
 
 Every record carries `createdAt`, and the two mutable record types (DID documents and
-revocation registry entries) also carry `updatedAt`, as ISO-8601 strings.
+revocation registry entries) also carry `updatedAt`, as ISO-8601 strings. Both are
+service-controlled and always present: any client-supplied value in a submitted payload
+is overwritten, and reads never return `null` for them. An `updateDid` carries the
+original `createdAt` over to the replacement document, so an update cannot restamp the
+record's creation time.
 
-> **Trust caveat.** These values (and the `txTime` in event payloads / `timestamp` in
-> history revisions) come from the submitting client's channel-header transaction
-> timestamp: deterministic across peers, but **chosen by the submitter and not attested
-> by the network**. They are audit metadata only — do not build freshness or ordering
-> guarantees on them. Ordering within a revocation registry is what the entry `version`
-> is for.
-
-Records written before timestamps were introduced have no stored value; reads return
-`"createdAt": null` (and `"updatedAt": null`) for them, and an update to such a record
-stamps `updatedAt` while leaving `createdAt` null rather than fabricating a creation
-time.
+> **Trust caveat.** These values (and the `timestamp` in history revisions) come from the
+> submitting client's channel-header transaction timestamp: deterministic across peers,
+> but **chosen by the submitter and not attested by the network**. They are audit
+> metadata only — do not build freshness or ordering guarantees on them. Ordering within
+> a revocation registry is what the entry `version` is for.
 
 ## Identifiers
 
@@ -307,8 +309,10 @@ Identity is two-level:
     issuer's DID document (fragment `#key-1` style kids are expanded).
   - The verification method must be `JsonWebKey2020` with an EC **P-256** JWK — this is
     currently required of *every* verification method in a DID document.
-  - `iss` must equal the issuer DID, which must exist and be `ACTIVE` on the ledger;
-    `iat`, `nbf` and `exp` are mandatory and checked against the transaction timestamp.
+  - `iss` names the issuer DID, which must exist and be `ACTIVE` on the ledger — the
+    signing key is resolved from that document, so a valid signature *is* the proof of
+    issuance; `iat`, `nbf` and `exp` are mandatory and checked against the transaction
+    timestamp.
   - Tokens are **deployment-bound, transaction-bound and one-time use**:
     - `aud` must contain the fixed audience `vdr-network:vdrchaincode`.
     - The `txd` claim must equal the base64url (unpadded) SHA-256 digest of the
@@ -356,6 +360,7 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `NOT_FOUND` | the requested object does not exist |
 | `REFERENCE_MISSING` | a referenced object (schema, credDef, …) does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed |
+| `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
 ## Architecture
 
