@@ -112,9 +112,9 @@ public class RevRegEntryRecord {
      * <p>The value is the submitting client's channel-header transaction time: deterministic across
      * peers but chosen by the submitter, not attested by the network. Audit metadata only — never
      * build freshness or ordering guarantees on it; ordering of entry revisions is what {@code
-     * version} is for. {@code null} for records written before timestamps were introduced.
+     * version} is for.
      *
-     * @return ISO-8601 creation time, or {@code null} for pre-timestamp records
+     * @return ISO-8601 creation time, never {@code null} for a persisted record
      */
     public String getCreatedAt() {
         return createdAt;
@@ -133,9 +133,9 @@ public class RevRegEntryRecord {
      * Returns the last accumulator-replacement timestamp (ISO-8601).
      *
      * <p>Same trust caveat as {@link #getCreatedAt()}: client-declared channel-header time, audit
-     * metadata only. {@code null} for records written before timestamps were introduced.
+     * metadata only.
      *
-     * @return ISO-8601 last-mutation time, or {@code null} for pre-timestamp records
+     * @return ISO-8601 last-mutation time, never {@code null} for a persisted record
      */
     public String getUpdatedAt() {
         return updatedAt;

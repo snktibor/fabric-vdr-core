@@ -1,7 +1,6 @@
 package com.example.vdr.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -117,13 +116,15 @@ class DidServiceTest {
                 VdrException.class, () -> didService.deactivateDid("other", "did:example:123"));
     }
 
-    /** Verifies DID update preserves owner/status and writes replacement document. */
+    /** Verifies DID update preserves owner, status and createdAt, writing the replacement. */
     @Test
     void updateDidActiveOwnerPersistsUpdatedDocument() {
+        final String createdAt = TX_TIME.minusSeconds(3600).toString();
         final DidDocument existing = new DidDocument();
         existing.setId("did:example:123");
         existing.setOwnerId("owner");
         existing.setStatus(RecordStatus.ACTIVE);
+        existing.setCreatedAt(createdAt);
         when(didRegistry.get("did:example:123")).thenReturn(existing);
 
         final String json = didJson("did:example:123");
@@ -135,25 +136,9 @@ class DidServiceTest {
         assertEquals("owner", stored.getOwnerId());
         assertEquals(RecordStatus.ACTIVE, stored.getStatus());
         assertEquals("did:example:123", stored.getController());
+        assertEquals(createdAt, stored.getCreatedAt());
         assertEquals(TX_TIME.toString(), stored.getUpdatedAt());
         verify(eventEmitter).emit(eq(VdrEvents.DID_UPDATED), any());
-    }
-
-    /** Verifies update preserves a pre-timestamp record's null createdAt instead of faking one. */
-    @Test
-    void updateDidPreservesNullCreatedAtOfLegacyRecords() {
-        final DidDocument existing = new DidDocument();
-        existing.setId("did:example:123");
-        existing.setOwnerId("owner");
-        existing.setStatus(RecordStatus.ACTIVE);
-        when(didRegistry.get("did:example:123")).thenReturn(existing);
-
-        didService.updateDid("owner", "did:example:123", didJson("did:example:123"));
-
-        final ArgumentCaptor<DidDocument> captor = ArgumentCaptor.forClass(DidDocument.class);
-        verify(didRegistry).put(eq("did:example:123"), captor.capture());
-        assertNull(captor.getValue().getCreatedAt());
-        assertEquals(TX_TIME.toString(), captor.getValue().getUpdatedAt());
     }
 
     /** Verifies deactivation stamps updatedAt and emits the lifecycle event. */

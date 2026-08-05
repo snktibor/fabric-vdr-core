@@ -196,10 +196,9 @@ public class CredentialDefinitionRecord {
      *
      * <p>The value is the submitting client's channel-header transaction time: deterministic across
      * peers but chosen by the submitter, not attested by the network. Audit metadata only — never
-     * build freshness or ordering guarantees on it. {@code null} for records written before
-     * timestamps were introduced.
+     * build freshness or ordering guarantees on it.
      *
-     * @return ISO-8601 creation time, or {@code null} for pre-timestamp records
+     * @return ISO-8601 creation time, never {@code null} for a persisted record
      */
     public String getCreatedAt() {
         return createdAt;

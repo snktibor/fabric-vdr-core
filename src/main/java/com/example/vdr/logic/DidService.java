@@ -163,8 +163,8 @@ public class DidService {
 
         updated.setOwnerId(existing.getOwnerId());
         updated.setStatus(existing.getStatus());
-        // Preserve the original creation time (client-supplied values are overwritten); records
-        // written before timestamps existed keep a null createdAt rather than a fabricated one.
+        // Carry the original creation time over to the replacement document; a client-supplied
+        // createdAt in the payload is discarded, so an update can never restamp the record.
         updated.setCreatedAt(existing.getCreatedAt());
         updated.setUpdatedAt(txTimeIso());
         didRegistry.put(normalizedId, updated);
