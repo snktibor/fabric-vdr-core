@@ -549,7 +549,7 @@ class VdrContractTest {
                 .updateRevRegEntry("caller", "revregdef-1", TestVectors.G1_TIMES_2);
     }
 
-    /** Verifies entry history serializes revisions oldest-first with tombstones flagged. */
+    /** Verifies entry history serializes revisions oldest-first in one uniform revision shape. */
     @Test
     void getRevRegEntryHistoryReturnsRevisionArray() {
         final VdrContract contract = new VdrContract();
@@ -577,19 +577,24 @@ class VdrContractTest {
         final ObjectNode first = JsonUtil.objectNode();
         first.put("txId", "tx-1");
         first.put("timestamp", firstTime.toString());
+        first.put("deleted", false);
         first.put("accumValue", TestVectors.G1_GENERATOR);
         first.put("version", 0L);
         expected.add(first);
         final ObjectNode second = JsonUtil.objectNode();
         second.put("txId", "tx-2");
         second.put("timestamp", secondTime.toString());
+        second.put("deleted", false);
         second.put("accumValue", TestVectors.G1_TIMES_2);
         second.put("version", 1L);
         expected.add(second);
+        // A tombstone keeps the same field set: deleted flips, the record fields go JSON null.
         final ObjectNode third = JsonUtil.objectNode();
         third.put("txId", "tx-3");
         third.put("timestamp", secondTime.toString());
         third.put("deleted", true);
+        third.putNull("accumValue");
+        third.putNull("version");
         expected.add(third);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
     }

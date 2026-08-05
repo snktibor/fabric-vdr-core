@@ -447,11 +447,12 @@ public class VdrContract implements ContractInterface {
      * verifier can use this to resolve the accumulator value that was current at a given point in
      * time, since entry updates overwrite the value in place.
      *
-     * <p>Each array element carries {@code txId}, {@code timestamp} (the writing client's declared
-     * transaction time — audit metadata, not attested), {@code accumValue} and {@code version}.
-     * Should a future revision ever delete the entry, that revision is rendered as {@code
-     * {"deleted":true}} with txId and timestamp but no record fields. An empty array means no entry
-     * was ever created for the definition.
+     * <p>Every array element has the same shape, so a client binds against one schema: {@code
+     * txId}, {@code timestamp} (the writing client's declared transaction time — audit metadata,
+     * not attested), {@code deleted}, {@code accumValue} and {@code version}. Should a future
+     * revision ever delete the entry, that revision carries {@code "deleted":true} and JSON {@code
+     * null} for both record fields. An empty array means no entry was ever created for the
+     * definition.
      *
      * @param ctx The custom SSI transaction context.
      * @param revRegDefId The ID of the parent revocation registry definition whose entry history to
@@ -475,8 +476,10 @@ public class VdrContract implements ContractInterface {
                                 revision.getTimestamp() == null
                                         ? null
                                         : revision.getTimestamp().toString());
+                        item.put("deleted", revision.isDeleted());
                         if (revision.isDeleted()) {
-                            item.put("deleted", true);
+                            item.putNull("accumValue");
+                            item.putNull("version");
                         } else {
                             item.put("accumValue", revision.getValue().getAccumValue());
                             item.put("version", revision.getValue().getVersion());
