@@ -43,24 +43,19 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
 
     /**
      * The chaincode addresses an entry by its parent revocation registry definition id (one entry
-     * per definition), so the parent id is recorded as the effective id for Gherkin resolution; the
-     * entry's own UUIDv7 id is submitted at create time and preserved in the stored payload.
+     * per definition), so the parent id is recorded as the effective id for Gherkin resolution. The
+     * entry has no id of its own: the {@code rawId} written in the feature file is a scenario
+     * handle only and is never submitted to the ledger.
      */
     @Override
     public void create(final String rawId) {
         final String revRegDefId = ensureRevRegDef();
-        final String revRegEntryId = uniqueId(rawId);
         context.setEffectiveId(rawId, revRegDefId);
 
         final String ownerDid = context.requireOwner(revRegDefId);
         final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
         executor.submitSigned(
-                "createRevRegEntry",
-                ownerDid,
-                keyPair,
-                revRegEntryId,
-                revRegDefId,
-                GENESIS_ACCUM_VALUE);
+                "createRevRegEntry", ownerDid, keyPair, revRegDefId, GENESIS_ACCUM_VALUE);
     }
 
     @Override
