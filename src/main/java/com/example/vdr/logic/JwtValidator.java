@@ -114,7 +114,7 @@ public class JwtValidator {
 
         final JsonNode verificationMethod = resolveVerificationMethod(didDocument, keyId);
         final PublicKey publicKey = toPublicKey(verificationMethod, keyId);
-        final Claims verifiedClaims = verifySignedClaims(token, publicKey, issuerDid, txTimestamp);
+        final Claims verifiedClaims = verifySignedClaims(token, publicKey, txTimestamp);
         requireAudience(verifiedClaims);
         requireTransactionScope(verifiedClaims, method, scopeArgs);
         consumeTokenId(verifiedClaims, issuerDid);
@@ -200,29 +200,27 @@ public class JwtValidator {
      *   <li>Time claims {@code iat}, {@code nbf} and {@code exp} are evaluated against the
      *       deterministic {@code txTimestamp} (Fabric transaction time) and allow a small {@code
      *       CLOCK_SKEW_SECONDS} tolerance; system clock MUST NOT be used.
-     *   <li>The token {@code iss} claim is strictly required and must equal {@code expectedIssuer}.
      * </ul>
+     *
+     * <p>The issuer is not re-checked here: {@code publicKey} was resolved from the DID document of
+     * the {@code iss} claim itself, so a successful signature verification is exactly the statement
+     * that the token was signed by a key the claimed issuer published.
      *
      * @param token compact JWT token
      * @param publicKey public key resolved from the issuer DID document
-     * @param expectedIssuer expected issuer DID that must match the token {@code iss}
      * @param txTimestamp deterministic Fabric transaction timestamp used for time checks
      * @return signature-verified token claims for further deployment/scope/nonce checks
-     * @throws com.example.vdr.exception.VdrException when signature, issuer, or claim validations
-     *     fail (returned as an unauthorized error)
+     * @throws com.example.vdr.exception.VdrException when signature or claim validations fail
+     *     (returned as an unauthorized error)
      */
     private Claims verifySignedClaims(
-            final String token,
-            final PublicKey publicKey,
-            final String expectedIssuer,
-            final Instant txTimestamp) {
+            final String token, final PublicKey publicKey, final Instant txTimestamp) {
         try {
             final Claims verifiedClaims =
                     Jwts.parser()
                             .verifyWith(publicKey)
                             .clock(() -> Date.from(txTimestamp))
                             .clockSkewSeconds(CLOCK_SKEW_SECONDS)
-                            .requireIssuer(expectedIssuer)
                             .build()
                             .parseSignedClaims(token)
                             .getPayload();

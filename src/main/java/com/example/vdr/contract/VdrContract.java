@@ -48,8 +48,8 @@ public class VdrContract implements ContractInterface {
 
     /**
      * Registers a new Decentralized Identifier (DID) document on the ledger. This transaction
-     * validates the input, ensures the DID does not already exist, and assigns ownership to the
-     * transaction caller.
+     * validates the input, ensures the DID does not already exist, and records the DID itself as
+     * its own owner — registration is open and ownership is self-assigned first come, first served.
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier for the DID.

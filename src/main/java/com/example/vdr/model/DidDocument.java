@@ -35,31 +35,6 @@ public class DidDocument {
     public DidDocument() {}
 
     /**
-     * Creates a fully populated DID document record.
-     *
-     * @param id DID identifier
-     * @param controller optional controller DID or authority reference
-     * @param verificationMethod verification method entries as JSON objects
-     * @param service service endpoint entries as JSON objects
-     * @param ownerId transaction caller identity recorded as owner
-     * @param status lifecycle status value
-     */
-    public DidDocument(
-            final String id,
-            final String controller,
-            final List<JsonNode> verificationMethod,
-            final List<JsonNode> service,
-            final String ownerId,
-            final RecordStatus status) {
-        this.id = id;
-        this.controller = controller;
-        this.verificationMethod = verificationMethod;
-        this.service = service;
-        this.ownerId = ownerId;
-        this.status = status;
-    }
-
-    /**
      * Returns the DID identifier.
      *
      * @return DID id value

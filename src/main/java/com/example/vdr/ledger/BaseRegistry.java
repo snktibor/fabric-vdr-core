@@ -64,16 +64,6 @@ public abstract class BaseRegistry<T> {
     }
 
     /**
-     * Reads the raw JSON string state for debugging or direct output.
-     *
-     * @param id The unique identifier.
-     * @return The raw JSON stored on the ledger.
-     */
-    public String getJson(final String id) {
-        return stub.getStringState(compositeKey(id));
-    }
-
-    /**
      * Serializes a domain object and writes it to the ledger. This method uses {@link JsonUtil} to
      * ensure canonical formatting of the stored data.
      *
