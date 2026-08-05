@@ -164,11 +164,12 @@ transactions are unauthenticated reads. The `list*` transactions return a JSON a
 
 The entry is the only mutable record type: it holds the issuer's current accumulator
 value for one revocation registry definition, and is stored keyed by that parent
-definition's id.
+definition's id. It has no identifier of its own — exactly one entry exists per
+definition, so the parent's id addresses it unambiguously.
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createRevRegEntry` | SUBMIT | `id`, `revRegDefId`, `accumValue` (compressed G1 hex, see [below](#wire-encodings-and-type-identifiers)), `jwt` | created entry record |
+| `createRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue` (compressed G1 hex, see [below](#wire-encodings-and-type-identifiers)), `jwt` | created entry record |
 | `updateRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue`, `jwt` | updated entry record (audit `version` incremented) |
 | `getRevRegEntry` | EVALUATE | `revRegDefId` | entry record |
 | `getRevRegEntryHistory` | EVALUATE | `revRegDefId` | JSON array of all entry revisions, **oldest first**: `{txId, timestamp, accumValue, version}` per revision (a hypothetical future deletion would appear as `{txId, timestamp, deleted:true}`); empty array if no entry was ever created |
@@ -287,8 +288,10 @@ Registry object ids are URN-style strings with a fixed prefix and a **UUIDv7** s
 | Schema | `schema:vdr:<UUIDv7>` |
 | Credential definition | `creddef:vdr:<UUIDv7>` |
 | Revocation registry definition | `revregdef:vdr:<UUIDv7>` |
-| Revocation registry entry | `revregentry:vdr:<UUIDv7>` |
 | DID | any non-blank string (generic `did:<method>:<id>` syntax is **not yet enforced**) |
+
+Revocation registry entries have no id of their own: they are addressed by their parent
+revocation registry definition's id.
 
 ## Authentication and authorization
 
