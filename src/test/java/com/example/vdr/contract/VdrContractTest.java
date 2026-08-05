@@ -510,27 +510,18 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
-        erecord.setId("revregentry-1");
         erecord.setRevRegDefId("revregdef-1");
         erecord.setAccumValue(TestVectors.G1_GENERATOR);
         erecord.setVersion(0L);
-        erecord.setOwnerId("caller");
 
-        stubSignerDid(
-                jwt,
-                "caller",
-                "createRevRegEntry",
-                "revregentry-1",
-                "revregdef-1",
-                TestVectors.G1_GENERATOR);
+        stubSignerDid(jwt, "caller", "createRevRegEntry", "revregdef-1", TestVectors.G1_GENERATOR);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
         when(revRegEntryService.createRevRegEntry(
-                        "caller", "revregentry-1", "revregdef-1", TestVectors.G1_GENERATOR))
+                        "caller", "revregdef-1", TestVectors.G1_GENERATOR))
                 .thenReturn(erecord);
 
         final String result =
-                contract.createRevRegEntry(
-                        ctx, "revregentry-1", "revregdef-1", TestVectors.G1_GENERATOR, jwt);
+                contract.createRevRegEntry(ctx, "revregdef-1", TestVectors.G1_GENERATOR, jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
     }
@@ -541,11 +532,9 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
-        erecord.setId("revregentry-1");
         erecord.setRevRegDefId("revregdef-1");
         erecord.setAccumValue(TestVectors.G1_TIMES_2);
         erecord.setVersion(1L);
-        erecord.setOwnerId("caller");
 
         stubSignerDid(jwt, "caller", "updateRevRegEntry", "revregdef-1", TestVectors.G1_TIMES_2);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
@@ -630,7 +619,6 @@ class VdrContractTest {
     void getRevRegEntryReturnsCanonicalJson() {
         final VdrContract contract = new VdrContract();
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
-        erecord.setId("revregentry-2");
         erecord.setRevRegDefId("revregdef-1");
         erecord.setAccumValue(TestVectors.G1_GENERATOR);
         erecord.setVersion(0L);
