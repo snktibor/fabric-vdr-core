@@ -115,12 +115,15 @@ mvn -Pe2e verify -Dvdr.e2e.cryptoPath=/path/to/crypto-config/peerOrganizations/o
 
 ## Transaction reference
 
-Contract name: `VdrContract`. All parameters and return values are strings; JSON
-payloads are passed as serialized JSON strings, and every response is canonical
-(deterministically ordered) JSON. `SUBMIT` transactions write state and require a
-DID-JWT (`jwt` parameter, see [below](#authentication-and-authorization)); `EVALUATE`
-transactions are unauthenticated reads. The `list*` transactions return a JSON array of
-`{"id": ..., "value": ...}` objects and scan the whole namespace (no pagination).
+Contract name: `VdrContract`. Every return value is a string, as is every parameter
+except `createRevRegDef`'s numeric `maxCredNum`; JSON payloads are passed as
+serialized JSON strings, and every response is canonical (deterministically ordered)
+JSON. `SUBMIT` transactions write state and require a DID-JWT (`jwt` parameter, see
+[below](#authentication-and-authorization)); the sole exception is `createDid`, which
+takes no JWT by design — DID registration is the open bootstrap step (see
+[Trust model](#trust-model)). `EVALUATE` transactions are unauthenticated reads. The
+`list*` transactions return a JSON array of `{"id": ..., "value": ...}` objects and
+scan the whole namespace (no pagination).
 
 ### DID documents
 
@@ -357,8 +360,7 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 |---|---|
 | `INVALID_ARGUMENT` | input validation failed (blank field, malformed id or JSON, …) |
 | `ALREADY_EXISTS` | an object with the given id already exists |
-| `NOT_FOUND` | the requested object does not exist |
-| `REFERENCE_MISSING` | a referenced object (schema, credDef, …) does not exist |
+| `NOT_FOUND` | the requested object, or one it references, does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
