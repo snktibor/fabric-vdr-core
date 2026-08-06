@@ -311,11 +311,16 @@ public class ValidationService {
     /**
      * Validates object-shape constraints for embedded DID document arrays.
      *
-     * <p>Verification method and service entries must be JSON objects when provided, ensuring
-     * predictable downstream processing.
+     * <p>A DID document must carry at least one verification method, and every entry must be a JSON
+     * object with non-empty textual {@code id}, {@code type} and {@code controller}, typed {@code
+     * JsonWebKey2020}, and a {@code publicKeyJwk} object holding an EC P-256 key with non-empty
+     * textual {@code kty}, {@code crv}, {@code x} and {@code y} — the shape the ES256 JWT
+     * authorization path resolves signing keys from. Service entries are optional, but must be JSON
+     * objects when provided.
      *
      * @param document DID document instance to validate
-     * @throws VdrException if any embedded array entry is null or non-object
+     * @throws VdrException if the verification method array is missing or empty, any verification
+     *     method violates the shape above, or any service entry is null or non-object
      */
     public void validateDidDocumentShape(final DidDocument document) {
         if (document.getVerificationMethod() == null

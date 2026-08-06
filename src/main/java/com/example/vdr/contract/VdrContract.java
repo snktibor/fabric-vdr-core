@@ -207,7 +207,7 @@ public class VdrContract implements ContractInterface {
     /**
      * Creates a new Credential Definition on the ledger. A credential definition describes the
      * structure and details of a verifiable credential. It is linked to a schema and an issuer DID,
-     * and owned by the transaction caller.
+     * with the signer DID recorded as owner.
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier for the credential definition.
@@ -220,8 +220,8 @@ public class VdrContract implements ContractInterface {
      *     as a JSON string.
      * @param jwt The JWT token containing the issuer claim for authentication and authorization.
      * @return The canonical JSON representation of the created {@link CredentialDefinitionRecord}.
-     * @throws ChaincodeException If validation fails, the schema or issuer DID is not active, or
-     *     the ID is duplicated.
+     * @throws ChaincodeException If validation fails, the schema or issuer DID is missing, the
+     *     issuer DID is not active, or the ID is duplicated.
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
     public String createCredDef(
@@ -284,8 +284,8 @@ public class VdrContract implements ContractInterface {
      * Creates a new Revocation Registry Definition on the ledger. A revocation registry definition
      * publishes the parameters, capacity, and public cryptographic keys used to revoke credentials
      * under the tails-free AnonCreds v2 VB20 accumulator scheme. It is linked to a credential
-     * definition and an issuer DID, owned by the transaction caller, and strictly immutable once
-     * created.
+     * definition and an issuer DID, with the signer DID recorded as owner, and strictly immutable
+     * once created.
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier for the revocation registry definition.

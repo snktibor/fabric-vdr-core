@@ -31,8 +31,7 @@ public class SsiContext extends Context {
     private final SsiServices services;
 
     /**
-     * Initializes the SSI context by resolving the client identity and bootstrapping the registry
-     * and service graph.
+     * Initializes the SSI context by bootstrapping the per-transaction registry and service graph.
      *
      * @param stub The Fabric ChaincodeStub for ledger interaction.
      */

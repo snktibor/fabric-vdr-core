@@ -38,7 +38,7 @@ public class SchemaRecord {
      * @param name schema display name
      * @param version schema version identifier
      * @param attrNames allowed credential attribute names
-     * @param ownerId transaction caller identity recorded as owner
+     * @param ownerId signer DID recorded as owner
      */
     public SchemaRecord(
             final String id,
