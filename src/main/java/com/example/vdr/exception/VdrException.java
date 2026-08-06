@@ -61,35 +61,6 @@ public class VdrException extends RuntimeException {
     }
 
     /**
-     * Creates an exception for referential integrity violations.
-     *
-     * <p>This is used when a record references another SSI artifact (for example a schema or
-     * credential definition) that does not exist in the registry.
-     *
-     * @param entityType entity type being validated
-     * @param id identifier of the referencing entity
-     * @param referenceType expected type of the referenced entity
-     * @param referenceId missing referenced identifier
-     * @return a {@link VdrException} with {@code REFERENCE_MISSING} error code
-     */
-    public static VdrException referenceMissing(
-            final String entityType,
-            final String id,
-            final String referenceType,
-            final String referenceId) {
-        return new VdrException(
-                "REFERENCE_MISSING",
-                entityType
-                        + " with id '"
-                        + id
-                        + "' references missing "
-                        + referenceType
-                        + " '"
-                        + referenceId
-                        + "'");
-    }
-
-    /**
      * Creates an exception for authorization failures.
      *
      * @param message explanation describing why caller authorization failed

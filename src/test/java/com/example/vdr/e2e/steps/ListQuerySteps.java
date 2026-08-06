@@ -43,17 +43,4 @@ public class ListQuerySteps {
                                 "Expected list of '%s' to contain id '%s' but response was: %s",
                                 entityType, resolved, response));
     }
-
-    @Then("the list should not contain the {string} with id {string}")
-    public void listShouldNotContain(final String entityType, final String rawId) {
-        final String response = context.lastQueryResponse();
-        assertNotNull(response, "No list response captured - did the When-step run?");
-        final String resolved = context.resolveId(rawId);
-        assertTrue(
-                !response.contains("\"id\":\"" + resolved + "\""),
-                () ->
-                        String.format(
-                                "Expected list of '%s' NOT to contain id '%s' but response was: %s",
-                                entityType, resolved, response));
-    }
 }
