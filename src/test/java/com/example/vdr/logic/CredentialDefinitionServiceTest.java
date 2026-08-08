@@ -33,7 +33,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CredentialDefinitionServiceTest {
 
-    private static final String CRED_DEF_ID = "creddef:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
+    private static final String OTHER_DID = "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22";
+
+    private static final String SCHEMA_ID =
+            ISSUER_DID + "/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1";
+
+    private static final String CRED_DEF_ID =
+            ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/018f6c06-4d13-7b58-b0e2-3a91c4d7e2f0";
 
     @Mock private CredentialDefinitionRegistry credDefRegistry;
 
@@ -62,18 +70,18 @@ class CredentialDefinitionServiceTest {
     @Test
     void createCredDefSetsOwner() {
         when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
-        when(schemaRegistry.get("schema-1")).thenReturn(new SchemaRecord());
+        when(schemaRegistry.get(SCHEMA_ID)).thenReturn(new SchemaRecord());
         final DidDocument issuer = new DidDocument();
-        issuer.setId("did:issuer");
+        issuer.setId(ISSUER_DID);
         issuer.setStatus(RecordStatus.ACTIVE);
-        when(didRegistry.get("did:issuer")).thenReturn(issuer);
+        when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
 
         final String publicMetadata = "{\"type\":\"BBS\"}";
         credentialDefinitionService.createCredDef(
-                "did:issuer",
+                ISSUER_DID,
                 CRED_DEF_ID,
-                "did:issuer",
-                "schema-1",
+                ISSUER_DID,
+                SCHEMA_ID,
                 VdrTypes.CRED_DEF_BBS_V1,
                 "TAG",
                 publicMetadata);
@@ -81,11 +89,11 @@ class CredentialDefinitionServiceTest {
         final ArgumentCaptor<CredentialDefinitionRecord> captor =
                 ArgumentCaptor.forClass(CredentialDefinitionRecord.class);
         verify(credDefRegistry).put(anyString(), captor.capture());
-        assertEquals("did:issuer", captor.getValue().getOwnerId());
+        assertEquals(ISSUER_DID, captor.getValue().getOwnerId());
     }
 
     /**
-     * Verifies creation rejects a malformed (wrong-prefix / non-UUIDv7) id before ledger access.
+     * Verifies creation rejects an id whose object segment is not a UUIDv7 before ledger access.
      */
     @Test
     void createCredDefRejectsMalformedId() {
@@ -93,10 +101,10 @@ class CredentialDefinitionServiceTest {
                 VdrException.class,
                 () ->
                         credentialDefinitionService.createCredDef(
-                                "did:issuer",
-                                "creddef:vdr:not-a-uuid-v7",
-                                "did:issuer",
-                                "schema-1",
+                                ISSUER_DID,
+                                ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/not-a-uuid-v7",
+                                ISSUER_DID,
+                                SCHEMA_ID,
                                 VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 "{\"type\":\"BBS\"}"));
@@ -106,17 +114,17 @@ class CredentialDefinitionServiceTest {
     @Test
     void createCredDefRejectsMissingSchema() {
         when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
-        when(schemaRegistry.get("schema-1")).thenReturn(null);
+        when(schemaRegistry.get(SCHEMA_ID)).thenReturn(null);
 
         final String publicMetadata = "{\"type\":\"BBS\"}";
         assertThrows(
                 VdrException.class,
                 () ->
                         credentialDefinitionService.createCredDef(
-                                "did:issuer",
+                                ISSUER_DID,
                                 CRED_DEF_ID,
-                                "did:issuer",
-                                "schema-1",
+                                ISSUER_DID,
+                                SCHEMA_ID,
                                 VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 publicMetadata));
@@ -129,10 +137,10 @@ class CredentialDefinitionServiceTest {
                 VdrException.class,
                 () ->
                         credentialDefinitionService.createCredDef(
-                                "did:other",
+                                OTHER_DID,
                                 CRED_DEF_ID,
-                                "did:issuer",
-                                "schema-1",
+                                ISSUER_DID,
+                                SCHEMA_ID,
                                 VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 "{\"type\":\"BBS\"}"));
@@ -146,10 +154,10 @@ class CredentialDefinitionServiceTest {
                         VdrException.class,
                         () ->
                                 credentialDefinitionService.createCredDef(
-                                        "did:issuer",
+                                        ISSUER_DID,
                                         CRED_DEF_ID,
-                                        "did:issuer",
-                                        "schema-1",
+                                        ISSUER_DID,
+                                        SCHEMA_ID,
                                         "CL",
                                         "TAG",
                                         "{}"));

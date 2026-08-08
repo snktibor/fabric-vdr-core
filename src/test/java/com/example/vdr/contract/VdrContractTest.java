@@ -52,6 +52,17 @@ class VdrContractTest {
 
     private static final Instant TX_TIME = Instant.ofEpochMilli(123L);
 
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
+    private static final String SCHEMA_ID =
+            ISSUER_DID + "/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1";
+
+    private static final String CRED_DEF_ID =
+            ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/018f6c06-4d13-7b58-b0e2-3a91c4d7e2f0";
+
+    private static final String REV_REG_DEF_ID =
+            ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c07-9e04-7ff1-a3c6-71b28e05d9a4";
+
     @Mock private SsiContext ctx;
 
     @Mock private SsiServices services;
@@ -208,8 +219,8 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final SchemaRecord schema = new SchemaRecord();
-        schema.setId("schema-1");
-        schema.setIssuerId("did:issuer");
+        schema.setId(SCHEMA_ID);
+        schema.setIssuerId(ISSUER_DID);
         schema.setName("Degree");
         schema.setVersion("1.0");
         schema.setAttrNames(List.of("name", "degree"));
@@ -219,30 +230,19 @@ class VdrContractTest {
                 jwt,
                 "caller",
                 "createSchema",
-                "schema-1",
-                "did:issuer",
+                SCHEMA_ID,
+                ISSUER_DID,
                 "Degree",
                 "1.0",
                 "[\"name\",\"degree\"]");
         when(services.getSchemaService()).thenReturn(schemaService);
         when(schemaService.createSchema(
-                        "caller",
-                        "schema-1",
-                        "did:issuer",
-                        "Degree",
-                        "1.0",
-                        "[\"name\",\"degree\"]"))
+                        "caller", SCHEMA_ID, ISSUER_DID, "Degree", "1.0", "[\"name\",\"degree\"]"))
                 .thenReturn(schema);
 
         final String result =
                 contract.createSchema(
-                        ctx,
-                        "schema-1",
-                        "did:issuer",
-                        "Degree",
-                        "1.0",
-                        "[\"name\",\"degree\"]",
-                        jwt);
+                        ctx, SCHEMA_ID, ISSUER_DID, "Degree", "1.0", "[\"name\",\"degree\"]", jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(schema), result);
     }
@@ -252,17 +252,17 @@ class VdrContractTest {
     void getSchemaReturnsCanonicalJson() {
         final VdrContract contract = new VdrContract();
         final SchemaRecord schema = new SchemaRecord();
-        schema.setId("schema-2");
-        schema.setIssuerId("did:issuer");
+        schema.setId(SCHEMA_ID);
+        schema.setIssuerId(ISSUER_DID);
         schema.setName("Profile");
         schema.setVersion("1.0");
         schema.setAttrNames(List.of("name"));
 
         when(ctx.getServices()).thenReturn(services);
         when(services.getSchemaService()).thenReturn(schemaService);
-        when(schemaService.getSchema("schema-2")).thenReturn(schema);
+        when(schemaService.getSchema(SCHEMA_ID)).thenReturn(schema);
 
-        final String result = contract.getSchema(ctx, "schema-2");
+        final String result = contract.getSchema(ctx, SCHEMA_ID);
 
         assertEquals(JsonUtil.toCanonicalJson(schema), result);
     }
@@ -272,8 +272,8 @@ class VdrContractTest {
     void listSchemasReturnsEntryArray() {
         final VdrContract contract = new VdrContract();
         final SchemaRecord schema = new SchemaRecord();
-        schema.setId("schema-3");
-        schema.setIssuerId("did:issuer");
+        schema.setId(SCHEMA_ID);
+        schema.setIssuerId(ISSUER_DID);
         schema.setName("Identity");
         schema.setVersion("1.0");
         schema.setAttrNames(List.of("name"));
@@ -281,13 +281,13 @@ class VdrContractTest {
         when(ctx.getServices()).thenReturn(services);
         when(services.getSchemaService()).thenReturn(schemaService);
         when(schemaService.listSchemas())
-                .thenReturn(List.of(new RegistryEntry<>("schema-3", schema)));
+                .thenReturn(List.of(new RegistryEntry<>(SCHEMA_ID, schema)));
 
         final String result = contract.listSchemas(ctx);
 
         final ArrayNode expected = JsonUtil.arrayNode();
         final ObjectNode item = JsonUtil.objectNode();
-        item.put("id", "schema-3");
+        item.put("id", SCHEMA_ID);
         item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(schema)));
         expected.add(item);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
@@ -314,9 +314,9 @@ class VdrContractTest {
         final ObjectNode metadata = JsonUtil.objectNode();
         metadata.put("type", "BBS");
         final CredentialDefinitionRecord crecord = new CredentialDefinitionRecord();
-        crecord.setId("creddef-1");
-        crecord.setIssuerId("did:issuer");
-        crecord.setSchemaId("schema-1");
+        crecord.setId(CRED_DEF_ID);
+        crecord.setIssuerId(ISSUER_DID);
+        crecord.setSchemaId(SCHEMA_ID);
         crecord.setType(VdrTypes.CRED_DEF_BBS_V1);
         crecord.setTag("TAG");
         crecord.setPublicMetadata(metadata);
@@ -326,18 +326,18 @@ class VdrContractTest {
                 jwt,
                 "caller",
                 "createCredDef",
-                "creddef-1",
-                "did:issuer",
-                "schema-1",
+                CRED_DEF_ID,
+                ISSUER_DID,
+                SCHEMA_ID,
                 VdrTypes.CRED_DEF_BBS_V1,
                 "TAG",
                 "{\"type\":\"BBS\"}");
         when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
         when(credentialDefinitionService.createCredDef(
                         "caller",
-                        "creddef-1",
-                        "did:issuer",
-                        "schema-1",
+                        CRED_DEF_ID,
+                        ISSUER_DID,
+                        SCHEMA_ID,
                         VdrTypes.CRED_DEF_BBS_V1,
                         "TAG",
                         "{\"type\":\"BBS\"}"))
@@ -346,9 +346,9 @@ class VdrContractTest {
         final String result =
                 contract.createCredDef(
                         ctx,
-                        "creddef-1",
-                        "did:issuer",
-                        "schema-1",
+                        CRED_DEF_ID,
+                        ISSUER_DID,
+                        SCHEMA_ID,
                         VdrTypes.CRED_DEF_BBS_V1,
                         "TAG",
                         "{\"type\":\"BBS\"}",
@@ -362,18 +362,18 @@ class VdrContractTest {
     void getCredDefReturnsCanonicalJson() {
         final VdrContract contract = new VdrContract();
         final CredentialDefinitionRecord crecord = new CredentialDefinitionRecord();
-        crecord.setId("creddef-2");
-        crecord.setIssuerId("did:issuer");
-        crecord.setSchemaId("schema-1");
+        crecord.setId(CRED_DEF_ID);
+        crecord.setIssuerId(ISSUER_DID);
+        crecord.setSchemaId(SCHEMA_ID);
         crecord.setType(VdrTypes.CRED_DEF_BBS_V1);
         crecord.setTag("TAG");
         crecord.setPublicMetadata(JsonUtil.objectNode());
 
         when(ctx.getServices()).thenReturn(services);
         when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
-        when(credentialDefinitionService.getCredDef("creddef-2")).thenReturn(crecord);
+        when(credentialDefinitionService.getCredDef(CRED_DEF_ID)).thenReturn(crecord);
 
-        final String result = contract.getCredDef(ctx, "creddef-2");
+        final String result = contract.getCredDef(ctx, CRED_DEF_ID);
 
         assertEquals(JsonUtil.toCanonicalJson(crecord), result);
     }
@@ -383,9 +383,9 @@ class VdrContractTest {
     void listCredDefsReturnsEntryArray() {
         final VdrContract contract = new VdrContract();
         final CredentialDefinitionRecord crecord = new CredentialDefinitionRecord();
-        crecord.setId("creddef-3");
-        crecord.setIssuerId("did:issuer");
-        crecord.setSchemaId("schema-1");
+        crecord.setId(CRED_DEF_ID);
+        crecord.setIssuerId(ISSUER_DID);
+        crecord.setSchemaId(SCHEMA_ID);
         crecord.setType(VdrTypes.CRED_DEF_BBS_V1);
         crecord.setTag("TAG");
         crecord.setPublicMetadata(JsonUtil.objectNode());
@@ -393,13 +393,13 @@ class VdrContractTest {
         when(ctx.getServices()).thenReturn(services);
         when(services.getCredentialDefinitionService()).thenReturn(credentialDefinitionService);
         when(credentialDefinitionService.listCredDefs())
-                .thenReturn(List.of(new RegistryEntry<>("creddef-3", crecord)));
+                .thenReturn(List.of(new RegistryEntry<>(CRED_DEF_ID, crecord)));
 
         final String result = contract.listCredDefs(ctx);
 
         final ArrayNode expected = JsonUtil.arrayNode();
         final ObjectNode item = JsonUtil.objectNode();
-        item.put("id", "creddef-3");
+        item.put("id", CRED_DEF_ID);
         item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(crecord)));
         expected.add(item);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
@@ -413,9 +413,9 @@ class VdrContractTest {
         final ObjectNode publicKeys = JsonUtil.objectNode();
         publicKeys.put("revocationVerifyingKey", TestVectors.G2_GENERATOR);
         final RevRegDefRecord rrecord = new RevRegDefRecord();
-        rrecord.setId("revregdef-1");
-        rrecord.setIssuerId("did:issuer");
-        rrecord.setCredDefId("creddef-1");
+        rrecord.setId(REV_REG_DEF_ID);
+        rrecord.setIssuerId(ISSUER_DID);
+        rrecord.setCredDefId(CRED_DEF_ID);
         rrecord.setType(VdrTypes.REV_REG_VB20_V1);
         rrecord.setPublicKeys(publicKeys);
         rrecord.setMaxCredNum(100L);
@@ -425,18 +425,18 @@ class VdrContractTest {
                 jwt,
                 "caller",
                 "createRevRegDef",
-                "revregdef-1",
-                "did:issuer",
-                "creddef-1",
+                REV_REG_DEF_ID,
+                ISSUER_DID,
+                CRED_DEF_ID,
                 VdrTypes.REV_REG_VB20_V1,
                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                 "100");
         when(services.getRevRegDefService()).thenReturn(revRegDefService);
         when(revRegDefService.createRevRegDef(
                         "caller",
-                        "revregdef-1",
-                        "did:issuer",
-                        "creddef-1",
+                        REV_REG_DEF_ID,
+                        ISSUER_DID,
+                        CRED_DEF_ID,
                         VdrTypes.REV_REG_VB20_V1,
                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                         100L))
@@ -445,9 +445,9 @@ class VdrContractTest {
         final String result =
                 contract.createRevRegDef(
                         ctx,
-                        "revregdef-1",
-                        "did:issuer",
-                        "creddef-1",
+                        REV_REG_DEF_ID,
+                        ISSUER_DID,
+                        CRED_DEF_ID,
                         VdrTypes.REV_REG_VB20_V1,
                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                         100L,
@@ -461,18 +461,18 @@ class VdrContractTest {
     void getRevRegDefReturnsCanonicalJson() {
         final VdrContract contract = new VdrContract();
         final RevRegDefRecord rrecord = new RevRegDefRecord();
-        rrecord.setId("revregdef-2");
-        rrecord.setIssuerId("did:issuer");
-        rrecord.setCredDefId("creddef-1");
+        rrecord.setId(REV_REG_DEF_ID);
+        rrecord.setIssuerId(ISSUER_DID);
+        rrecord.setCredDefId(CRED_DEF_ID);
         rrecord.setType(VdrTypes.REV_REG_VB20_V1);
         rrecord.setPublicKeys(JsonUtil.objectNode());
         rrecord.setMaxCredNum(100L);
 
         when(ctx.getServices()).thenReturn(services);
         when(services.getRevRegDefService()).thenReturn(revRegDefService);
-        when(revRegDefService.getRevRegDef("revregdef-2")).thenReturn(rrecord);
+        when(revRegDefService.getRevRegDef(REV_REG_DEF_ID)).thenReturn(rrecord);
 
-        final String result = contract.getRevRegDef(ctx, "revregdef-2");
+        final String result = contract.getRevRegDef(ctx, REV_REG_DEF_ID);
 
         assertEquals(JsonUtil.toCanonicalJson(rrecord), result);
     }
@@ -482,9 +482,9 @@ class VdrContractTest {
     void listRevRegDefsReturnsEntryArray() {
         final VdrContract contract = new VdrContract();
         final RevRegDefRecord rrecord = new RevRegDefRecord();
-        rrecord.setId("revregdef-3");
-        rrecord.setIssuerId("did:issuer");
-        rrecord.setCredDefId("creddef-1");
+        rrecord.setId(REV_REG_DEF_ID);
+        rrecord.setIssuerId(ISSUER_DID);
+        rrecord.setCredDefId(CRED_DEF_ID);
         rrecord.setType(VdrTypes.REV_REG_VB20_V1);
         rrecord.setPublicKeys(JsonUtil.objectNode());
         rrecord.setMaxCredNum(100L);
@@ -492,13 +492,13 @@ class VdrContractTest {
         when(ctx.getServices()).thenReturn(services);
         when(services.getRevRegDefService()).thenReturn(revRegDefService);
         when(revRegDefService.listRevRegDefs())
-                .thenReturn(List.of(new RegistryEntry<>("revregdef-3", rrecord)));
+                .thenReturn(List.of(new RegistryEntry<>(REV_REG_DEF_ID, rrecord)));
 
         final String result = contract.listRevRegDefs(ctx);
 
         final ArrayNode expected = JsonUtil.arrayNode();
         final ObjectNode item = JsonUtil.objectNode();
-        item.put("id", "revregdef-3");
+        item.put("id", REV_REG_DEF_ID);
         item.set("value", JsonUtil.readTree(JsonUtil.toCanonicalJson(rrecord)));
         expected.add(item);
         assertEquals(JsonUtil.toCanonicalJson(expected), result);
@@ -510,18 +510,18 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
-        erecord.setRevRegDefId("revregdef-1");
+        erecord.setRevRegDefId(REV_REG_DEF_ID);
         erecord.setAccumValue(TestVectors.G1_GENERATOR);
         erecord.setVersion(0L);
 
-        stubSignerDid(jwt, "caller", "createRevRegEntry", "revregdef-1", TestVectors.G1_GENERATOR);
+        stubSignerDid(jwt, "caller", "createRevRegEntry", REV_REG_DEF_ID, TestVectors.G1_GENERATOR);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
         when(revRegEntryService.createRevRegEntry(
-                        "caller", "revregdef-1", TestVectors.G1_GENERATOR))
+                        "caller", REV_REG_DEF_ID, TestVectors.G1_GENERATOR))
                 .thenReturn(erecord);
 
         final String result =
-                contract.createRevRegEntry(ctx, "revregdef-1", TestVectors.G1_GENERATOR, jwt);
+                contract.createRevRegEntry(ctx, REV_REG_DEF_ID, TestVectors.G1_GENERATOR, jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
     }
@@ -532,21 +532,21 @@ class VdrContractTest {
         final VdrContract contract = new VdrContract();
         final String jwt = "jwt";
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
-        erecord.setRevRegDefId("revregdef-1");
+        erecord.setRevRegDefId(REV_REG_DEF_ID);
         erecord.setAccumValue(TestVectors.G1_TIMES_2);
         erecord.setVersion(1L);
 
-        stubSignerDid(jwt, "caller", "updateRevRegEntry", "revregdef-1", TestVectors.G1_TIMES_2);
+        stubSignerDid(jwt, "caller", "updateRevRegEntry", REV_REG_DEF_ID, TestVectors.G1_TIMES_2);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
-        when(revRegEntryService.updateRevRegEntry("caller", "revregdef-1", TestVectors.G1_TIMES_2))
+        when(revRegEntryService.updateRevRegEntry("caller", REV_REG_DEF_ID, TestVectors.G1_TIMES_2))
                 .thenReturn(erecord);
 
         final String result =
-                contract.updateRevRegEntry(ctx, "revregdef-1", TestVectors.G1_TIMES_2, jwt);
+                contract.updateRevRegEntry(ctx, REV_REG_DEF_ID, TestVectors.G1_TIMES_2, jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
         verify(revRegEntryService)
-                .updateRevRegEntry("caller", "revregdef-1", TestVectors.G1_TIMES_2);
+                .updateRevRegEntry("caller", REV_REG_DEF_ID, TestVectors.G1_TIMES_2);
     }
 
     /** Verifies entry history serializes revisions oldest-first in one uniform revision shape. */
@@ -564,14 +564,14 @@ class VdrContractTest {
 
         when(ctx.getServices()).thenReturn(services);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
-        when(revRegEntryService.getRevRegEntryHistory("revregdef-1"))
+        when(revRegEntryService.getRevRegEntryHistory(REV_REG_DEF_ID))
                 .thenReturn(
                         List.of(
                                 new KeyRevision<>("tx-1", firstTime, false, genesis),
                                 new KeyRevision<>("tx-2", secondTime, false, updated),
                                 new KeyRevision<>("tx-3", secondTime, true, null)));
 
-        final String result = contract.getRevRegEntryHistory(ctx, "revregdef-1");
+        final String result = contract.getRevRegEntryHistory(ctx, REV_REG_DEF_ID);
 
         final ArrayNode expected = JsonUtil.arrayNode();
         final ObjectNode first = JsonUtil.objectNode();
@@ -624,15 +624,15 @@ class VdrContractTest {
     void getRevRegEntryReturnsCanonicalJson() {
         final VdrContract contract = new VdrContract();
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
-        erecord.setRevRegDefId("revregdef-1");
+        erecord.setRevRegDefId(REV_REG_DEF_ID);
         erecord.setAccumValue(TestVectors.G1_GENERATOR);
         erecord.setVersion(0L);
 
         when(ctx.getServices()).thenReturn(services);
         when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
-        when(revRegEntryService.getRevRegEntry("revregdef-1")).thenReturn(erecord);
+        when(revRegEntryService.getRevRegEntry(REV_REG_DEF_ID)).thenReturn(erecord);
 
-        final String result = contract.getRevRegEntry(ctx, "revregdef-1");
+        final String result = contract.getRevRegEntry(ctx, REV_REG_DEF_ID);
 
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
     }

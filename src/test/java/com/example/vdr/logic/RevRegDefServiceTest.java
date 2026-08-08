@@ -34,8 +34,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class RevRegDefServiceTest {
 
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
+    private static final String OTHER_DID = "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22";
+
+    private static final String CRED_DEF_ID =
+            ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/018f6c06-4d13-7b58-b0e2-3a91c4d7e2f0";
+
     private static final String REV_REG_DEF_ID =
-            "revregdef:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+            ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c07-9e04-7ff1-a3c6-71b28e05d9a4";
 
     @Mock private RevRegDefRegistry revRegDefRegistry;
 
@@ -65,19 +72,19 @@ class RevRegDefServiceTest {
     void createRevRegDefSetsOwner() {
         when(revRegDefRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
         final CredentialDefinitionRecord credDef = new CredentialDefinitionRecord();
-        credDef.setIssuerId("did:issuer");
-        when(credDefRegistry.get("creddef-1")).thenReturn(credDef);
+        credDef.setIssuerId(ISSUER_DID);
+        when(credDefRegistry.get(CRED_DEF_ID)).thenReturn(credDef);
         final DidDocument issuer = new DidDocument();
-        issuer.setId("did:issuer");
+        issuer.setId(ISSUER_DID);
         issuer.setStatus(RecordStatus.ACTIVE);
-        when(didRegistry.get("did:issuer")).thenReturn(issuer);
+        when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
 
         final String publicKeys = TestVectors.REVOCATION_PUBLIC_KEYS_JSON;
         revRegDefService.createRevRegDef(
-                "did:issuer",
+                ISSUER_DID,
                 REV_REG_DEF_ID,
-                "did:issuer",
-                "creddef-1",
+                ISSUER_DID,
+                CRED_DEF_ID,
                 VdrTypes.REV_REG_VB20_V1,
                 publicKeys,
                 100L);
@@ -85,12 +92,12 @@ class RevRegDefServiceTest {
         final ArgumentCaptor<RevRegDefRecord> captor =
                 ArgumentCaptor.forClass(RevRegDefRecord.class);
         verify(revRegDefRegistry).put(anyString(), captor.capture());
-        assertEquals("did:issuer", captor.getValue().getOwnerId());
+        assertEquals(ISSUER_DID, captor.getValue().getOwnerId());
         assertEquals(100L, captor.getValue().getMaxCredNum());
     }
 
     /**
-     * Verifies creation rejects a malformed (wrong-prefix / non-UUIDv7) id before ledger access.
+     * Verifies creation rejects an id whose object segment is not a UUIDv7 before ledger access.
      */
     @Test
     void createRevRegDefRejectsMalformedId() {
@@ -98,10 +105,10 @@ class RevRegDefServiceTest {
                 VdrException.class,
                 () ->
                         revRegDefService.createRevRegDef(
-                                "did:issuer",
-                                "revregdef:vdr:not-a-uuid-v7",
-                                "did:issuer",
-                                "creddef-1",
+                                ISSUER_DID,
+                                ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/not-a-uuid-v7",
+                                ISSUER_DID,
+                                CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                 100L));
@@ -111,17 +118,17 @@ class RevRegDefServiceTest {
     @Test
     void createRevRegDefRejectsMissingCredDef() {
         when(revRegDefRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
-        when(credDefRegistry.get("creddef-1")).thenReturn(null);
+        when(credDefRegistry.get(CRED_DEF_ID)).thenReturn(null);
 
         final String publicKeys = TestVectors.REVOCATION_PUBLIC_KEYS_JSON;
         assertThrows(
                 VdrException.class,
                 () ->
                         revRegDefService.createRevRegDef(
-                                "did:issuer",
+                                ISSUER_DID,
                                 REV_REG_DEF_ID,
-                                "did:issuer",
-                                "creddef-1",
+                                ISSUER_DID,
+                                CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 publicKeys,
                                 100L));
@@ -134,10 +141,10 @@ class RevRegDefServiceTest {
                 VdrException.class,
                 () ->
                         revRegDefService.createRevRegDef(
-                                "did:other",
+                                OTHER_DID,
                                 REV_REG_DEF_ID,
-                                "did:issuer",
-                                "creddef-1",
+                                ISSUER_DID,
+                                CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                 100L));
@@ -148,17 +155,17 @@ class RevRegDefServiceTest {
     void createRevRegDefRejectsCredDefIssuerMismatch() {
         when(revRegDefRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
         final CredentialDefinitionRecord credDef = new CredentialDefinitionRecord();
-        credDef.setIssuerId("did:someone-else");
-        when(credDefRegistry.get("creddef-1")).thenReturn(credDef);
+        credDef.setIssuerId(OTHER_DID);
+        when(credDefRegistry.get(CRED_DEF_ID)).thenReturn(credDef);
 
         assertThrows(
                 VdrException.class,
                 () ->
                         revRegDefService.createRevRegDef(
-                                "did:issuer",
+                                ISSUER_DID,
                                 REV_REG_DEF_ID,
-                                "did:issuer",
-                                "creddef-1",
+                                ISSUER_DID,
+                                CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                 100L));
@@ -172,10 +179,10 @@ class RevRegDefServiceTest {
                         VdrException.class,
                         () ->
                                 revRegDefService.createRevRegDef(
-                                        "did:issuer",
+                                        ISSUER_DID,
                                         REV_REG_DEF_ID,
-                                        "did:issuer",
-                                        "creddef-1",
+                                        ISSUER_DID,
+                                        CRED_DEF_ID,
                                         "CL_ACCUM",
                                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
                                         100L));
@@ -192,10 +199,10 @@ class RevRegDefServiceTest {
                         VdrException.class,
                         () ->
                                 revRegDefService.createRevRegDef(
-                                        "did:issuer",
+                                        ISSUER_DID,
                                         REV_REG_DEF_ID,
-                                        "did:issuer",
-                                        "creddef-1",
+                                        ISSUER_DID,
+                                        CRED_DEF_ID,
                                         VdrTypes.REV_REG_VB20_V1,
                                         extraField,
                                         100L));

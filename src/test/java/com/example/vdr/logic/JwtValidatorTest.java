@@ -44,12 +44,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class JwtValidatorTest {
 
-    private static final String ISSUER_DID = "did:vdr:issuer";
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
     private static final String KEY_ID = ISSUER_DID + "#key-1";
+    private static final String SCHEMA_ID =
+            ISSUER_DID + "/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1";
     private static final Instant NOW = Instant.ofEpochMilli(1700000000000L);
     private static final String METHOD = "createSchema";
     private static final List<String> SCOPE_ARGS =
-            List.of("schema:vdr:1", ISSUER_DID, "Degree", "1.0", "[\"name\"]");
+            List.of(SCHEMA_ID, ISSUER_DID, "Degree", "1.0", "[\"name\"]");
     private static final String JTI = "3f7a1a3c-8f43-4c1e-9a35-8d1f8f8e0001";
 
     @Mock private DidRegistry didRegistry;
@@ -263,7 +265,7 @@ class JwtValidatorTest {
         givenActiveIssuerDid();
         final String token = signEs256(builder -> {});
         final List<String> tamperedArgs =
-                List.of("schema:vdr:1", ISSUER_DID, "Degree", "2.0", "[\"name\"]");
+                List.of(SCHEMA_ID, ISSUER_DID, "Degree", "2.0", "[\"name\"]");
 
         final VdrException exception =
                 assertThrows(

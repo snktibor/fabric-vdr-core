@@ -39,6 +39,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class RevRegEntryServiceTest {
 
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+    private static final String OTHER_DID = "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22";
+    private static final String REV_REG_DEF_ID =
+            ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c07-9e04-7ff1-a3c6-71b28e05d9a4";
     private static final Instant TX_TIME = Instant.parse("2026-07-12T10:15:30Z");
     private static final String GENESIS_ACCUM = TestVectors.G1_GENERATOR;
     private static final String NEXT_ACCUM = TestVectors.G1_TIMES_2;
@@ -67,7 +71,7 @@ class RevRegEntryServiceTest {
     /** Creates a parent revocation registry definition owned by the given DID. */
     private RevRegDefRecord parentOwnedBy(final String ownerDid) {
         final RevRegDefRecord parent = new RevRegDefRecord();
-        parent.setId("revregdef-1");
+        parent.setId(REV_REG_DEF_ID);
         parent.setOwnerId(ownerDid);
         return parent;
     }
@@ -75,15 +79,15 @@ class RevRegEntryServiceTest {
     /** Verifies genesis entries persist version 0, the verbatim value, and audit timestamps. */
     @Test
     void createRevRegEntrySetsGenesisVersionAndTimestamps() {
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
-        when(revRegEntryRegistry.exists("revregdef-1")).thenReturn(false);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
+        when(revRegEntryRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
 
-        revRegEntryService.createRevRegEntry("did:issuer", "revregdef-1", GENESIS_ACCUM);
+        revRegEntryService.createRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM);
 
         final ArgumentCaptor<RevRegEntryRecord> captor =
                 ArgumentCaptor.forClass(RevRegEntryRecord.class);
-        verify(revRegEntryRegistry).put(eq("revregdef-1"), captor.capture());
-        assertEquals("revregdef-1", captor.getValue().getRevRegDefId());
+        verify(revRegEntryRegistry).put(eq(REV_REG_DEF_ID), captor.capture());
+        assertEquals(REV_REG_DEF_ID, captor.getValue().getRevRegDefId());
         assertEquals(0L, captor.getValue().getVersion());
         assertEquals(GENESIS_ACCUM, captor.getValue().getAccumValue());
         assertEquals(TX_TIME.toString(), captor.getValue().getCreatedAt());
@@ -93,15 +97,15 @@ class RevRegEntryServiceTest {
     /** Verifies genesis creation emits the accumulator event carrying the full payload. */
     @Test
     void createRevRegEntryEmitsCreatedEventWithAccumulator() {
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
-        when(revRegEntryRegistry.exists("revregdef-1")).thenReturn(false);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
+        when(revRegEntryRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
 
-        revRegEntryService.createRevRegEntry("did:issuer", "revregdef-1", GENESIS_ACCUM);
+        revRegEntryService.createRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM);
 
         final ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
         verify(eventEmitter).emit(eq(VdrEvents.REV_REG_ENTRY_CREATED), payloadCaptor.capture());
         final Map<?, ?> payload = (Map<?, ?>) payloadCaptor.getValue();
-        assertEquals("revregdef-1", payload.get("revRegDefId"));
+        assertEquals(REV_REG_DEF_ID, payload.get("revRegDefId"));
         assertEquals(GENESIS_ACCUM, payload.get("accumValue"));
         assertEquals(0L, payload.get("version"));
         assertEquals(3, payload.size());
@@ -110,26 +114,26 @@ class RevRegEntryServiceTest {
     /** Verifies creation fails when the parent revocation registry definition does not exist. */
     @Test
     void createRevRegEntryRejectsMissingParent() {
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(null);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(null);
 
         assertThrows(
                 VdrException.class,
                 () ->
                         revRegEntryService.createRevRegEntry(
-                                "did:issuer", "revregdef-1", GENESIS_ACCUM));
+                                ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM));
     }
 
     /** Verifies creation fails when the signer does not own the parent definition. */
     @Test
     void createRevRegEntryRejectsNonOwnerSigner() {
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
 
         final VdrException exception =
                 assertThrows(
                         VdrException.class,
                         () ->
                                 revRegEntryService.createRevRegEntry(
-                                        "did:other", "revregdef-1", GENESIS_ACCUM));
+                                        OTHER_DID, REV_REG_DEF_ID, GENESIS_ACCUM));
         assertEquals("UNAUTHORIZED", exception.getErrorCode());
         verify(revRegEntryRegistry, never()).put(anyString(), any());
     }
@@ -137,30 +141,30 @@ class RevRegEntryServiceTest {
     /** Verifies creation fails when an entry already exists for the definition. */
     @Test
     void createRevRegEntryRejectsDuplicateForDefinition() {
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
-        when(revRegEntryRegistry.exists("revregdef-1")).thenReturn(true);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
+        when(revRegEntryRegistry.exists(REV_REG_DEF_ID)).thenReturn(true);
 
         final VdrException exception =
                 assertThrows(
                         VdrException.class,
                         () ->
                                 revRegEntryService.createRevRegEntry(
-                                        "did:issuer", "revregdef-1", GENESIS_ACCUM));
+                                        ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM));
         assertEquals("ALREADY_EXISTS", exception.getErrorCode());
     }
 
     /** Verifies updates replace the accumulator value verbatim and increment the version. */
     @Test
     void updateRevRegEntryReplacesValueAndIncrementsVersion() {
-        final RevRegEntryRecord existing = new RevRegEntryRecord("revregdef-1", GENESIS_ACCUM, 3L);
-        when(revRegEntryRegistry.get("revregdef-1")).thenReturn(existing);
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
+        final RevRegEntryRecord existing = new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, 3L);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
 
-        revRegEntryService.updateRevRegEntry("did:issuer", "revregdef-1", NEXT_ACCUM);
+        revRegEntryService.updateRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM);
 
         final ArgumentCaptor<RevRegEntryRecord> captor =
                 ArgumentCaptor.forClass(RevRegEntryRecord.class);
-        verify(revRegEntryRegistry).put(eq("revregdef-1"), captor.capture());
+        verify(revRegEntryRegistry).put(eq(REV_REG_DEF_ID), captor.capture());
         assertEquals(NEXT_ACCUM, captor.getValue().getAccumValue());
         assertEquals(4L, captor.getValue().getVersion());
         assertEquals(TX_TIME.toString(), captor.getValue().getUpdatedAt());
@@ -169,16 +173,16 @@ class RevRegEntryServiceTest {
     /** Verifies accumulator updates emit the witness-refresh event with the new value. */
     @Test
     void updateRevRegEntryEmitsUpdatedEventWithNewAccumulator() {
-        final RevRegEntryRecord existing = new RevRegEntryRecord("revregdef-1", GENESIS_ACCUM, 0L);
-        when(revRegEntryRegistry.get("revregdef-1")).thenReturn(existing);
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
+        final RevRegEntryRecord existing = new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, 0L);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
 
-        revRegEntryService.updateRevRegEntry("did:issuer", "revregdef-1", NEXT_ACCUM);
+        revRegEntryService.updateRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM);
 
         final ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
         verify(eventEmitter).emit(eq(VdrEvents.REV_REG_ENTRY_UPDATED), payloadCaptor.capture());
         final Map<?, ?> payload = (Map<?, ?>) payloadCaptor.getValue();
-        assertEquals("revregdef-1", payload.get("revRegDefId"));
+        assertEquals(REV_REG_DEF_ID, payload.get("revRegDefId"));
         assertEquals(NEXT_ACCUM, payload.get("accumValue"));
         assertEquals(1L, payload.get("version"));
         assertEquals(3, payload.size());
@@ -187,16 +191,16 @@ class RevRegEntryServiceTest {
     /** Verifies updates from a non-owner signer are rejected without any ledger write. */
     @Test
     void updateRevRegEntryRejectsNonOwnerSigner() {
-        final RevRegEntryRecord existing = new RevRegEntryRecord("revregdef-1", GENESIS_ACCUM, 0L);
-        when(revRegEntryRegistry.get("revregdef-1")).thenReturn(existing);
-        when(revRegDefRegistry.get("revregdef-1")).thenReturn(parentOwnedBy("did:issuer"));
+        final RevRegEntryRecord existing = new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, 0L);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
 
         final VdrException exception =
                 assertThrows(
                         VdrException.class,
                         () ->
                                 revRegEntryService.updateRevRegEntry(
-                                        "did:other", "revregdef-1", HIJACK_ACCUM));
+                                        OTHER_DID, REV_REG_DEF_ID, HIJACK_ACCUM));
         assertEquals("UNAUTHORIZED", exception.getErrorCode());
         verify(revRegEntryRegistry, never()).put(anyString(), any());
         verify(eventEmitter, never()).emit(anyString(), any());
@@ -205,13 +209,13 @@ class RevRegEntryServiceTest {
     /** Verifies history resolution delegates to the registry and preserves revision order. */
     @Test
     void getRevRegEntryHistoryDelegatesToRegistry() {
-        final RevRegEntryRecord genesis = new RevRegEntryRecord("revregdef-1", GENESIS_ACCUM, 0L);
+        final RevRegEntryRecord genesis = new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, 0L);
         final List<KeyRevision<RevRegEntryRecord>> revisions =
                 List.of(new KeyRevision<>("tx-1", TX_TIME, false, genesis));
-        when(revRegEntryRegistry.history("revregdef-1")).thenReturn(revisions);
+        when(revRegEntryRegistry.history(REV_REG_DEF_ID)).thenReturn(revisions);
 
         final List<KeyRevision<RevRegEntryRecord>> result =
-                revRegEntryService.getRevRegEntryHistory("revregdef-1");
+                revRegEntryService.getRevRegEntryHistory(REV_REG_DEF_ID);
 
         assertEquals(1, result.size());
         assertEquals("tx-1", result.get(0).getTxId());
@@ -230,13 +234,11 @@ class RevRegEntryServiceTest {
     /** Verifies updates fail when no entry exists for the definition. */
     @Test
     void updateRevRegEntryRejectsMissingEntry() {
-        when(revRegEntryRegistry.get("revregdef-1")).thenReturn(null);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(null);
 
         assertThrows(
                 VdrException.class,
-                () ->
-                        revRegEntryService.updateRevRegEntry(
-                                "did:issuer", "revregdef-1", NEXT_ACCUM));
+                () -> revRegEntryService.updateRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM));
     }
 
     /** Verifies malformed accumulator encodings are rejected before any ledger access. */
@@ -247,7 +249,7 @@ class RevRegEntryServiceTest {
                         VdrException.class,
                         () ->
                                 revRegEntryService.createRevRegEntry(
-                                        "did:issuer", "revregdef-1", "accum-genesis"));
+                                        ISSUER_DID, REV_REG_DEF_ID, "accum-genesis"));
         assertEquals("INVALID_ARGUMENT", notHex.getErrorCode());
 
         final VdrException uppercase =
@@ -255,7 +257,7 @@ class RevRegEntryServiceTest {
                         VdrException.class,
                         () ->
                                 revRegEntryService.updateRevRegEntry(
-                                        "did:issuer", "revregdef-1", GENESIS_ACCUM.toUpperCase()));
+                                        ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM.toUpperCase()));
         assertEquals("INVALID_ARGUMENT", uppercase.getErrorCode());
     }
 }

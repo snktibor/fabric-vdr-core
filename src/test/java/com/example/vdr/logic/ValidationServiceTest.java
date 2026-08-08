@@ -22,6 +22,11 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("java:S1192")
 class ValidationServiceTest {
 
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
+    private static final String SCHEMA_ID =
+            ISSUER_DID + "/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1";
+
     private final ValidationService validationService = new ValidationService();
 
     /** Verifies blank values are rejected while surrounding whitespace is trimmed. */
@@ -40,35 +45,103 @@ class ValidationServiceTest {
                 () -> validationService.requireMatchingIds("id", "other", "id"));
     }
 
-    /** Verifies a prefixed UUIDv7 identifier is accepted and returned trimmed. */
+    /** Verifies well-formed DIDs of any method are accepted and returned trimmed. */
     @Test
-    void requireValidEntityIdAcceptsPrefixedUuidV7() {
+    void requireValidDidAcceptsAnyMethod() {
+        assertEquals(ISSUER_DID, validationService.requireValidDid(" " + ISSUER_DID + " ", "id"));
         assertEquals(
-                "schema:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e",
-                validationService.requireValidEntityId(
-                        " schema:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e ", "schema:vdr:", "id"));
+                "did:web:issuer.example.com",
+                validationService.requireValidDid("did:web:issuer.example.com", "id"));
+        assertEquals("did:example:123", validationService.requireValidDid("did:example:123", "id"));
     }
 
-    /** Verifies an id with the wrong prefix is rejected as a validation failure. */
+    /** Verifies a DID carrying a multi-segment method-specific id is accepted. */
     @Test
-    void requireValidEntityIdRejectsWrongPrefix() {
+    void requireValidDidAcceptsColonSegmentedMethodSpecificId() {
+        assertEquals(
+                "did:indy:sovrin:staging:6cgbu8ZPoWTnR5Rv5JcSMB",
+                validationService.requireValidDid(
+                        "did:indy:sovrin:staging:6cgbu8ZPoWTnR5Rv5JcSMB", "id"));
+    }
+
+    /** Verifies strings that are not well-formed DIDs are rejected as validation failures. */
+    @Test
+    void requireValidDidRejectsMalformedValues() {
+        // No method-specific id at all.
+        assertThrows(VdrException.class, () -> validationService.requireValidDid("did:vdr", "id"));
+        // Empty method-specific id.
+        assertThrows(VdrException.class, () -> validationService.requireValidDid("did:vdr:", "id"));
+        // Uppercase method name violates the DID Core method-name production.
+        assertThrows(
+                VdrException.class, () -> validationService.requireValidDid("did:VDR:abc", "id"));
+        // A DID never contains a path segment.
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireValidDid(ISSUER_DID + "/anoncreds", "id"));
+        // Not a DID at all — the shape the end-to-end suite used to mint for issuer seeds.
         assertThrows(
                 VdrException.class,
                 () ->
-                        validationService.requireValidEntityId(
-                                "creddef:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e",
-                                "schema:vdr:",
+                        validationService.requireValidDid(
+                                "issuer-did-018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e", "id"));
+    }
+
+    /** Verifies a DID URL rooted at the issuer DID is accepted and returned trimmed. */
+    @Test
+    void requireValidObjectIdAcceptsIssuerRootedDidUrl() {
+        assertEquals(
+                SCHEMA_ID,
+                validationService.requireValidObjectId(
+                        " " + SCHEMA_ID + " ", ISSUER_DID, AnonCredsObjectTypes.SCHEMA, "id"));
+    }
+
+    /** Verifies an id rooted at a different issuer DID is rejected as a validation failure. */
+    @Test
+    void requireValidObjectIdRejectsForeignIssuer() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireValidObjectId(
+                                SCHEMA_ID,
+                                "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22",
+                                AnonCredsObjectTypes.SCHEMA,
                                 "id"));
     }
 
-    /** Verifies an id whose suffix is not a UUIDv7 is rejected as a validation failure. */
+    /** Verifies an id carrying the wrong object-type token is rejected. */
     @Test
-    void requireValidEntityIdRejectsNonUuidV7() {
+    void requireValidObjectIdRejectsWrongObjectType() {
         assertThrows(
                 VdrException.class,
                 () ->
-                        validationService.requireValidEntityId(
-                                "schema:vdr:not-a-uuid-v7", "schema:vdr:", "id"));
+                        validationService.requireValidObjectId(
+                                SCHEMA_ID, ISSUER_DID, AnonCredsObjectTypes.PUBLIC_CRED_DEF, "id"));
+    }
+
+    /** Verifies an id whose object segment is not a UUIDv7 is rejected as a validation failure. */
+    @Test
+    void requireValidObjectIdRejectsNonUuidV7() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireValidObjectId(
+                                ISSUER_DID + "/anoncreds/v2/SCHEMA/not-a-uuid-v7",
+                                ISSUER_DID,
+                                AnonCredsObjectTypes.SCHEMA,
+                                "id"));
+    }
+
+    /** Verifies the legacy prefixed-URN identifier shape is no longer accepted. */
+    @Test
+    void requireValidObjectIdRejectsLegacyPrefixedId() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        validationService.requireValidObjectId(
+                                "schema:vdr:018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1",
+                                ISSUER_DID,
+                                AnonCredsObjectTypes.SCHEMA,
+                                "id"));
     }
 
     /** Verifies object parsing helper rejects JSON arrays. */

@@ -103,6 +103,17 @@ class DidServiceTest {
         assertThrows(VdrException.class, () -> didService.createDid("did:example:123", json));
     }
 
+    /**
+     * Verifies identifiers that are not well-formed DIDs are rejected before ledger access. Every
+     * AnonCreds object id is a DID URL rooted at its issuer's DID, so an ill-formed DID registered
+     * here would yield ill-formed object ids downstream.
+     */
+    @Test
+    void createDidRejectsMalformedDid() {
+        final String json = didJson("not-a-did");
+        assertThrows(VdrException.class, () -> didService.createDid("not-a-did", json));
+    }
+
     /** Verifies deactivation requires owner identity match. */
     @Test
     void deactivateDidRequiresOwner() {
