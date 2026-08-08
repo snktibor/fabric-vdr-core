@@ -23,13 +23,27 @@ public abstract class AbstractEntityHandler implements EntityHandler {
     }
 
     /**
-     * Replaces the last segment or appends a UUIDv7 to guarantee a collision-safe,
-     * format-compliant, time-ordered id.
+     * Returns a fresh UUIDv7 for the object segment of a minted identifier: collision-safe and
+     * time-ordered, so ids sort by creation time.
      */
-    protected static String uniqueId(final String base) {
-        int lastColon = base.lastIndexOf(':');
-        String prefix = lastColon != -1 ? base.substring(0, lastColon + 1) : base + "-";
-        return prefix + UuidCreator.getTimeOrderedEpoch().toString();
+    protected static String uuid7() {
+        return UuidCreator.getTimeOrderedEpoch().toString();
+    }
+
+    /**
+     * Mints an AnonCreds object identifier as a DID URL rooted at the issuer's DID.
+     *
+     * <p>Feature-file ids are scenario handles only: a real id embeds the issuer DID minted at run
+     * time, so it cannot be written down in Gherkin. {@link ScenarioContext#setEffectiveId} maps
+     * the handle to the id actually submitted.
+     *
+     * @param issuerDid registered issuer DID the identifier is rooted at
+     * @param objectType object-type path token (see {@link
+     *     com.example.vdr.logic.AnonCredsObjectTypes})
+     * @return newly minted object identifier
+     */
+    protected static String mintObjectId(final String issuerDid, final String objectType) {
+        return issuerDid + "/anoncreds/v2/" + objectType + "/" + uuid7();
     }
 
     protected String resolveId(final String rawId) {

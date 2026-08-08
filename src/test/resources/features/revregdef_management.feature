@@ -7,18 +7,18 @@ Feature: Revocation Registry Definition Lifecycle Management
         Given a connected Fabric Gateway as an "authorized" client
 
     Scenario: 1. Publish a new revocation registry definition
-        When I create a "revocation registry definition" with id "revregdef:vdr:test-1"
+        When I create a "revocation registry definition" with id "revregdef-1"
         Then the transaction should be successful
-        And a "revocation registry definition" with id "revregdef:vdr:test-1" should exist on the ledger
+        And a "revocation registry definition" with id "revregdef-1" should exist on the ledger
 
     Scenario: 2. Query an existing revocation registry definition by ID
-        Given a "revocation registry definition" with id "revregdef:vdr:test-2" exists on the ledger
-        When I query the "revocation registry definition" with id "revregdef:vdr:test-2"
+        Given a "revocation registry definition" with id "revregdef-2" exists on the ledger
+        When I query the "revocation registry definition" with id "revregdef-2"
         Then the transaction should be successful
-        And a "revocation registry definition" with id "revregdef:vdr:test-2" should exist on the ledger
+        And a "revocation registry definition" with id "revregdef-2" should exist on the ledger
 
     Scenario: 3. List revocation registry definitions returns previously created entries
-        Given a "revocation registry definition" with id "revregdef:vdr:test-3" exists on the ledger
+        Given a "revocation registry definition" with id "revregdef-3" exists on the ledger
         When I list all "revocation registry definition" entries
         Then the transaction should be successful
-        And the list should contain the "revocation registry definition" with id "revregdef:vdr:test-3"
+        And the list should contain the "revocation registry definition" with id "revregdef-3"

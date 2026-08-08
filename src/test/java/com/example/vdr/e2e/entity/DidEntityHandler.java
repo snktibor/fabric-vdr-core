@@ -31,9 +31,12 @@ public class DidEntityHandler extends AbstractEntityHandler {
         return "listDids";
     }
 
+    /**
+     * Mints a {@code did:vdr:<UUIDv7>} identifier; the feature-file id is a scenario handle only.
+     */
     @Override
     public void create(final String rawId) {
-        final String did = uniqueId(rawId);
+        final String did = "did:vdr:" + uuid7();
         context.setEffectiveId(rawId, did);
         final KeyPair keyPair;
         try {

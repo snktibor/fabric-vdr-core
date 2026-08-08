@@ -63,13 +63,14 @@ public class RevRegDefService {
      * Creates and stores a new revocation registry definition owned by the caller.
      *
      * <p>The method enforces deterministic preconditions before persistence: required input fields,
-     * UUIDv7-based id format, id uniqueness, referenced credential definition existence, issuer
-     * consistency with the referenced credential definition, and active issuer DID status. The
-     * {@code signerDid} argument is resolved from the verified DID-JWT upstream by the contract
-     * layer; no token verification happens here.
+     * an id that is a DID URL rooted at the declared issuer DID, id uniqueness, referenced
+     * credential definition existence, issuer consistency with the referenced credential
+     * definition, and active issuer DID status. The {@code signerDid} argument is resolved from the
+     * verified DID-JWT upstream by the contract layer; no token verification happens here.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
-     * @param id unique identifier for the revocation registry definition
+     * @param id unique revocation registry definition identifier as a DID URL rooted at the issuer
+     *     DID
      * @param issuerId issuer DID associated with the definition
      * @param credDefId referenced credential definition identifier
      * @param type revocation scheme identifier; must be allowlisted (see {@link
@@ -88,9 +89,11 @@ public class RevRegDefService {
             final String type,
             final String publicKeysJson,
             final long maxCredNum) {
+        // The issuer is validated first because the definition id must be rooted at it.
+        final String normalizedIssuerId = validationService.requireValidDid(issuerId, "issuerId");
         final String normalizedId =
-                validationService.requireValidEntityId(id, "revregdef:vdr:", "id");
-        final String normalizedIssuerId = validationService.requireNotBlank(issuerId, "issuerId");
+                validationService.requireValidObjectId(
+                        id, normalizedIssuerId, AnonCredsObjectTypes.REV_REG_DEF, "id");
         final String normalizedCredDefId =
                 validationService.requireNotBlank(credDefId, "credDefId");
         final String normalizedType =

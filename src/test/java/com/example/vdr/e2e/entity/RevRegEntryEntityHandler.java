@@ -11,7 +11,7 @@ import java.security.KeyPair;
 public class RevRegEntryEntityHandler extends AbstractEntityHandler {
 
     public static final String TYPE = "revocation registry entry";
-    private static final String DEFAULT_REV_REG_DEF_SEED = "revregdef:vdr:revregentry-default";
+    private static final String DEFAULT_REV_REG_DEF_SEED = "revregdef-revregentry-default";
     private static final String NON_OWNER_DID_SEED = "revregentry-non-owner-did";
     // Genuine compressed G1 vectors; Gherkin refers to them via TestVectors aliases.
     private static final String GENESIS_ACCUM_VALUE = TestVectors.accumValue("accum-genesis");

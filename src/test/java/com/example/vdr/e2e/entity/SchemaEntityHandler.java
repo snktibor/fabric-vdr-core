@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
+import com.example.vdr.logic.AnonCredsObjectTypes;
 import java.security.KeyPair;
 
 public class SchemaEntityHandler extends AbstractEntityHandler {
@@ -68,7 +69,7 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
     }
 
     private void submitCreate(final String rawId, final String issuerDid) {
-        final String schemaId = uniqueId(rawId);
+        final String schemaId = mintObjectId(issuerDid, AnonCredsObjectTypes.SCHEMA);
         context.setEffectiveId(rawId, schemaId);
         context.recordOwner(schemaId, issuerDid);
         final KeyPair keyPair = context.requireDidKeyPair(issuerDid);

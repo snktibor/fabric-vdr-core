@@ -53,11 +53,12 @@ public class SchemaService {
     /**
      * Creates and stores a new schema record owned by the caller.
      *
-     * <p>Creation enforces id uniqueness, validates issuer DID existence/activity, and normalizes
-     * schema attributes before persistence.
+     * <p>Creation enforces that the schema id is a DID URL rooted at the declared issuer DID,
+     * enforces id uniqueness, validates issuer DID existence/activity, and normalizes schema
+     * attributes before persistence.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
-     * @param id unique schema identifier
+     * @param id unique schema identifier as a DID URL rooted at the issuer DID
      * @param issuerId issuer DID that governs the schema
      * @param name schema display name
      * @param version schema version identifier
@@ -73,8 +74,11 @@ public class SchemaService {
             final String name,
             final String version,
             final String attrNamesJson) {
-        final String normalizedId = validationService.requireValidEntityId(id, "schema:vdr:", "id");
-        final String normalizedIssuerId = validationService.requireNotBlank(issuerId, "issuerId");
+        // The issuer is validated first because the schema id must be rooted at it.
+        final String normalizedIssuerId = validationService.requireValidDid(issuerId, "issuerId");
+        final String normalizedId =
+                validationService.requireValidObjectId(
+                        id, normalizedIssuerId, AnonCredsObjectTypes.SCHEMA, "id");
         final String normalizedName = validationService.requireNotBlank(name, "name");
         final String normalizedVersion = validationService.requireNotBlank(version, "version");
         final List<String> attrNames =

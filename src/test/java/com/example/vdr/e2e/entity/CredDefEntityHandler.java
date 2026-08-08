@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
+import com.example.vdr.logic.AnonCredsObjectTypes;
 import com.example.vdr.logic.VdrTypes;
 import java.security.KeyPair;
 
@@ -11,7 +12,7 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
 
     public static final String TYPE = "credential definition";
     private static final String DEFAULT_ISSUER_DID_SEED = "issuer-did";
-    private static final String DEFAULT_SCHEMA_SEED = "schema:vdr:creddef-default";
+    private static final String DEFAULT_SCHEMA_SEED = "schema-creddef-default";
 
     private final DidEntityHandler didHandler;
     private final SchemaEntityHandler schemaHandler;
@@ -45,7 +46,7 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
     public void create(final String rawId) {
         final String issuerDid = ensureIssuerDid();
         final String schemaId = ensureSchema();
-        final String credDefId = uniqueId(rawId);
+        final String credDefId = mintObjectId(issuerDid, AnonCredsObjectTypes.PUBLIC_CRED_DEF);
         context.setEffectiveId(rawId, credDefId);
         context.recordOwner(credDefId, issuerDid);
 

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.example.vdr.TestVectors;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
+import com.example.vdr.logic.AnonCredsObjectTypes;
 import com.example.vdr.logic.VdrTypes;
 import java.security.KeyPair;
 
@@ -12,7 +13,7 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
 
     public static final String TYPE = "revocation registry definition";
     private static final String DEFAULT_ISSUER_DID_SEED = "issuer-did";
-    private static final String DEFAULT_CRED_DEF_SEED = "creddef:vdr:revregdef-default";
+    private static final String DEFAULT_CRED_DEF_SEED = "creddef-revregdef-default";
 
     private final DidEntityHandler didHandler;
     private final CredDefEntityHandler credDefHandler;
@@ -46,7 +47,7 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
     public void create(final String rawId) {
         final String issuerDid = ensureIssuerDid();
         final String credDefId = ensureCredDef();
-        final String revRegDefId = uniqueId(rawId);
+        final String revRegDefId = mintObjectId(issuerDid, AnonCredsObjectTypes.REV_REG_DEF);
         context.setEffectiveId(rawId, revRegDefId);
         context.recordOwner(revRegDefId, issuerDid);
 

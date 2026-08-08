@@ -52,7 +52,8 @@ public class VdrContract implements ContractInterface {
      * its own owner — registration is open and ownership is self-assigned first come, first served.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the DID.
+     * @param id The unique identifier for the DID, in {@code did:<method>:<method-specific-id>}
+     *     syntax; no DID method is privileged.
      * @param didDocumentJson The raw JSON representation of the DID document.
      * @return The canonical JSON representation of the created {@link DidDocument}.
      * @throws ChaincodeException If validation fails or the DID already exists.
@@ -145,7 +146,8 @@ public class VdrContract implements ContractInterface {
      * method validates the schema structure and associates it with an issuer DID.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the schema.
+     * @param id The unique identifier for the schema: a DID URL rooted at {@code issuerId} (see
+     *     {@link com.example.vdr.logic.ValidationService#requireValidObjectId}).
      * @param issuerId The DID of the issuer owning this schema.
      * @param name The human-readable name of the schema.
      * @param version The version string of the schema.
@@ -210,7 +212,8 @@ public class VdrContract implements ContractInterface {
      * with the signer DID recorded as owner.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the credential definition.
+     * @param id The unique identifier for the credential definition: a DID URL rooted at {@code
+     *     issuerId} (see {@link com.example.vdr.logic.ValidationService#requireValidObjectId}).
      * @param issuerId The DID of the issuer who owns this credential definition.
      * @param schemaId The ID of the schema this credential definition adheres to.
      * @param type The credential definition type; must be allowlisted (see {@link
@@ -288,7 +291,9 @@ public class VdrContract implements ContractInterface {
      * once created.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the revocation registry definition.
+     * @param id The unique identifier for the revocation registry definition: a DID URL rooted at
+     *     {@code issuerId} (see {@link
+     *     com.example.vdr.logic.ValidationService#requireValidObjectId}).
      * @param issuerId The DID of the issuer who owns this revocation registry definition.
      * @param credDefId The ID of the credential definition this registry revokes against.
      * @param type The revocation scheme identifier; must be allowlisted (see {@link

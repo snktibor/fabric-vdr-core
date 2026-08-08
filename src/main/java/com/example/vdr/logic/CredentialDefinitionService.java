@@ -60,10 +60,11 @@ public class CredentialDefinitionService {
      * Creates and stores a new credential definition owned by the caller.
      *
      * <p>The method enforces deterministic preconditions before persistence: required input fields,
-     * id uniqueness, referenced schema existence, and active issuer DID status.
+     * an id that is a DID URL rooted at the declared issuer DID, id uniqueness, referenced schema
+     * existence, and active issuer DID status.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
-     * @param id unique identifier for the credential definition
+     * @param id unique credential definition identifier as a DID URL rooted at the issuer DID
      * @param issuerId issuer DID associated with the definition
      * @param schemaId referenced schema identifier
      * @param type credential definition type descriptor
@@ -81,9 +82,11 @@ public class CredentialDefinitionService {
             final String type,
             final String tag,
             final String publicMetadataJson) {
+        // The issuer is validated first because the credential definition id must be rooted at it.
+        final String normalizedIssuerId = validationService.requireValidDid(issuerId, "issuerId");
         final String normalizedId =
-                validationService.requireValidEntityId(id, "creddef:vdr:", "id");
-        final String normalizedIssuerId = validationService.requireNotBlank(issuerId, "issuerId");
+                validationService.requireValidObjectId(
+                        id, normalizedIssuerId, AnonCredsObjectTypes.PUBLIC_CRED_DEF, "id");
         final String normalizedSchemaId = validationService.requireNotBlank(schemaId, "schemaId");
         final String normalizedType =
                 validationService.requireAllowedType(type, VdrTypes.CRED_DEF_TYPES, "type");

@@ -73,7 +73,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 114 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 121 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -129,7 +129,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createDid` | SUBMIT | `id`, `didDocumentJson` | created DID document |
+| `createDid` | SUBMIT | `id` (DID Core syntax, see [Identifiers](#identifiers)), `didDocumentJson` | created DID document |
 | `getDid` | EVALUATE | `id` | DID document |
 | `updateDid` | SUBMIT | `id`, `didDocumentJson`, `jwt` | updated DID document |
 | `deactivateDid` | SUBMIT | `id`, `jwt` | DID document with `status: INACTIVE` |
@@ -143,7 +143,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createSchema` | SUBMIT | `id`, `issuerId`, `name`, `version`, `attrNamesJson` (JSON string array), `jwt` | created schema record |
+| `createSchema` | SUBMIT | `id` (DID URL rooted at `issuerId`, see [Identifiers](#identifiers)), `issuerId`, `name`, `version`, `attrNamesJson` (JSON string array), `jwt` | created schema record |
 | `getSchema` | EVALUATE | `id` | schema record |
 | `listSchemas` | EVALUATE | — | array of all schema entries |
 
@@ -151,7 +151,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createCredDef` | SUBMIT | `id`, `issuerId`, `schemaId`, `type` (allowlisted, see [below](#wire-encodings-and-type-identifiers)), `tag`, `publicMetadataJson` (JSON object), `jwt` | created credential definition record |
+| `createCredDef` | SUBMIT | `id` (DID URL rooted at `issuerId`, see [Identifiers](#identifiers)), `issuerId`, `schemaId`, `type` (allowlisted, see [below](#wire-encodings-and-type-identifiers)), `tag`, `publicMetadataJson` (JSON object), `jwt` | created credential definition record |
 | `getCredDef` | EVALUATE | `id` | credential definition record |
 | `listCredDefs` | EVALUATE | — | array of all credential definition entries |
 
@@ -159,7 +159,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createRevRegDef` | SUBMIT | `id`, `issuerId`, `credDefId`, `type` (allowlisted), `publicKeysJson` (exact shape, see [below](#wire-encodings-and-type-identifiers)), `maxCredNum` (number), `jwt` | created revocation registry definition record |
+| `createRevRegDef` | SUBMIT | `id` (DID URL rooted at `issuerId`, see [Identifiers](#identifiers)), `issuerId`, `credDefId`, `type` (allowlisted), `publicKeysJson` (exact shape, see [below](#wire-encodings-and-type-identifiers)), `maxCredNum` (number), `jwt` | created revocation registry definition record |
 | `getRevRegDef` | EVALUATE | `id` | revocation registry definition record |
 | `listRevRegDefs` | EVALUATE | — | array of all revocation registry definition entries |
 
@@ -168,7 +168,8 @@ scan the whole namespace (no pagination).
 The entry is the only mutable record type: it holds the issuer's current accumulator
 value for one revocation registry definition, and is stored keyed by that parent
 definition's id. It has no identifier of its own — exactly one entry exists per
-definition, so the parent's id addresses it unambiguously.
+definition, so the parent's DID URL addresses it unambiguously (see
+[Identifiers](#identifiers)).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
@@ -285,18 +286,50 @@ record's creation time.
 
 ## Identifiers
 
-Registry object ids are URN-style strings with a fixed prefix and a **UUIDv7** suffix
-(the embedded millisecond timestamp makes ids sortable by creation time):
+AnonCreds object ids are **DID URLs rooted at the publishing issuer's DID**, following the
+convention every registered AnonCreds objects method uses — `did:indy` writes
+`<did>/anoncreds/<version>/<TYPE>/<...>`, the Hiero method
+`<publisher-did>/anoncreds/<version>/<TYPE>/<topic>`:
+
+```
+<issuer-did>/anoncreds/v2/<TYPE>/<UUIDv7>
+```
 
 | Object | Format |
 |---|---|
-| Schema | `schema:vdr:<UUIDv7>` |
-| Credential definition | `creddef:vdr:<UUIDv7>` |
-| Revocation registry definition | `revregdef:vdr:<UUIDv7>` |
-| DID | any non-blank string (generic `did:<method>:<id>` syntax is **not yet enforced**) |
+| Schema | `<issuer-did>/anoncreds/v2/SCHEMA/<UUIDv7>` |
+| Credential definition | `<issuer-did>/anoncreds/v2/PUBLIC_CRED_DEF/<UUIDv7>` |
+| Revocation registry definition | `<issuer-did>/anoncreds/v2/REV_REG_DEF/<UUIDv7>` |
+| DID | `did:<method>:<method-specific-id>` (DID Core syntax, **enforced**; no method privileged) |
 
+For example, for the issuer `did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e`:
+
+```
+did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1
+```
+
+Segment by segment:
+
+- **The issuer DID roots the id**, so an identifier names its own issuer: resolving one never
+  needs a second lookup to learn who published it. A DID never contains `/` (DID Core), so the
+  id splits unambiguously into issuer and path at its first slash. The id is validated
+  *against the issuer the transaction declares*, and that issuer must in turn match the
+  verified token signer — so no caller can mint an identifier rooted at a DID it does not
+  control.
+- **`v2`** versions the AnonCreds *object shapes*, not this registry's method specification.
+  Both registered methods sit at `v0`, which denotes the legacy Indy-era shapes; this registry
+  publishes AnonCreds v2 objects (see the [type allowlist](#type-allowlist)).
+- **`PUBLIC_CRED_DEF`** is preferred over `did:indy`'s `CLAIM_DEF`, which is Indy ledger
+  transaction vocabulary for a CL-signature credential definition — an AnonCreds v1 construct
+  this registry rejects by construction. It also states what is actually published: only the
+  public half of the credential definition ever reaches the ledger.
+- **`<UUIDv7>`** carries an embedded millisecond timestamp, so ids sort by creation time.
+
+Ids are client-minted; the chaincode validates the grammar on create and never generates one.
 Revocation registry entries have no id of their own: they are addressed by their parent
-revocation registry definition's id.
+revocation registry definition's DID URL, exactly as the AnonCreds revocation status list is
+resolved through its definition. The time dimension other methods encode in an entry id is
+served here by [`getRevRegEntryHistory`](#revocation-registry-entries).
 
 ## Authentication and authorization
 
@@ -332,13 +365,18 @@ Identity is two-level:
       the same pair. The `jwt` must always be the transaction's final argument.
   - Mutations are **owner-gated**: the signer DID must match the `ownerId` recorded on
     the target object (for entries: on the parent revocation registry definition).
+  - On create, the object id must be a DID URL rooted at the declared `issuerId`, and
+    `issuerId` must equal the signer DID — so a published id always names the DID that
+    actually authorized it.
 
 ### Trust model
 
 - **Open DID registration (intentional).** `createDid` takes no JWT: any channel member
-  may register any not-yet-taken DID id, and ownership is self-assigned first come,
-  first served (`ownerId` is the DID itself). Every other mutation is authorized against
-  this self-registered ownership via DID-JWT.
+  may register any not-yet-taken, syntactically valid DID id, and ownership is
+  self-assigned first come, first served (`ownerId` is the DID itself). Every other
+  mutation is authorized against this self-registered ownership via DID-JWT. Because
+  every AnonCreds object id is a DID URL rooted at its issuer's DID, taking a DID is
+  also what reserves the identifier space beneath it.
 - **Single-org endorsement (dev network).** The companion network defines one
   organization (`Org1MSP`, two peers) with no explicit endorsement policy, so the
   Fabric-level write gate is simply membership in `Org1`; the chaincode reads no MSP

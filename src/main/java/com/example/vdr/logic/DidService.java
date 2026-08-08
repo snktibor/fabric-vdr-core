@@ -60,10 +60,11 @@ public class DidService {
      * @throws VdrException if validation fails or the DID id already exists
      */
     public DidDocument createDid(final String id, final String didDocumentJson) {
-        // A DID id follows generic 'did:<method>:<method-specific-id>' syntax, not the constrained
-        // '<entity>:vdr:<UUIDv7>' URN enforced by requireValidEntityId, so only non-blankness is
-        // required here.
-        final String normalizedId = validationService.requireNotBlank(id, "id");
+        // Only the generic 'did:<method>:<method-specific-id>' syntax is enforced: the registry
+        // stays method-agnostic by design, and no DID method carries privilege here. The check is
+        // not cosmetic — every AnonCreds object id is a DID URL rooted at its issuer's DID, so an
+        // ill-formed DID registered here would produce ill-formed object ids downstream.
+        final String normalizedId = validationService.requireValidDid(id, "id");
         final DidDocument document =
                 validationService.parseJson(didDocumentJson, DidDocument.class);
 

@@ -22,6 +22,22 @@ public class ValidationService {
             java.util.regex.Pattern.compile(
                     "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
 
+    // DID syntax per DID Core 1.0 section 3.1: did = "did:" method-name ":" method-specific-id,
+    // where method-name is lowercase alphanumeric and method-specific-id is colon-separated groups
+    // of idchars (ALPHA / DIGIT / "." / "-" / "_" / pct-encoded) ending in a non-empty group. The
+    // grammar is method-agnostic on purpose — did:vdr, did:web and did:key issuers are all legal
+    // here. Crucially a DID contains no "/", which is what lets an object identifier split
+    // unambiguously into issuer DID and AnonCreds path at its first slash.
+    private static final String DID_ID_CHAR = "(?:[A-Za-z0-9._-]|%[0-9A-Fa-f]{2})";
+    private static final java.util.regex.Pattern DID_PATTERN =
+            java.util.regex.Pattern.compile(
+                    "^did:[a-z0-9]+:(?:" + DID_ID_CHAR + "*:)*" + DID_ID_CHAR + "+$");
+    // Path segments every AnonCreds object identifier carries between the issuer DID and the object
+    // type. "anoncreds" is the object-family marker the registered methods share; the version
+    // segment versions the AnonCreds OBJECT SHAPES, not this registry's method specification — the
+    // registered methods sit at v0 (legacy Indy-era shapes) while this registry publishes v2 ones.
+    private static final String ANONCREDS_PATH = "/anoncreds/v2/";
+
     // Compressed BLS12-381 points in ZCash encoding, as lowercase hex: G1 = 48 bytes / 96 chars,
     // G2 = 96 bytes / 192 chars. Lowercase-only keeps ledger JSON byte-stable; base64, 0x-prefixed,
     // uppercase, and uncompressed forms all fail these patterns.
@@ -54,32 +70,63 @@ public class ValidationService {
     }
 
     /**
-     * Validates that the input is a well-formed Uniform Resource Name (URN) consisting of a
-     * specific prefix followed by a strict UUIDv7.
+     * Validates that the input is a syntactically well-formed Decentralized Identifier.
      *
-     * <p>This method first normalizes the input by rejecting blank or null values. It is designed
-     * to be highly reusable for any current or future ledger entities (e.g., {@code "did:vdr:"},
-     * {@code "schema:vdr:"}, {@code "creddef:vdr:"}). UUIDv7 is chosen so identifiers carry an
-     * embedded millisecond Unix timestamp, allowing ledger transactions to be sorted by creation
-     * time using the id alone.
+     * <p>Only the {@code did:<method>:<method-specific-id>} syntax of DID Core is enforced; no DID
+     * method is privileged and no resolution is attempted here. Callers that need the DID to exist
+     * and be active on this ledger resolve it through the DID registry afterwards.
      *
      * @param value the raw input identifier to validate
-     * @param expectedPrefix the required namespace prefix (e.g., {@code "did:vdr:"})
+     * @param fieldName the logical name of the field
+     * @return the trimmed, non-blank, and syntactically valid DID
+     * @throws VdrException if the input is null, empty, whitespace only, or not a well-formed DID
+     */
+    public String requireValidDid(final String value, final String fieldName) {
+        final String normalized = requireNotBlank(value, fieldName);
+
+        if (!DID_PATTERN.matcher(normalized).matches()) {
+            throw VdrException.invalid(
+                    fieldName
+                            + " format is invalid. Must match 'did:<method>:<method-specific-id>'");
+        }
+
+        return normalized;
+    }
+
+    /**
+     * Validates that the input is a well-formed AnonCreds object identifier: a DID URL rooted at
+     * the issuer's DID, followed by the AnonCreds path, the object type, and a strict UUIDv7.
+     *
+     * <p>The issuer DID is an INPUT to this check rather than something read back out of the
+     * identifier. An object id is therefore only ever valid relative to the issuer the transaction
+     * declares, and since that issuer must in turn match the verified token signer, no caller can
+     * mint an identifier rooted at a DID it does not control. UUIDv7 is chosen for the object
+     * segment so identifiers carry an embedded millisecond Unix timestamp, allowing ledger
+     * transactions to be sorted by creation time using the id alone.
+     *
+     * @param value the raw input identifier to validate
+     * @param issuerDid the validated issuer DID the identifier must be rooted at
+     * @param objectType the required object-type token (see {@link AnonCredsObjectTypes})
      * @param fieldName the logical name of the field
      * @return the trimmed, non-blank, and fully validated identifier string
-     * @throws VdrException if the input is null, empty, or whitespace only, does not start with the
-     *     expected prefix, or if the suffix is not a valid UUIDv7
+     * @throws VdrException if the input is null, empty, or whitespace only, is not rooted at the
+     *     issuer DID with the expected AnonCreds path and object type, or if the object segment is
+     *     not a valid UUIDv7
      */
-    public String requireValidEntityId(
-            final String value, final String expectedPrefix, final String fieldName) {
-        String normalized = requireNotBlank(value, fieldName);
+    public String requireValidObjectId(
+            final String value,
+            final String issuerDid,
+            final String objectType,
+            final String fieldName) {
+        final String normalized = requireNotBlank(value, fieldName);
+        final String expectedPrefix = issuerDid + ANONCREDS_PATH + objectType + "/";
 
         if (!normalized.startsWith(expectedPrefix)) {
             throw VdrException.invalid(
                     fieldName + " format is invalid. Must match '" + expectedPrefix + "<UUIDv7>'");
         }
 
-        String uuidPart = normalized.substring(expectedPrefix.length());
+        final String uuidPart = normalized.substring(expectedPrefix.length());
         if (!UUID_V7_PATTERN.matcher(uuidPart).matches()) {
             throw VdrException.invalid(
                     fieldName + " format is invalid. Must match '" + expectedPrefix + "<UUIDv7>'");
