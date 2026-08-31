@@ -21,6 +21,7 @@ public class SchemaService {
 
     private final SchemaRegistry schemaRegistry;
     private final DidService didService;
+    private final AuthorizationService authorizationService;
     private final ValidationService validationService;
     private final ChaincodeEventEmitter eventEmitter;
     private final Instant txTimestamp;
@@ -30,6 +31,7 @@ public class SchemaService {
      *
      * @param schemaRegistry registry used for schema persistence
      * @param didService DID service enforcing issuer DID existence and active status
+     * @param authorizationService owner authorization utility
      * @param validationService fail-fast validation utility
      * @param eventEmitter chaincode event emitter for state-change notifications
      * @param txTimestamp client-declared transaction time used for audit timestamps
@@ -37,11 +39,13 @@ public class SchemaService {
     public SchemaService(
             final SchemaRegistry schemaRegistry,
             final DidService didService,
+            final AuthorizationService authorizationService,
             final ValidationService validationService,
             final ChaincodeEventEmitter eventEmitter,
             final Instant txTimestamp) {
         this.schemaRegistry = schemaRegistry;
         this.didService = didService;
+        this.authorizationService = authorizationService;
         this.validationService = validationService;
         this.eventEmitter = eventEmitter;
         this.txTimestamp = txTimestamp;
@@ -81,10 +85,8 @@ public class SchemaService {
         final List<String> attrNames =
                 validationService.parseStringArray(attrNamesJson, "attrNames");
 
-        if (!normalizedIssuerId.equals(signerDid)) {
-            throw VdrException.unauthorized(
-                    "Unauthorized: signer DID must match issuerId for schema creation");
-        }
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, normalizedIssuerId, "schema", normalizedId);
 
         if (schemaRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("schema", normalizedId);

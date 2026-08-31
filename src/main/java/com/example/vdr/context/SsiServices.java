@@ -75,12 +75,18 @@ public class SsiServices {
                         txTimestamp);
         this.schemaService =
                 new SchemaService(
-                        schemaRegistry, didService, validationService, eventEmitter, txTimestamp);
+                        schemaRegistry,
+                        didService,
+                        authorizationService,
+                        validationService,
+                        eventEmitter,
+                        txTimestamp);
         this.credentialDefinitionService =
                 new CredentialDefinitionService(
                         credDefRegistry,
                         schemaRegistry,
                         didService,
+                        authorizationService,
                         validationService,
                         eventEmitter,
                         txTimestamp);
@@ -89,6 +95,7 @@ public class SsiServices {
                         revRegDefRegistry,
                         credDefRegistry,
                         didService,
+                        authorizationService,
                         validationService,
                         eventEmitter,
                         txTimestamp);

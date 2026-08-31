@@ -27,6 +27,7 @@ public class RevRegDefService {
     private final RevRegDefRegistry revRegDefRegistry;
     private final CredentialDefinitionRegistry credDefRegistry;
     private final DidService didService;
+    private final AuthorizationService authorizationService;
     private final ValidationService validationService;
     private final ChaincodeEventEmitter eventEmitter;
     private final Instant txTimestamp;
@@ -37,6 +38,7 @@ public class RevRegDefService {
      * @param revRegDefRegistry registry used to persist revocation registry definitions
      * @param credDefRegistry registry used to resolve referenced credential definitions
      * @param didService DID service enforcing issuer DID existence and active status
+     * @param authorizationService owner authorization utility
      * @param validationService fail-fast input and JSON validation utility
      * @param eventEmitter chaincode event emitter for state-change notifications
      * @param txTimestamp client-declared transaction time used for audit timestamps
@@ -45,12 +47,14 @@ public class RevRegDefService {
             final RevRegDefRegistry revRegDefRegistry,
             final CredentialDefinitionRegistry credDefRegistry,
             final DidService didService,
+            final AuthorizationService authorizationService,
             final ValidationService validationService,
             final ChaincodeEventEmitter eventEmitter,
             final Instant txTimestamp) {
         this.revRegDefRegistry = revRegDefRegistry;
         this.credDefRegistry = credDefRegistry;
         this.didService = didService;
+        this.authorizationService = authorizationService;
         this.validationService = validationService;
         this.eventEmitter = eventEmitter;
         this.txTimestamp = txTimestamp;
@@ -101,11 +105,8 @@ public class RevRegDefService {
             throw VdrException.invalid("maxCredNum must be greater than zero");
         }
 
-        if (!normalizedIssuerId.equals(signerDid)) {
-            throw VdrException.unauthorized(
-                    "Unauthorized: signer DID must match issuerId for revocation registry"
-                            + " definition creation");
-        }
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, normalizedIssuerId, "revregdef", normalizedId);
 
         if (revRegDefRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("revregdef", normalizedId);

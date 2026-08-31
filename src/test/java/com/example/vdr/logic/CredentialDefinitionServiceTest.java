@@ -58,6 +58,7 @@ class CredentialDefinitionServiceTest {
     /** Initializes service under test with mocked registries and real validators. */
     @BeforeEach
     void setUp() {
+        final AuthorizationService authorizationService = new AuthorizationService();
         final ValidationService validationService = new ValidationService();
         credentialDefinitionService =
                 new CredentialDefinitionService(
@@ -65,10 +66,11 @@ class CredentialDefinitionServiceTest {
                         schemaRegistry,
                         new DidService(
                                 didRegistry,
-                                new AuthorizationService(),
+                                authorizationService,
                                 validationService,
                                 eventEmitter,
                                 TX_TIME),
+                        authorizationService,
                         validationService,
                         eventEmitter,
                         TX_TIME);

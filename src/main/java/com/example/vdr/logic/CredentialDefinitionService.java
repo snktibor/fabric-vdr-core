@@ -24,6 +24,7 @@ public class CredentialDefinitionService {
     private final CredentialDefinitionRegistry credDefRegistry;
     private final SchemaRegistry schemaRegistry;
     private final DidService didService;
+    private final AuthorizationService authorizationService;
     private final ValidationService validationService;
     private final ChaincodeEventEmitter eventEmitter;
     private final Instant txTimestamp;
@@ -34,6 +35,7 @@ public class CredentialDefinitionService {
      * @param credDefRegistry registry used to persist credential definitions
      * @param schemaRegistry registry used to resolve referenced schemas
      * @param didService DID service enforcing issuer DID existence and active status
+     * @param authorizationService owner authorization utility
      * @param validationService fail-fast input and JSON validation utility
      * @param eventEmitter chaincode event emitter for state-change notifications
      * @param txTimestamp client-declared transaction time used for audit timestamps
@@ -42,12 +44,14 @@ public class CredentialDefinitionService {
             final CredentialDefinitionRegistry credDefRegistry,
             final SchemaRegistry schemaRegistry,
             final DidService didService,
+            final AuthorizationService authorizationService,
             final ValidationService validationService,
             final ChaincodeEventEmitter eventEmitter,
             final Instant txTimestamp) {
         this.credDefRegistry = credDefRegistry;
         this.schemaRegistry = schemaRegistry;
         this.didService = didService;
+        this.authorizationService = authorizationService;
         this.validationService = validationService;
         this.eventEmitter = eventEmitter;
         this.txTimestamp = txTimestamp;
@@ -91,10 +95,8 @@ public class CredentialDefinitionService {
         final JsonNode publicMetadata =
                 validationService.parseJsonObject(publicMetadataJson, "publicMetadata");
 
-        if (!normalizedIssuerId.equals(signerDid)) {
-            throw VdrException.unauthorized(
-                    "Unauthorized: signer DID must match issuerId for credential definition creation");
-        }
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, normalizedIssuerId, "creddef", normalizedId);
 
         if (credDefRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("creddef", normalizedId);

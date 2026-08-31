@@ -54,16 +54,18 @@ class SchemaServiceTest {
     /** Initializes service under test with mocked registry dependencies. */
     @BeforeEach
     void setUp() {
+        final AuthorizationService authorizationService = new AuthorizationService();
         final ValidationService validationService = new ValidationService();
         schemaService =
                 new SchemaService(
                         schemaRegistry,
                         new DidService(
                                 didRegistry,
-                                new AuthorizationService(),
+                                authorizationService,
                                 validationService,
                                 eventEmitter,
                                 TX_TIME),
+                        authorizationService,
                         validationService,
                         eventEmitter,
                         TX_TIME);
