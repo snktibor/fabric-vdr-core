@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyPair;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,6 +59,17 @@ public class AnonCredsDemoIT {
 
     @Test
     void publishesTheCredxRevocationLifecycleToTheLedger() throws Exception {
+        // A missing bundle is the ordinary state of a clean checkout: the Rust half of the demo
+        // has not run, so there is nothing for this harness to publish. Skip, so a plain `mvn
+        // verify` stays green. A bundle that is present but unusable is a real problem, and still
+        // fails inside run().
+        final Path bundlePath = bundlePath();
+        Assumptions.assumeTrue(
+                Files.isRegularFile(bundlePath) && Files.isReadable(bundlePath),
+                "Skipping AnonCredsDemoIT: no bundle at "
+                        + bundlePath.toAbsolutePath()
+                        + ". Run the demo via ./run-anoncreds-demo.sh, or `cargo run -- emit` in"
+                        + " anoncreds-vdr-demo, to generate it.");
         run();
     }
 
@@ -72,7 +84,7 @@ public class AnonCredsDemoIT {
      */
     static void run() throws Exception {
         final Path directory = stage3Directory();
-        final Path bundlePath = directory.resolve(BUNDLE_FILE);
+        final Path bundlePath = bundlePath();
         require(
                 Files.isRegularFile(bundlePath),
                 "No bundle at "
@@ -305,5 +317,14 @@ public class AnonCredsDemoIT {
             return Paths.get(fromEnv);
         }
         return Paths.get(DEFAULT_STAGE3_DIR);
+    }
+
+    /**
+     * Where the Rust side's bundle lives. Composed from {@link #stage3Directory()} so the skip
+     * guard in the test and the check in {@link #run()} always look at the same file, whichever way
+     * the stage 3 directory was overridden.
+     */
+    private static Path bundlePath() {
+        return stage3Directory().resolve(BUNDLE_FILE);
     }
 }
