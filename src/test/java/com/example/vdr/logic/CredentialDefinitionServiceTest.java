@@ -156,6 +156,34 @@ class CredentialDefinitionServiceTest {
                                 "{\"type\":\"BBS\"}"));
     }
 
+    /**
+     * Verifies creation fails when the issuer DID is not active, with the unauthorized code the
+     * shared DID guard reports.
+     */
+    @Test
+    void createCredDefRejectsInactiveIssuer() {
+        when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
+        when(schemaRegistry.get(SCHEMA_ID)).thenReturn(new SchemaRecord());
+        final DidDocument issuer = new DidDocument();
+        issuer.setId(ISSUER_DID);
+        issuer.setStatus(RecordStatus.INACTIVE);
+        when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                credentialDefinitionService.createCredDef(
+                                        ISSUER_DID,
+                                        CRED_DEF_ID,
+                                        ISSUER_DID,
+                                        SCHEMA_ID,
+                                        VdrTypes.CRED_DEF_BBS_V1,
+                                        "TAG",
+                                        "{\"type\":\"BBS\"}"));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+    }
+
     /** Verifies non-allowlisted credential definition types are rejected. */
     @Test
     void createCredDefRejectsUnknownType() {

@@ -185,7 +185,10 @@ class DidServiceTest {
         assertTrue(exception.getMessage().toLowerCase().contains("authorization"));
     }
 
-    /** Verifies active-state assertion fails for inactive DID records. */
+    /**
+     * Verifies the downstream active-state guard rejects inactive DID records with the same
+     * unauthorized code the self-update path reports for the same predicate.
+     */
     @Test
     void assertDidActiveRejectsInactive() {
         final DidDocument existing = new DidDocument();
@@ -193,6 +196,10 @@ class DidServiceTest {
         existing.setStatus(RecordStatus.INACTIVE);
         when(didRegistry.get("did:example:123")).thenReturn(existing);
 
-        assertThrows(VdrException.class, () -> didService.assertDidActive("did:example:123"));
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> didService.assertDidActive("did:example:123"));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+        assertTrue(exception.getMessage().toLowerCase().contains("authorization"));
     }
 }

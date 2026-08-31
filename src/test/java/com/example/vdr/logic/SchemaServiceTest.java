@@ -119,7 +119,10 @@ class SchemaServiceTest {
                                 OTHER_DID, SCHEMA_ID, OTHER_DID, "name", "1.0", "[\"name\"]"));
     }
 
-    /** Verifies schema creation fails when issuer DID is not active. */
+    /**
+     * Verifies schema creation fails when issuer DID is not active, with the unauthorized code the
+     * shared DID guard reports.
+     */
     @Test
     void createSchemaRejectsInactiveIssuer() {
         when(schemaRegistry.exists(SCHEMA_ID)).thenReturn(false);
@@ -129,11 +132,18 @@ class SchemaServiceTest {
         when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
 
         final String attrNamesJson = "[\"name\"]";
-        assertThrows(
-                VdrException.class,
-                () ->
-                        schemaService.createSchema(
-                                ISSUER_DID, SCHEMA_ID, ISSUER_DID, "name", "1.0", attrNamesJson));
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                schemaService.createSchema(
+                                        ISSUER_DID,
+                                        SCHEMA_ID,
+                                        ISSUER_DID,
+                                        "name",
+                                        "1.0",
+                                        attrNamesJson));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
     }
 
     /** Verifies schema creation rejects signer DID mismatched with issuer DID. */

@@ -181,6 +181,36 @@ class RevRegDefServiceTest {
                                 100L));
     }
 
+    /**
+     * Verifies creation fails when the issuer DID is not active, with the unauthorized code the
+     * shared DID guard reports.
+     */
+    @Test
+    void createRevRegDefRejectsInactiveIssuer() {
+        when(revRegDefRegistry.exists(REV_REG_DEF_ID)).thenReturn(false);
+        final CredentialDefinitionRecord credDef = new CredentialDefinitionRecord();
+        credDef.setIssuerId(ISSUER_DID);
+        when(credDefRegistry.get(CRED_DEF_ID)).thenReturn(credDef);
+        final DidDocument issuer = new DidDocument();
+        issuer.setId(ISSUER_DID);
+        issuer.setStatus(RecordStatus.INACTIVE);
+        when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegDefService.createRevRegDef(
+                                        ISSUER_DID,
+                                        REV_REG_DEF_ID,
+                                        ISSUER_DID,
+                                        CRED_DEF_ID,
+                                        VdrTypes.REV_REG_VB20_V1,
+                                        TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
+                                        100L));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+    }
+
     /** Verifies non-allowlisted revocation scheme identifiers are rejected. */
     @Test
     void createRevRegDefRejectsUnknownType() {

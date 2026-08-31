@@ -152,10 +152,7 @@ public class DidService {
 
         authorizationService.assertSignerOwnsEntity(
                 signerDid, existing.getOwnerId(), "did", existing.getId());
-        if (existing.getStatus() != RecordStatus.ACTIVE) {
-            throw VdrException.unauthorized(
-                    "authorization failed: did '" + normalizedId + "' is not active");
-        }
+        assertDocumentActive(existing);
 
         final DidDocument updated = validationService.parseJson(didDocumentJson, DidDocument.class);
         validationService.requireNotBlank(updated.getId(), "did document id");
@@ -180,12 +177,29 @@ public class DidService {
      * before processing related entities.
      *
      * @param didId DID identifier to validate
-     * @throws VdrException if DID is missing or not in active status
+     * @throws VdrException if DID is missing, or is deactivated and therefore no longer authorized
      */
     public void assertDidActive(final String didId) {
-        final DidDocument document = getDid(didId);
+        assertDocumentActive(getDid(didId));
+    }
+
+    /**
+     * Enforces the active-status guard on an already-resolved DID document.
+     *
+     * <p>Deactivation is what revokes a DID's authority, so the failure is reported as {@code
+     * UNAUTHORIZED} rather than as a malformed argument: the DID checked here is always one the
+     * caller must itself control, either the DID updating its own document or the declared issuer
+     * of an AnonCreds object, which the object services independently require to equal the verified
+     * signer. Taking the document rather than an id keeps the guard free of a second ledger read on
+     * flows that already resolved the record.
+     *
+     * @param document resolved DID document to check
+     * @throws VdrException if the document is not in active status
+     */
+    private void assertDocumentActive(final DidDocument document) {
         if (document.getStatus() != RecordStatus.ACTIVE) {
-            throw VdrException.invalid("did '" + didId + "' is not active");
+            throw VdrException.unauthorized(
+                    "authorization failed: did '" + document.getId() + "' is not active");
         }
     }
 
