@@ -73,7 +73,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 121 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 125 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -399,7 +399,7 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `INVALID_ARGUMENT` | input validation failed (blank field, malformed id or JSON, …) |
 | `ALREADY_EXISTS` | an object with the given id already exists |
 | `NOT_FOUND` | the requested object, or one it references, does not exist |
-| `UNAUTHORIZED` | JWT validation or ownership check failed |
+| `UNAUTHORIZED` | JWT validation or ownership check failed, or the acting DID is deactivated |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
 ## Architecture
