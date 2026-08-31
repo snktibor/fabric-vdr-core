@@ -121,10 +121,13 @@ public final class JsonUtil {
     /**
      * Produces a non-empty exception message for user-facing error contexts.
      *
+     * <p>When an exception carries no message the simple class name stands in, so a failure
+     * response stays diagnosable without ever exposing an empty reason.
+     *
      * @param exception source exception
      * @return exception message or exception simple type name when blank
      */
-    private static String safeMessage(final Exception exception) {
+    public static String safeMessage(final Exception exception) {
         final String message = exception.getMessage();
         return message == null || message.isBlank()
                 ? exception.getClass().getSimpleName()

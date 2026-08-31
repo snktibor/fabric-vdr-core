@@ -239,7 +239,7 @@ public class JwtValidator {
         } catch (final SignatureException exception) {
             throw unauthorized("invalid jwt signature");
         } catch (final JwtException | IllegalArgumentException exception) {
-            throw unauthorized("jwt validation failed: " + safeMessage(exception));
+            throw unauthorized("jwt validation failed: " + JsonUtil.safeMessage(exception));
         }
     }
 
@@ -420,22 +420,6 @@ public class JwtValidator {
             throw unauthorized("blank jwt field '" + field + "' in " + sourceName);
         }
         return text;
-    }
-
-    /**
-     * Returns a stable, non-null message for exceptions used in error responses.
-     *
-     * <p>When an exception has no useful message this method returns the exception class name to
-     * avoid leaking implementation details while preserving diagnosability.
-     *
-     * @param exception exception to extract a safe message from
-     * @return non-empty message string
-     */
-    private static String safeMessage(final Exception exception) {
-        final String message = exception.getMessage();
-        return message == null || message.isBlank()
-                ? exception.getClass().getSimpleName()
-                : message;
     }
 
     /**
