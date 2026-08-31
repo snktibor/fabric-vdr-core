@@ -2,12 +2,9 @@ package com.example.vdr.logic;
 
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.ChaincodeEventEmitter;
-import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.ledger.SchemaRegistry;
 import com.example.vdr.ledger.VdrEvents;
-import com.example.vdr.model.DidDocument;
-import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.SchemaRecord;
 import java.time.Instant;
 import java.util.List;
@@ -23,7 +20,7 @@ import java.util.Map;
 public class SchemaService {
 
     private final SchemaRegistry schemaRegistry;
-    private final DidRegistry didRegistry;
+    private final DidService didService;
     private final ValidationService validationService;
     private final ChaincodeEventEmitter eventEmitter;
     private final Instant txTimestamp;
@@ -32,19 +29,19 @@ public class SchemaService {
      * Creates a schema service with required registries and cross-cutting utilities.
      *
      * @param schemaRegistry registry used for schema persistence
-     * @param didRegistry registry used to resolve issuer DIDs
+     * @param didService DID service enforcing issuer DID existence and active status
      * @param validationService fail-fast validation utility
      * @param eventEmitter chaincode event emitter for state-change notifications
      * @param txTimestamp client-declared transaction time used for audit timestamps
      */
     public SchemaService(
             final SchemaRegistry schemaRegistry,
-            final DidRegistry didRegistry,
+            final DidService didService,
             final ValidationService validationService,
             final ChaincodeEventEmitter eventEmitter,
             final Instant txTimestamp) {
         this.schemaRegistry = schemaRegistry;
-        this.didRegistry = didRegistry;
+        this.didService = didService;
         this.validationService = validationService;
         this.eventEmitter = eventEmitter;
         this.txTimestamp = txTimestamp;
@@ -93,13 +90,7 @@ public class SchemaService {
             throw VdrException.duplicate("schema", normalizedId);
         }
 
-        final DidDocument issuer = didRegistry.get(normalizedIssuerId);
-        if (issuer == null) {
-            throw VdrException.notFound("issuer DID", normalizedIssuerId);
-        }
-        if (issuer.getStatus() != RecordStatus.ACTIVE) {
-            throw VdrException.invalid("issuer DID '" + normalizedIssuerId + "' is not active");
-        }
+        didService.assertDidActive(normalizedIssuerId);
 
         final SchemaRecord schemaRecord =
                 new SchemaRecord(

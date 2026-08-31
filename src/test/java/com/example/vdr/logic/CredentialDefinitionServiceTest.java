@@ -43,6 +43,8 @@ class CredentialDefinitionServiceTest {
     private static final String CRED_DEF_ID =
             ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/018f6c06-4d13-7b58-b0e2-3a91c4d7e2f0";
 
+    private static final Instant TX_TIME = Instant.parse("2026-07-12T10:15:30Z");
+
     @Mock private CredentialDefinitionRegistry credDefRegistry;
 
     @Mock private SchemaRegistry schemaRegistry;
@@ -56,14 +58,20 @@ class CredentialDefinitionServiceTest {
     /** Initializes service under test with mocked registries and real validators. */
     @BeforeEach
     void setUp() {
+        final ValidationService validationService = new ValidationService();
         credentialDefinitionService =
                 new CredentialDefinitionService(
                         credDefRegistry,
                         schemaRegistry,
-                        didRegistry,
-                        new ValidationService(),
+                        new DidService(
+                                didRegistry,
+                                new AuthorizationService(),
+                                validationService,
+                                eventEmitter,
+                                TX_TIME),
+                        validationService,
                         eventEmitter,
-                        Instant.parse("2026-07-12T10:15:30Z"));
+                        TX_TIME);
     }
 
     /** Verifies newly created credential definitions persist signer DID ownership. */

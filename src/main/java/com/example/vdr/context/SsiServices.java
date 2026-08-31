@@ -40,7 +40,9 @@ public class SsiServices {
      *
      * <p>Cross-cutting concerns (authorization and validation) are instantiated once and shared by
      * domain services so ownership and fail-fast checks remain consistent across DID, schema,
-     * credential definition, and revocation registry flows.
+     * credential definition, and revocation registry flows. The AnonCreds object services take the
+     * DID service rather than the DID registry: resolving an issuer DID and requiring it to be
+     * active is a DID domain rule, not a data-access concern.
      *
      * @param didRegistry DID data access component for ledger reads/writes
      * @param schemaRegistry schema data access component for ledger reads/writes
@@ -73,12 +75,12 @@ public class SsiServices {
                         txTimestamp);
         this.schemaService =
                 new SchemaService(
-                        schemaRegistry, didRegistry, validationService, eventEmitter, txTimestamp);
+                        schemaRegistry, didService, validationService, eventEmitter, txTimestamp);
         this.credentialDefinitionService =
                 new CredentialDefinitionService(
                         credDefRegistry,
                         schemaRegistry,
-                        didRegistry,
+                        didService,
                         validationService,
                         eventEmitter,
                         txTimestamp);
@@ -86,7 +88,7 @@ public class SsiServices {
                 new RevRegDefService(
                         revRegDefRegistry,
                         credDefRegistry,
-                        didRegistry,
+                        didService,
                         validationService,
                         eventEmitter,
                         txTimestamp);

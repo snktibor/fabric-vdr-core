@@ -44,6 +44,8 @@ class RevRegDefServiceTest {
     private static final String REV_REG_DEF_ID =
             ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c07-9e04-7ff1-a3c6-71b28e05d9a4";
 
+    private static final Instant TX_TIME = Instant.parse("2026-07-12T10:15:30Z");
+
     @Mock private RevRegDefRegistry revRegDefRegistry;
 
     @Mock private CredentialDefinitionRegistry credDefRegistry;
@@ -57,14 +59,20 @@ class RevRegDefServiceTest {
     /** Initializes service under test with mocked registries and real validators. */
     @BeforeEach
     void setUp() {
+        final ValidationService validationService = new ValidationService();
         revRegDefService =
                 new RevRegDefService(
                         revRegDefRegistry,
                         credDefRegistry,
-                        didRegistry,
-                        new ValidationService(),
+                        new DidService(
+                                didRegistry,
+                                new AuthorizationService(),
+                                validationService,
+                                eventEmitter,
+                                TX_TIME),
+                        validationService,
                         eventEmitter,
-                        Instant.parse("2026-07-12T10:15:30Z"));
+                        TX_TIME);
     }
 
     /** Verifies newly created revocation registry definitions persist signer DID ownership. */

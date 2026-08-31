@@ -3,13 +3,10 @@ package com.example.vdr.logic;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.ChaincodeEventEmitter;
 import com.example.vdr.ledger.CredentialDefinitionRegistry;
-import com.example.vdr.ledger.DidRegistry;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.ledger.RevRegDefRegistry;
 import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.CredentialDefinitionRecord;
-import com.example.vdr.model.DidDocument;
-import com.example.vdr.model.RecordStatus;
 import com.example.vdr.model.RevRegDefRecord;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
@@ -29,7 +26,7 @@ public class RevRegDefService {
 
     private final RevRegDefRegistry revRegDefRegistry;
     private final CredentialDefinitionRegistry credDefRegistry;
-    private final DidRegistry didRegistry;
+    private final DidService didService;
     private final ValidationService validationService;
     private final ChaincodeEventEmitter eventEmitter;
     private final Instant txTimestamp;
@@ -39,7 +36,7 @@ public class RevRegDefService {
      *
      * @param revRegDefRegistry registry used to persist revocation registry definitions
      * @param credDefRegistry registry used to resolve referenced credential definitions
-     * @param didRegistry registry used to resolve issuer DIDs
+     * @param didService DID service enforcing issuer DID existence and active status
      * @param validationService fail-fast input and JSON validation utility
      * @param eventEmitter chaincode event emitter for state-change notifications
      * @param txTimestamp client-declared transaction time used for audit timestamps
@@ -47,13 +44,13 @@ public class RevRegDefService {
     public RevRegDefService(
             final RevRegDefRegistry revRegDefRegistry,
             final CredentialDefinitionRegistry credDefRegistry,
-            final DidRegistry didRegistry,
+            final DidService didService,
             final ValidationService validationService,
             final ChaincodeEventEmitter eventEmitter,
             final Instant txTimestamp) {
         this.revRegDefRegistry = revRegDefRegistry;
         this.credDefRegistry = credDefRegistry;
-        this.didRegistry = didRegistry;
+        this.didService = didService;
         this.validationService = validationService;
         this.eventEmitter = eventEmitter;
         this.txTimestamp = txTimestamp;
@@ -127,13 +124,7 @@ public class RevRegDefService {
                             + "'");
         }
 
-        final DidDocument issuer = didRegistry.get(normalizedIssuerId);
-        if (issuer == null) {
-            throw VdrException.notFound("issuer DID", normalizedIssuerId);
-        }
-        if (issuer.getStatus() != RecordStatus.ACTIVE) {
-            throw VdrException.invalid("issuer DID '" + normalizedIssuerId + "' is not active");
-        }
+        didService.assertDidActive(normalizedIssuerId);
 
         final RevRegDefRecord revRegDefRecord =
                 new RevRegDefRecord(
