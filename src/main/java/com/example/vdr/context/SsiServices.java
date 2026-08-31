@@ -103,6 +103,7 @@ public class SsiServices {
                 new RevRegEntryService(
                         revRegEntryRegistry,
                         revRegDefRegistry,
+                        authorizationService,
                         validationService,
                         eventEmitter,
                         txTimestamp);

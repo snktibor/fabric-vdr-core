@@ -28,6 +28,7 @@ public class RevRegEntryService {
 
     private final RevRegEntryRegistry revRegEntryRegistry;
     private final RevRegDefRegistry revRegDefRegistry;
+    private final AuthorizationService authorizationService;
     private final ValidationService validationService;
     private final ChaincodeEventEmitter eventEmitter;
     private final Instant txTimestamp;
@@ -37,6 +38,7 @@ public class RevRegEntryService {
      *
      * @param revRegEntryRegistry registry used to persist revocation registry entries
      * @param revRegDefRegistry registry used to resolve parent revocation registry definitions
+     * @param authorizationService owner authorization utility
      * @param validationService fail-fast input and JSON validation utility
      * @param eventEmitter chaincode event emitter for state-change notifications
      * @param txTimestamp client-declared transaction time used for audit timestamps
@@ -44,11 +46,13 @@ public class RevRegEntryService {
     public RevRegEntryService(
             final RevRegEntryRegistry revRegEntryRegistry,
             final RevRegDefRegistry revRegDefRegistry,
+            final AuthorizationService authorizationService,
             final ValidationService validationService,
             final ChaincodeEventEmitter eventEmitter,
             final Instant txTimestamp) {
         this.revRegEntryRegistry = revRegEntryRegistry;
         this.revRegDefRegistry = revRegDefRegistry;
+        this.authorizationService = authorizationService;
         this.validationService = validationService;
         this.eventEmitter = eventEmitter;
         this.txTimestamp = txTimestamp;
@@ -68,8 +72,9 @@ public class RevRegEntryService {
      * @param accumValue genesis accumulator value computed off chain (compressed BLS12-381 G1 point
      *     as 96 lowercase hex characters)
      * @return created and persisted revocation registry entry record with version 0
-     * @throws VdrException if validation fails, the parent definition is missing, the signer does
-     *     not own the parent definition, or an entry already exists for the definition
+     * @throws VdrException if validation fails, the parent definition is missing or records no
+     *     owner, the signer does not own the parent definition, or an entry already exists for the
+     *     definition
      */
     public RevRegEntryRecord createRevRegEntry(
             final String signerDid, final String revRegDefId, final String accumValue) {
@@ -82,11 +87,8 @@ public class RevRegEntryService {
         if (parent == null) {
             throw VdrException.notFound("revregdef", normalizedRevRegDefId);
         }
-        if (!parent.getOwnerId().equals(signerDid)) {
-            throw VdrException.unauthorized(
-                    "Unauthorized: signer DID must match the revocation registry definition owner"
-                            + " for revocation registry entry creation");
-        }
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, parent.getOwnerId(), "revregdef", normalizedRevRegDefId);
 
         if (revRegEntryRegistry.exists(normalizedRevRegDefId)) {
             throw VdrException.duplicate("revregentry", normalizedRevRegDefId);
@@ -113,8 +115,8 @@ public class RevRegEntryService {
      * @param newAccumValue replacement accumulator value computed off chain (compressed BLS12-381
      *     G1 point as 96 lowercase hex characters)
      * @return updated and persisted revocation registry entry record
-     * @throws VdrException if validation fails, the entry or its parent definition is missing, or
-     *     the signer does not own the parent definition
+     * @throws VdrException if validation fails, the entry or its parent definition is missing, the
+     *     parent definition records no owner, or the signer does not own the parent definition
      */
     public RevRegEntryRecord updateRevRegEntry(
             final String signerDid, final String revRegDefId, final String newAccumValue) {
@@ -132,11 +134,8 @@ public class RevRegEntryService {
         if (parent == null) {
             throw VdrException.notFound("revregdef", normalizedRevRegDefId);
         }
-        if (!parent.getOwnerId().equals(signerDid)) {
-            throw VdrException.unauthorized(
-                    "Unauthorized: signer DID must match the revocation registry definition owner"
-                            + " for revocation registry entry update");
-        }
+        authorizationService.assertSignerOwnsEntity(
+                signerDid, parent.getOwnerId(), "revregdef", normalizedRevRegDefId);
 
         existing.setAccumValue(normalizedAccumValue);
         existing.setVersion(existing.getVersion() + 1);

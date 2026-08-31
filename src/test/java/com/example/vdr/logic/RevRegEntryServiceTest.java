@@ -32,8 +32,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Unit tests for {@link RevRegEntryService} creation and mutation semantics.
  *
  * <p>The suite verifies genesis versioning, owner-only authorization on both create and update
- * against the parent revocation registry definition's recorded owner, and fail-fast rejection of
- * malformed accumulator values, missing parents, and duplicate entries.
+ * against the parent revocation registry definition's recorded owner — including a parent that
+ * records no owner at all — and fail-fast rejection of malformed accumulator values, missing
+ * parents, and duplicate entries.
  */
 @SuppressWarnings("java:S1192")
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +64,7 @@ class RevRegEntryServiceTest {
                 new RevRegEntryService(
                         revRegEntryRegistry,
                         revRegDefRegistry,
+                        new AuthorizationService(),
                         new ValidationService(),
                         eventEmitter,
                         TX_TIME);
@@ -138,6 +140,25 @@ class RevRegEntryServiceTest {
         verify(revRegEntryRegistry, never()).put(anyString(), any());
     }
 
+    /**
+     * Verifies a parent definition carrying no recorded owner is rejected as unauthorized. The
+     * shared owner check reads the missing owner as absent authority; the inline comparison this
+     * replaced dereferenced it and would have failed the transaction with a null pointer instead.
+     */
+    @Test
+    void createRevRegEntryRejectsParentWithoutOwner() {
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(null));
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegEntryService.createRevRegEntry(
+                                        ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+    }
+
     /** Verifies creation fails when an entry already exists for the definition. */
     @Test
     void createRevRegEntryRejectsDuplicateForDefinition() {
@@ -201,6 +222,24 @@ class RevRegEntryServiceTest {
                         () ->
                                 revRegEntryService.updateRevRegEntry(
                                         OTHER_DID, REV_REG_DEF_ID, HIJACK_ACCUM));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies a parent definition carrying no recorded owner is rejected on update too. */
+    @Test
+    void updateRevRegEntryRejectsParentWithoutOwner() {
+        final RevRegEntryRecord existing = new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, 0L);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(null));
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegEntryService.updateRevRegEntry(
+                                        ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM));
         assertEquals("UNAUTHORIZED", exception.getErrorCode());
         verify(revRegEntryRegistry, never()).put(anyString(), any());
         verify(eventEmitter, never()).emit(anyString(), any());
