@@ -81,7 +81,7 @@ class SchemaServiceTest {
         when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
 
         final String attrNamesJson = "[\"name\",\"degree\"]";
-        schemaService.createSchema(ISSUER_DID, SCHEMA_ID, ISSUER_DID, "name", "1.0", attrNamesJson);
+        schemaService.createSchema(ISSUER_DID, SCHEMA_ID, "name", "1.0", attrNamesJson);
 
         final ArgumentCaptor<SchemaRecord> captor = ArgumentCaptor.forClass(SchemaRecord.class);
         verify(schemaRegistry).put(anyString(), captor.capture());
@@ -100,23 +100,9 @@ class SchemaServiceTest {
                         schemaService.createSchema(
                                 ISSUER_DID,
                                 ISSUER_DID + "/anoncreds/v2/SCHEMA/not-a-uuid-v7",
-                                ISSUER_DID,
                                 "name",
                                 "1.0",
                                 "[\"name\"]"));
-    }
-
-    /**
-     * Verifies creation rejects an id rooted at a DID other than the declared issuer, so no caller
-     * can publish a schema whose identifier attributes it to somebody else.
-     */
-    @Test
-    void createSchemaRejectsIdRootedAtForeignIssuer() {
-        assertThrows(
-                VdrException.class,
-                () ->
-                        schemaService.createSchema(
-                                OTHER_DID, SCHEMA_ID, OTHER_DID, "name", "1.0", "[\"name\"]"));
     }
 
     /**
@@ -137,22 +123,20 @@ class SchemaServiceTest {
                         VdrException.class,
                         () ->
                                 schemaService.createSchema(
-                                        ISSUER_DID,
-                                        SCHEMA_ID,
-                                        ISSUER_DID,
-                                        "name",
-                                        "1.0",
-                                        attrNamesJson));
+                                        ISSUER_DID, SCHEMA_ID, "name", "1.0", attrNamesJson));
         assertEquals("UNAUTHORIZED", exception.getErrorCode());
     }
 
-    /** Verifies schema creation rejects signer DID mismatched with issuer DID. */
+    /**
+     * Verifies schema creation rejects a signer other than the issuer DID the id is rooted at, so
+     * no caller can publish a schema whose identifier attributes it to somebody else.
+     */
     @Test
     void createSchemaRejectsSignerMismatch() {
         assertThrows(
                 VdrException.class,
                 () ->
                         schemaService.createSchema(
-                                OTHER_DID, SCHEMA_ID, ISSUER_DID, "name", "1.0", "[\"name\"]"));
+                                OTHER_DID, SCHEMA_ID, "name", "1.0", "[\"name\"]"));
     }
 }

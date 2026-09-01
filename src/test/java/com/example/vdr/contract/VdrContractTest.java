@@ -227,22 +227,15 @@ class VdrContractTest {
         schema.setOwnerId("caller");
 
         stubSignerDid(
-                jwt,
-                "caller",
-                "createSchema",
-                SCHEMA_ID,
-                ISSUER_DID,
-                "Degree",
-                "1.0",
-                "[\"name\",\"degree\"]");
+                jwt, "caller", "createSchema", SCHEMA_ID, "Degree", "1.0", "[\"name\",\"degree\"]");
         when(services.getSchemaService()).thenReturn(schemaService);
         when(schemaService.createSchema(
-                        "caller", SCHEMA_ID, ISSUER_DID, "Degree", "1.0", "[\"name\",\"degree\"]"))
+                        "caller", SCHEMA_ID, "Degree", "1.0", "[\"name\",\"degree\"]"))
                 .thenReturn(schema);
 
         final String result =
                 contract.createSchema(
-                        ctx, SCHEMA_ID, ISSUER_DID, "Degree", "1.0", "[\"name\",\"degree\"]", jwt);
+                        ctx, SCHEMA_ID, "Degree", "1.0", "[\"name\",\"degree\"]", jwt);
 
         assertEquals(JsonUtil.toCanonicalJson(schema), result);
     }
@@ -327,7 +320,6 @@ class VdrContractTest {
                 "caller",
                 "createCredDef",
                 CRED_DEF_ID,
-                ISSUER_DID,
                 SCHEMA_ID,
                 VdrTypes.CRED_DEF_BBS_V1,
                 "TAG",
@@ -336,7 +328,6 @@ class VdrContractTest {
         when(credentialDefinitionService.createCredDef(
                         "caller",
                         CRED_DEF_ID,
-                        ISSUER_DID,
                         SCHEMA_ID,
                         VdrTypes.CRED_DEF_BBS_V1,
                         "TAG",
@@ -347,7 +338,6 @@ class VdrContractTest {
                 contract.createCredDef(
                         ctx,
                         CRED_DEF_ID,
-                        ISSUER_DID,
                         SCHEMA_ID,
                         VdrTypes.CRED_DEF_BBS_V1,
                         "TAG",
@@ -426,7 +416,6 @@ class VdrContractTest {
                 "caller",
                 "createRevRegDef",
                 REV_REG_DEF_ID,
-                ISSUER_DID,
                 CRED_DEF_ID,
                 VdrTypes.REV_REG_VB20_V1,
                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -435,7 +424,6 @@ class VdrContractTest {
         when(revRegDefService.createRevRegDef(
                         "caller",
                         REV_REG_DEF_ID,
-                        ISSUER_DID,
                         CRED_DEF_ID,
                         VdrTypes.REV_REG_VB20_V1,
                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -446,7 +434,6 @@ class VdrContractTest {
                 contract.createRevRegDef(
                         ctx,
                         REV_REG_DEF_ID,
-                        ISSUER_DID,
                         CRED_DEF_ID,
                         VdrTypes.REV_REG_VB20_V1,
                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,

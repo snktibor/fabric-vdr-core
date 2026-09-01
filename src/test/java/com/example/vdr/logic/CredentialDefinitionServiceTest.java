@@ -90,7 +90,6 @@ class CredentialDefinitionServiceTest {
         credentialDefinitionService.createCredDef(
                 ISSUER_DID,
                 CRED_DEF_ID,
-                ISSUER_DID,
                 SCHEMA_ID,
                 VdrTypes.CRED_DEF_BBS_V1,
                 "TAG",
@@ -113,7 +112,6 @@ class CredentialDefinitionServiceTest {
                         credentialDefinitionService.createCredDef(
                                 ISSUER_DID,
                                 ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/not-a-uuid-v7",
-                                ISSUER_DID,
                                 SCHEMA_ID,
                                 VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
@@ -133,14 +131,16 @@ class CredentialDefinitionServiceTest {
                         credentialDefinitionService.createCredDef(
                                 ISSUER_DID,
                                 CRED_DEF_ID,
-                                ISSUER_DID,
                                 SCHEMA_ID,
                                 VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
                                 publicMetadata));
     }
 
-    /** Verifies creation fails when signer DID differs from issuer DID. */
+    /**
+     * Verifies creation fails when the signer is not the issuer DID the id is rooted at, so no
+     * caller can publish a credential definition whose identifier attributes it to somebody else.
+     */
     @Test
     void createCredDefRejectsSignerMismatch() {
         assertThrows(
@@ -149,7 +149,6 @@ class CredentialDefinitionServiceTest {
                         credentialDefinitionService.createCredDef(
                                 OTHER_DID,
                                 CRED_DEF_ID,
-                                ISSUER_DID,
                                 SCHEMA_ID,
                                 VdrTypes.CRED_DEF_BBS_V1,
                                 "TAG",
@@ -176,7 +175,6 @@ class CredentialDefinitionServiceTest {
                                 credentialDefinitionService.createCredDef(
                                         ISSUER_DID,
                                         CRED_DEF_ID,
-                                        ISSUER_DID,
                                         SCHEMA_ID,
                                         VdrTypes.CRED_DEF_BBS_V1,
                                         "TAG",
@@ -192,13 +190,7 @@ class CredentialDefinitionServiceTest {
                         VdrException.class,
                         () ->
                                 credentialDefinitionService.createCredDef(
-                                        ISSUER_DID,
-                                        CRED_DEF_ID,
-                                        ISSUER_DID,
-                                        SCHEMA_ID,
-                                        "CL",
-                                        "TAG",
-                                        "{}"));
+                                        ISSUER_DID, CRED_DEF_ID, SCHEMA_ID, "CL", "TAG", "{}"));
         assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
     }
 }

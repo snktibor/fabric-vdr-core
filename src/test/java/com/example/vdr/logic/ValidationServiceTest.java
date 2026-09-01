@@ -86,24 +86,27 @@ class ValidationServiceTest {
                                 "issuer-did-018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e", "id"));
     }
 
-    /** Verifies a DID URL rooted at the issuer DID is accepted and returned trimmed. */
+    /** Verifies a DID URL rooted at an issuer DID is accepted and returned trimmed. */
     @Test
     void requireValidObjectIdAcceptsIssuerRootedDidUrl() {
         assertEquals(
                 SCHEMA_ID,
                 validationService.requireValidObjectId(
-                        " " + SCHEMA_ID + " ", ISSUER_DID, AnonCredsObjectTypes.SCHEMA, "id"));
+                        " " + SCHEMA_ID + " ", AnonCredsObjectTypes.SCHEMA, "id"));
     }
 
-    /** Verifies an id rooted at a different issuer DID is rejected as a validation failure. */
+    /**
+     * Verifies an id whose root is not a well-formed DID is rejected. With no separate issuer
+     * argument left to validate, this check is the only thing constraining the issuer an object is
+     * published under.
+     */
     @Test
-    void requireValidObjectIdRejectsForeignIssuer() {
+    void requireValidObjectIdRejectsMalformedIssuerRoot() {
         assertThrows(
                 VdrException.class,
                 () ->
                         validationService.requireValidObjectId(
-                                SCHEMA_ID,
-                                "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22",
+                                "issuer-1/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1",
                                 AnonCredsObjectTypes.SCHEMA,
                                 "id"));
     }
@@ -115,7 +118,7 @@ class ValidationServiceTest {
                 VdrException.class,
                 () ->
                         validationService.requireValidObjectId(
-                                SCHEMA_ID, ISSUER_DID, AnonCredsObjectTypes.PUBLIC_CRED_DEF, "id"));
+                                SCHEMA_ID, AnonCredsObjectTypes.PUBLIC_CRED_DEF, "id"));
     }
 
     /** Verifies an id whose object segment is not a UUIDv7 is rejected as a validation failure. */
@@ -126,7 +129,6 @@ class ValidationServiceTest {
                 () ->
                         validationService.requireValidObjectId(
                                 ISSUER_DID + "/anoncreds/v2/SCHEMA/not-a-uuid-v7",
-                                ISSUER_DID,
                                 AnonCredsObjectTypes.SCHEMA,
                                 "id"));
     }
@@ -139,9 +141,34 @@ class ValidationServiceTest {
                 () ->
                         validationService.requireValidObjectId(
                                 "schema:vdr:018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1",
-                                ISSUER_DID,
                                 AnonCredsObjectTypes.SCHEMA,
                                 "id"));
+    }
+
+    /** Verifies the issuer DID is read back out of an object id at its first slash. */
+    @Test
+    void requireIssuerDidOfReturnsRootDid() {
+        assertEquals(ISSUER_DID, validationService.requireIssuerDidOf(" " + SCHEMA_ID + " ", "id"));
+    }
+
+    /** Verifies an identifier carrying no path segment has no issuer to read out of it. */
+    @Test
+    void requireIssuerDidOfRejectsIdWithoutPath() {
+        assertThrows(
+                VdrException.class, () -> validationService.requireIssuerDidOf(ISSUER_DID, "id"));
+    }
+
+    /** Verifies a root that is not a well-formed DID is rejected rather than returned. */
+    @Test
+    void requireIssuerDidOfRejectsMalformedRoot() {
+        // Not a DID at all.
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireIssuerDidOf("issuer-1/anoncreds/v2", "id"));
+        // Empty root: the identifier starts at the path.
+        assertThrows(
+                VdrException.class,
+                () -> validationService.requireIssuerDidOf("/anoncreds/v2", "id"));
     }
 
     /** Verifies object parsing helper rejects JSON arrays. */

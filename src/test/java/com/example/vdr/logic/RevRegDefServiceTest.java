@@ -93,7 +93,6 @@ class RevRegDefServiceTest {
         revRegDefService.createRevRegDef(
                 ISSUER_DID,
                 REV_REG_DEF_ID,
-                ISSUER_DID,
                 CRED_DEF_ID,
                 VdrTypes.REV_REG_VB20_V1,
                 publicKeys,
@@ -117,7 +116,6 @@ class RevRegDefServiceTest {
                         revRegDefService.createRevRegDef(
                                 ISSUER_DID,
                                 ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/not-a-uuid-v7",
-                                ISSUER_DID,
                                 CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -137,14 +135,16 @@ class RevRegDefServiceTest {
                         revRegDefService.createRevRegDef(
                                 ISSUER_DID,
                                 REV_REG_DEF_ID,
-                                ISSUER_DID,
                                 CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 publicKeys,
                                 100L));
     }
 
-    /** Verifies creation fails when signer DID differs from issuer DID. */
+    /**
+     * Verifies creation fails when the signer is not the issuer DID the id is rooted at, so no
+     * caller can publish a definition whose identifier attributes it to somebody else.
+     */
     @Test
     void createRevRegDefRejectsSignerMismatch() {
         assertThrows(
@@ -153,7 +153,6 @@ class RevRegDefServiceTest {
                         revRegDefService.createRevRegDef(
                                 OTHER_DID,
                                 REV_REG_DEF_ID,
-                                ISSUER_DID,
                                 CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -174,7 +173,6 @@ class RevRegDefServiceTest {
                         revRegDefService.createRevRegDef(
                                 ISSUER_DID,
                                 REV_REG_DEF_ID,
-                                ISSUER_DID,
                                 CRED_DEF_ID,
                                 VdrTypes.REV_REG_VB20_V1,
                                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -203,7 +201,6 @@ class RevRegDefServiceTest {
                                 revRegDefService.createRevRegDef(
                                         ISSUER_DID,
                                         REV_REG_DEF_ID,
-                                        ISSUER_DID,
                                         CRED_DEF_ID,
                                         VdrTypes.REV_REG_VB20_V1,
                                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -221,7 +218,6 @@ class RevRegDefServiceTest {
                                 revRegDefService.createRevRegDef(
                                         ISSUER_DID,
                                         REV_REG_DEF_ID,
-                                        ISSUER_DID,
                                         CRED_DEF_ID,
                                         "CL_ACCUM",
                                         TestVectors.REVOCATION_PUBLIC_KEYS_JSON,
@@ -241,7 +237,6 @@ class RevRegDefServiceTest {
                                 revRegDefService.createRevRegDef(
                                         ISSUER_DID,
                                         REV_REG_DEF_ID,
-                                        ISSUER_DID,
                                         CRED_DEF_ID,
                                         VdrTypes.REV_REG_VB20_V1,
                                         extraField,

@@ -51,7 +51,7 @@ class JwtValidatorTest {
     private static final Instant NOW = Instant.ofEpochMilli(1700000000000L);
     private static final String METHOD = "createSchema";
     private static final List<String> SCOPE_ARGS =
-            List.of(SCHEMA_ID, ISSUER_DID, "Degree", "1.0", "[\"name\"]");
+            List.of(SCHEMA_ID, "Degree", "1.0", "[\"name\"]");
     private static final String JTI = "3f7a1a3c-8f43-4c1e-9a35-8d1f8f8e0001";
 
     @Mock private DidRegistry didRegistry;
