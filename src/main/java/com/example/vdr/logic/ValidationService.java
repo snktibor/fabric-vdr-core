@@ -97,29 +97,27 @@ public class ValidationService {
      * Validates that the input is a well-formed AnonCreds object identifier: a DID URL rooted at
      * the issuer's DID, followed by the AnonCreds path, the object type, and a strict UUIDv7.
      *
-     * <p>The issuer DID is an INPUT to this check rather than something read back out of the
-     * identifier. An object id is therefore only ever valid relative to the issuer the transaction
-     * declares, and since that issuer must in turn match the verified token signer, no caller can
-     * mint an identifier rooted at a DID it does not control. UUIDv7 is chosen for the object
-     * segment so identifiers carry an embedded millisecond Unix timestamp, allowing ledger
-     * transactions to be sorted by creation time using the id alone.
+     * <p>The issuer DID is read back out of the identifier by {@link #requireIssuerDidOf} rather
+     * than supplied alongside it: no transaction declares an issuer separately, so the id is its
+     * sole source. Because callers pair this check with an ownership check of that issuer against
+     * the verified token signer, no caller can mint an identifier rooted at a DID it does not
+     * control. UUIDv7 is chosen for the object segment so identifiers carry an embedded millisecond
+     * Unix timestamp, allowing ledger transactions to be sorted by creation time using the id
+     * alone.
      *
      * @param value the raw input identifier to validate
-     * @param issuerDid the validated issuer DID the identifier must be rooted at
      * @param objectType the required object-type token (see {@link AnonCredsObjectTypes})
      * @param fieldName the logical name of the field
      * @return the trimmed, non-blank, and fully validated identifier string
-     * @throws VdrException if the input is null, empty, or whitespace only, is not rooted at the
-     *     issuer DID with the expected AnonCreds path and object type, or if the object segment is
-     *     not a valid UUIDv7
+     * @throws VdrException if the input is null, empty, or whitespace only, is not rooted at a
+     *     well-formed issuer DID carrying the expected AnonCreds path and object type, or if the
+     *     object segment is not a valid UUIDv7
      */
     public String requireValidObjectId(
-            final String value,
-            final String issuerDid,
-            final String objectType,
-            final String fieldName) {
+            final String value, final String objectType, final String fieldName) {
         final String normalized = requireNotBlank(value, fieldName);
-        final String expectedPrefix = issuerDid + ANONCREDS_PATH + objectType + "/";
+        final String expectedPrefix =
+                requireIssuerDidOf(normalized, fieldName) + ANONCREDS_PATH + objectType + "/";
 
         if (!normalized.startsWith(expectedPrefix)) {
             throw VdrException.invalid(
@@ -133,6 +131,33 @@ public class ValidationService {
         }
 
         return normalized;
+    }
+
+    /**
+     * Extracts the issuer DID that an AnonCreds object identifier is rooted at.
+     *
+     * <p>A DID never contains {@code /} (DID Core), so an identifier splits unambiguously into
+     * issuer DID and AnonCreds path at its first slash, and the part before that slash must itself
+     * be a well-formed DID. Since object-creating transactions take no separate issuer argument,
+     * this is the single point at which the issuer of a created object is established: an object is
+     * published under the DID its own identifier names, and nothing else.
+     *
+     * @param value the raw object identifier to read the issuer DID out of
+     * @param fieldName the logical name of the field
+     * @return the well-formed issuer DID the identifier is rooted at
+     * @throws VdrException if the input is null, empty, or whitespace only, carries no path
+     *     segment, or is not rooted at a well-formed DID
+     */
+    public String requireIssuerDidOf(final String value, final String fieldName) {
+        final String normalized = requireNotBlank(value, fieldName);
+
+        final int pathStart = normalized.indexOf('/');
+        if (pathStart < 0) {
+            throw VdrException.invalid(
+                    fieldName + " format is invalid. Must be a DID URL rooted at the issuer DID");
+        }
+
+        return requireValidDid(normalized.substring(0, pathStart), fieldName + " issuer");
     }
 
     /**

@@ -61,12 +61,11 @@ public class CredentialDefinitionService {
      * Creates and stores a new credential definition owned by the caller.
      *
      * <p>The method enforces deterministic preconditions before persistence: required input fields,
-     * an id that is a DID URL rooted at the declared issuer DID, id uniqueness, referenced schema
-     * existence, and active issuer DID status.
+     * an id that is a DID URL rooted at an issuer DID, id uniqueness, referenced schema existence,
+     * and active issuer DID status.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
      * @param id unique credential definition identifier as a DID URL rooted at the issuer DID
-     * @param issuerId issuer DID associated with the definition
      * @param schemaId referenced schema identifier
      * @param type credential definition type descriptor
      * @param tag issuer-defined tag used for versioning/selection
@@ -78,16 +77,16 @@ public class CredentialDefinitionService {
     public CredentialDefinitionRecord createCredDef(
             final String signerDid,
             final String id,
-            final String issuerId,
             final String schemaId,
             final String type,
             final String tag,
             final String publicMetadataJson) {
-        // The issuer is validated first because the credential definition id must be rooted at it.
-        final String normalizedIssuerId = validationService.requireValidDid(issuerId, "issuerId");
+        // The id is the sole source of the issuer: a credential definition is published under the
+        // DID its own identifier is rooted at.
         final String normalizedId =
                 validationService.requireValidObjectId(
-                        id, normalizedIssuerId, AnonCredsObjectTypes.PUBLIC_CRED_DEF, "id");
+                        id, AnonCredsObjectTypes.PUBLIC_CRED_DEF, "id");
+        final String issuerDid = validationService.requireIssuerDidOf(normalizedId, "id");
         final String normalizedSchemaId = validationService.requireNotBlank(schemaId, "schemaId");
         final String normalizedType =
                 validationService.requireAllowedType(type, VdrTypes.CRED_DEF_TYPES, "type");
@@ -95,8 +94,7 @@ public class CredentialDefinitionService {
         final JsonNode publicMetadata =
                 validationService.parseJsonObject(publicMetadataJson, "publicMetadata");
 
-        authorizationService.assertSignerOwnsEntity(
-                signerDid, normalizedIssuerId, "creddef", normalizedId);
+        authorizationService.assertSignerOwnsEntity(signerDid, issuerDid, "creddef", normalizedId);
 
         if (credDefRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("creddef", normalizedId);
@@ -107,12 +105,12 @@ public class CredentialDefinitionService {
             throw VdrException.notFound("schema", normalizedSchemaId);
         }
 
-        didService.assertDidActive(normalizedIssuerId);
+        didService.assertDidActive(issuerDid);
 
         final CredentialDefinitionRecord credDefRecord =
                 new CredentialDefinitionRecord(
                         normalizedId,
-                        normalizedIssuerId,
+                        issuerDid,
                         normalizedSchemaId,
                         normalizedType,
                         normalizedTag,
@@ -124,13 +122,7 @@ public class CredentialDefinitionService {
         credDefRegistry.put(normalizedId, credDefRecord);
         eventEmitter.emit(
                 VdrEvents.CRED_DEF_CREATED,
-                Map.of(
-                        "id",
-                        normalizedId,
-                        "issuerId",
-                        normalizedIssuerId,
-                        "schemaId",
-                        normalizedSchemaId));
+                Map.of("id", normalizedId, "issuerId", issuerDid, "schemaId", normalizedSchemaId));
         return credDefRecord;
     }
 

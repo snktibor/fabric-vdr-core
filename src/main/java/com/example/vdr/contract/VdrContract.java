@@ -146,9 +146,9 @@ public class VdrContract implements ContractInterface {
      * method validates the schema structure and associates it with an issuer DID.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the schema: a DID URL rooted at {@code issuerId} (see
-     *     {@link com.example.vdr.logic.ValidationService#requireValidObjectId}).
-     * @param issuerId The DID of the issuer owning this schema.
+     * @param id The unique identifier for the schema: a DID URL rooted at the issuer's DID, which
+     *     is the sole source of the issuer owning this schema (see {@link
+     *     com.example.vdr.logic.ValidationService#requireValidObjectId}).
      * @param name The human-readable name of the schema.
      * @param version The version string of the schema.
      * @param attrNamesJson A JSON array of attribute names defined in the schema.
@@ -160,7 +160,6 @@ public class VdrContract implements ContractInterface {
     public String createSchema(
             final SsiContext ctx,
             final String id,
-            final String issuerId,
             final String name,
             final String version,
             final String attrNamesJson,
@@ -173,7 +172,6 @@ public class VdrContract implements ContractInterface {
                                     .createSchema(
                                             requireSignerDid(ctx, jwt, "createSchema"),
                                             id,
-                                            issuerId,
                                             name,
                                             version,
                                             attrNamesJson);
@@ -212,9 +210,9 @@ public class VdrContract implements ContractInterface {
      * with the signer DID recorded as owner.
      *
      * @param ctx The custom SSI transaction context.
-     * @param id The unique identifier for the credential definition: a DID URL rooted at {@code
-     *     issuerId} (see {@link com.example.vdr.logic.ValidationService#requireValidObjectId}).
-     * @param issuerId The DID of the issuer who owns this credential definition.
+     * @param id The unique identifier for the credential definition: a DID URL rooted at the
+     *     issuer's DID, which is the sole source of the issuer who owns this credential definition
+     *     (see {@link com.example.vdr.logic.ValidationService#requireValidObjectId}).
      * @param schemaId The ID of the schema this credential definition adheres to.
      * @param type The credential definition type; must be allowlisted (see {@link
      *     com.example.vdr.logic.VdrTypes#CRED_DEF_TYPES}).
@@ -230,7 +228,6 @@ public class VdrContract implements ContractInterface {
     public String createCredDef(
             final SsiContext ctx,
             final String id,
-            final String issuerId,
             final String schemaId,
             final String type,
             final String tag,
@@ -244,7 +241,6 @@ public class VdrContract implements ContractInterface {
                                     .createCredDef(
                                             requireSignerDid(ctx, jwt, "createCredDef"),
                                             id,
-                                            issuerId,
                                             schemaId,
                                             type,
                                             tag,
@@ -292,9 +288,9 @@ public class VdrContract implements ContractInterface {
      *
      * @param ctx The custom SSI transaction context.
      * @param id The unique identifier for the revocation registry definition: a DID URL rooted at
-     *     {@code issuerId} (see {@link
+     *     the issuer's DID, which is the sole source of the issuer who owns this revocation
+     *     registry definition (see {@link
      *     com.example.vdr.logic.ValidationService#requireValidObjectId}).
-     * @param issuerId The DID of the issuer who owns this revocation registry definition.
      * @param credDefId The ID of the credential definition this registry revokes against.
      * @param type The revocation scheme identifier; must be allowlisted (see {@link
      *     com.example.vdr.logic.VdrTypes#REV_REG_DEF_TYPES}).
@@ -311,7 +307,6 @@ public class VdrContract implements ContractInterface {
     public String createRevRegDef(
             final SsiContext ctx,
             final String id,
-            final String issuerId,
             final String credDefId,
             final String type,
             final String publicKeysJson,
@@ -325,7 +320,6 @@ public class VdrContract implements ContractInterface {
                                     .createRevRegDef(
                                             requireSignerDid(ctx, jwt, "createRevRegDef"),
                                             id,
-                                            issuerId,
                                             credDefId,
                                             type,
                                             publicKeysJson,

@@ -64,15 +64,14 @@ public class RevRegDefService {
      * Creates and stores a new revocation registry definition owned by the caller.
      *
      * <p>The method enforces deterministic preconditions before persistence: required input fields,
-     * an id that is a DID URL rooted at the declared issuer DID, id uniqueness, referenced
-     * credential definition existence, issuer consistency with the referenced credential
-     * definition, and active issuer DID status. The {@code signerDid} argument is resolved from the
-     * verified DID-JWT upstream by the contract layer; no token verification happens here.
+     * an id that is a DID URL rooted at an issuer DID, id uniqueness, referenced credential
+     * definition existence, issuer consistency with the referenced credential definition, and
+     * active issuer DID status. The {@code signerDid} argument is resolved from the verified
+     * DID-JWT upstream by the contract layer; no token verification happens here.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
      * @param id unique revocation registry definition identifier as a DID URL rooted at the issuer
      *     DID
-     * @param issuerId issuer DID associated with the definition
      * @param credDefId referenced credential definition identifier
      * @param type revocation scheme identifier; must be allowlisted (see {@link
      *     VdrTypes#REV_REG_DEF_TYPES})
@@ -85,16 +84,15 @@ public class RevRegDefService {
     public RevRegDefRecord createRevRegDef(
             final String signerDid,
             final String id,
-            final String issuerId,
             final String credDefId,
             final String type,
             final String publicKeysJson,
             final long maxCredNum) {
-        // The issuer is validated first because the definition id must be rooted at it.
-        final String normalizedIssuerId = validationService.requireValidDid(issuerId, "issuerId");
+        // The id is the sole source of the issuer: a definition is published under the DID its own
+        // identifier is rooted at.
         final String normalizedId =
-                validationService.requireValidObjectId(
-                        id, normalizedIssuerId, AnonCredsObjectTypes.REV_REG_DEF, "id");
+                validationService.requireValidObjectId(id, AnonCredsObjectTypes.REV_REG_DEF, "id");
+        final String issuerDid = validationService.requireIssuerDidOf(normalizedId, "id");
         final String normalizedCredDefId =
                 validationService.requireNotBlank(credDefId, "credDefId");
         final String normalizedType =
@@ -106,7 +104,7 @@ public class RevRegDefService {
         }
 
         authorizationService.assertSignerOwnsEntity(
-                signerDid, normalizedIssuerId, "revregdef", normalizedId);
+                signerDid, issuerDid, "revregdef", normalizedId);
 
         if (revRegDefRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("revregdef", normalizedId);
@@ -116,21 +114,21 @@ public class RevRegDefService {
         if (credDefRecord == null) {
             throw VdrException.notFound("creddef", normalizedCredDefId);
         }
-        if (!normalizedIssuerId.equals(credDefRecord.getIssuerId())) {
+        if (!issuerDid.equals(credDefRecord.getIssuerId())) {
             throw VdrException.invalid(
-                    "issuerId '"
-                            + normalizedIssuerId
+                    "issuer '"
+                            + issuerDid
                             + "' does not match issuer of referenced creddef '"
                             + normalizedCredDefId
                             + "'");
         }
 
-        didService.assertDidActive(normalizedIssuerId);
+        didService.assertDidActive(issuerDid);
 
         final RevRegDefRecord revRegDefRecord =
                 new RevRegDefRecord(
                         normalizedId,
-                        normalizedIssuerId,
+                        issuerDid,
                         normalizedCredDefId,
                         normalizedType,
                         publicKeys,
@@ -146,7 +144,7 @@ public class RevRegDefService {
                         "id",
                         normalizedId,
                         "issuerId",
-                        normalizedIssuerId,
+                        issuerDid,
                         "credDefId",
                         normalizedCredDefId));
         return revRegDefRecord;

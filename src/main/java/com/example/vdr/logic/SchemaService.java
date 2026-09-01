@@ -54,13 +54,12 @@ public class SchemaService {
     /**
      * Creates and stores a new schema record owned by the caller.
      *
-     * <p>Creation enforces that the schema id is a DID URL rooted at the declared issuer DID,
-     * enforces id uniqueness, validates issuer DID existence/activity, and normalizes schema
-     * attributes before persistence.
+     * <p>Creation enforces that the schema id is a DID URL rooted at an issuer DID, enforces id
+     * uniqueness, validates issuer DID existence/activity, and normalizes schema attributes before
+     * persistence.
      *
      * @param signerDid DID resolved from verified JWT issuer claim
      * @param id unique schema identifier as a DID URL rooted at the issuer DID
-     * @param issuerId issuer DID that governs the schema
      * @param name schema display name
      * @param version schema version identifier
      * @param attrNamesJson JSON array of schema attribute names
@@ -71,33 +70,31 @@ public class SchemaService {
     public SchemaRecord createSchema(
             final String signerDid,
             final String id,
-            final String issuerId,
             final String name,
             final String version,
             final String attrNamesJson) {
-        // The issuer is validated first because the schema id must be rooted at it.
-        final String normalizedIssuerId = validationService.requireValidDid(issuerId, "issuerId");
+        // The id is the sole source of the issuer: a schema is published under the DID its own
+        // identifier is rooted at.
         final String normalizedId =
-                validationService.requireValidObjectId(
-                        id, normalizedIssuerId, AnonCredsObjectTypes.SCHEMA, "id");
+                validationService.requireValidObjectId(id, AnonCredsObjectTypes.SCHEMA, "id");
+        final String issuerDid = validationService.requireIssuerDidOf(normalizedId, "id");
         final String normalizedName = validationService.requireNotBlank(name, "name");
         final String normalizedVersion = validationService.requireNotBlank(version, "version");
         final List<String> attrNames =
                 validationService.parseStringArray(attrNamesJson, "attrNames");
 
-        authorizationService.assertSignerOwnsEntity(
-                signerDid, normalizedIssuerId, "schema", normalizedId);
+        authorizationService.assertSignerOwnsEntity(signerDid, issuerDid, "schema", normalizedId);
 
         if (schemaRegistry.exists(normalizedId)) {
             throw VdrException.duplicate("schema", normalizedId);
         }
 
-        didService.assertDidActive(normalizedIssuerId);
+        didService.assertDidActive(issuerDid);
 
         final SchemaRecord schemaRecord =
                 new SchemaRecord(
                         normalizedId,
-                        normalizedIssuerId,
+                        issuerDid,
                         normalizedName,
                         normalizedVersion,
                         attrNames,
@@ -107,8 +104,7 @@ public class SchemaService {
 
         schemaRegistry.put(normalizedId, schemaRecord);
         eventEmitter.emit(
-                VdrEvents.SCHEMA_CREATED,
-                Map.of("id", normalizedId, "issuerId", normalizedIssuerId));
+                VdrEvents.SCHEMA_CREATED, Map.of("id", normalizedId, "issuerId", issuerDid));
         return schemaRecord;
     }
 
