@@ -132,7 +132,6 @@ public class AnonCredsDemoIT {
                 issuerDid,
                 issuerKeys,
                 schemaId,
-                issuerDid,
                 text(schema, "name"),
                 text(schema, "version"),
                 child(schema, "attrNames").toString());
@@ -147,7 +146,6 @@ public class AnonCredsDemoIT {
                 issuerDid,
                 issuerKeys,
                 credDefId,
-                issuerDid,
                 schemaId,
                 text(credDef, "type"),
                 text(credDef, "tag"),
@@ -168,7 +166,6 @@ public class AnonCredsDemoIT {
                 issuerDid,
                 issuerKeys,
                 revRegDefId,
-                issuerDid,
                 credDefId,
                 text(revRegDef, "type"),
                 publicKeysJson,

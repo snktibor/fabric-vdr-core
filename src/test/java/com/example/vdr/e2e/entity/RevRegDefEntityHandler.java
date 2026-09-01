@@ -57,7 +57,6 @@ public class RevRegDefEntityHandler extends AbstractEntityHandler {
                 issuerDid,
                 keyPair,
                 revRegDefId,
-                issuerDid,
                 credDefId,
                 VdrTypes.REV_REG_VB20_V1,
                 TestVectors.REVOCATION_PUBLIC_KEYS_JSON,

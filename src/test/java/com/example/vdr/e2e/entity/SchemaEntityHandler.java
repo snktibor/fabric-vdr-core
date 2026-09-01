@@ -78,7 +78,6 @@ public class SchemaEntityHandler extends AbstractEntityHandler {
                 issuerDid,
                 keyPair,
                 schemaId,
-                issuerDid,
                 "Test Schema",
                 "1.0",
                 "[\"attr1\", \"attr2\"]");

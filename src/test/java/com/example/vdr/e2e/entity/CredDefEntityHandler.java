@@ -56,7 +56,6 @@ public class CredDefEntityHandler extends AbstractEntityHandler {
                 issuerDid,
                 keyPair,
                 credDefId,
-                issuerDid,
                 schemaId,
                 VdrTypes.CRED_DEF_BBS_V1,
                 "tag-1",
