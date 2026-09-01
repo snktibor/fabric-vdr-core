@@ -73,7 +73,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 125 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 127 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -143,7 +143,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createSchema` | SUBMIT | `id` (DID URL rooted at `issuerId`, see [Identifiers](#identifiers)), `issuerId`, `name`, `version`, `attrNamesJson` (JSON string array), `jwt` | created schema record |
+| `createSchema` | SUBMIT | `id` (DID URL rooted at the issuer DID, see [Identifiers](#identifiers)), `name`, `version`, `attrNamesJson` (JSON string array), `jwt` | created schema record |
 | `getSchema` | EVALUATE | `id` | schema record |
 | `listSchemas` | EVALUATE | — | array of all schema entries |
 
@@ -151,7 +151,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createCredDef` | SUBMIT | `id` (DID URL rooted at `issuerId`, see [Identifiers](#identifiers)), `issuerId`, `schemaId`, `type` (allowlisted, see [below](#wire-encodings-and-type-identifiers)), `tag`, `publicMetadataJson` (JSON object), `jwt` | created credential definition record |
+| `createCredDef` | SUBMIT | `id` (DID URL rooted at the issuer DID, see [Identifiers](#identifiers)), `schemaId`, `type` (allowlisted, see [below](#wire-encodings-and-type-identifiers)), `tag`, `publicMetadataJson` (JSON object), `jwt` | created credential definition record |
 | `getCredDef` | EVALUATE | `id` | credential definition record |
 | `listCredDefs` | EVALUATE | — | array of all credential definition entries |
 
@@ -159,7 +159,7 @@ scan the whole namespace (no pagination).
 
 | Transaction | Type | Parameters | Returns |
 |---|---|---|---|
-| `createRevRegDef` | SUBMIT | `id` (DID URL rooted at `issuerId`, see [Identifiers](#identifiers)), `issuerId`, `credDefId`, `type` (allowlisted), `publicKeysJson` (exact shape, see [below](#wire-encodings-and-type-identifiers)), `maxCredNum` (number), `jwt` | created revocation registry definition record |
+| `createRevRegDef` | SUBMIT | `id` (DID URL rooted at the issuer DID, see [Identifiers](#identifiers)), `credDefId`, `type` (allowlisted), `publicKeysJson` (exact shape, see [below](#wire-encodings-and-type-identifiers)), `maxCredNum` (number), `jwt` | created revocation registry definition record |
 | `getRevRegDef` | EVALUATE | `id` | revocation registry definition record |
 | `listRevRegDefs` | EVALUATE | — | array of all revocation registry definition entries |
 
@@ -312,10 +312,10 @@ Segment by segment:
 
 - **The issuer DID roots the id**, so an identifier names its own issuer: resolving one never
   needs a second lookup to learn who published it. A DID never contains `/` (DID Core), so the
-  id splits unambiguously into issuer and path at its first slash. The id is validated
-  *against the issuer the transaction declares*, and that issuer must in turn match the
-  verified token signer — so no caller can mint an identifier rooted at a DID it does not
-  control.
+  id splits unambiguously into issuer and path at its first slash. Object-creating transactions
+  take no separate issuer argument — the id is *the sole source of the issuer*, read back out of
+  it at that first slash — and that issuer must match the verified token signer, so no caller
+  can mint an identifier rooted at a DID it does not control.
 - **`v2`** versions the AnonCreds *object shapes*, not this registry's method specification.
   Both registered methods sit at `v0`, which denotes the legacy Indy-era shapes; this registry
   publishes AnonCreds v2 objects (see the [type allowlist](#type-allowlist)).
@@ -365,9 +365,10 @@ Identity is two-level:
       the same pair. The `jwt` must always be the transaction's final argument.
   - Mutations are **owner-gated**: the signer DID must match the `ownerId` recorded on
     the target object (for entries: on the parent revocation registry definition).
-  - On create, the object id must be a DID URL rooted at the declared `issuerId`, and
-    `issuerId` must equal the signer DID — so a published id always names the DID that
-    actually authorized it.
+  - On create, the object id must be a DID URL rooted at a well-formed issuer DID, and that
+    issuer — read out of the id itself, since no create transaction declares one separately —
+    must equal the signer DID, so a published id always names the DID that actually
+    authorized it.
 
 ### Trust model
 
