@@ -166,13 +166,22 @@ public class ValidationService {
      * <p>This prevents accidental or malicious id substitution between API path inputs and embedded
      * JSON document identifiers.
      *
+     * <p>The check is fail-fast: a null identifier on either side and an id mismatch are both
+     * rejected immediately with deterministic validation errors. Callers normalize both ids through
+     * {@link #requireNotBlank} before comparing them, so the null case is unreachable today; the
+     * guard keeps a future caller from dereferencing an absent id here, which would escape the
+     * contract layer's error mapping as a NullPointerException carrying no error code.
+     *
      * @param expected identifier expected by request context
      * @param actual identifier provided in payload
      * @param fieldName logical field name for error reporting
-     * @throws VdrException if identifiers do not match exactly
+     * @throws VdrException if either identifier is null or the identifiers do not match exactly
      */
     public void requireMatchingIds(
             final String expected, final String actual, final String fieldName) {
+        if (expected == null || actual == null) {
+            throw VdrException.invalid(fieldName + " must not be null");
+        }
         if (!expected.equals(actual.trim())) {
             throw VdrException.invalid(fieldName + " must match the requested id");
         }

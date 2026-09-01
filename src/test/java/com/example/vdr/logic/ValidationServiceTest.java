@@ -45,6 +45,27 @@ class ValidationServiceTest {
                 () -> validationService.requireMatchingIds("id", "other", "id"));
     }
 
+    /**
+     * Verifies a null identifier on either side is rejected as a deterministic validation failure.
+     * Callers normalize both ids beforehand so neither can be null today; the unguarded comparison
+     * this replaced dereferenced them and would have failed the transaction with a null pointer
+     * carrying no error code at all.
+     */
+    @Test
+    void requireMatchingIdsRejectsNullIdentifiers() {
+        final VdrException nullActual =
+                assertThrows(
+                        VdrException.class,
+                        () -> validationService.requireMatchingIds("id", null, "id"));
+        assertEquals("INVALID_ARGUMENT", nullActual.getErrorCode());
+
+        final VdrException nullExpected =
+                assertThrows(
+                        VdrException.class,
+                        () -> validationService.requireMatchingIds(null, "id", "id"));
+        assertEquals("INVALID_ARGUMENT", nullExpected.getErrorCode());
+    }
+
     /** Verifies well-formed DIDs of any method are accepted and returned trimmed. */
     @Test
     void requireValidDidAcceptsAnyMethod() {
