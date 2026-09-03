@@ -35,3 +35,7 @@ Feature: DID Lifecycle Management
         When I list all "DID document" entries
         Then the transaction should be successful
         And the list should contain the "DID document" with id "did:vdr:test-5"
+
+    Scenario: 6. Reject a DID document payload that is the JSON null literal
+        When I create a DID document with id "did:vdr:test-6" and the raw document payload "null"
+        Then the transaction should fail with an "must be a JSON object" error

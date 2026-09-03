@@ -3,6 +3,7 @@ package com.example.vdr.logic;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.example.vdr.TestVectors;
 import com.example.vdr.exception.VdrException;
@@ -196,6 +197,21 @@ class ValidationServiceTest {
     @Test
     void parseJsonObjectRejectsArray() {
         assertThrows(VdrException.class, () -> validationService.parseJsonObject("[1]", "payload"));
+    }
+
+    /**
+     * Verifies the typed parser rejects the JSON {@code null} literal. Jackson deserializes it to a
+     * Java {@code null} rather than failing, and every caller dereferences the result at once, so
+     * without the guard the payload reaches them as a null pointer that carries no error code.
+     */
+    @Test
+    void parseJsonRejectsNullLiteral() {
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () -> validationService.parseJson("null", DidDocument.class));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("must be a JSON object"));
     }
 
     /** Verifies string-array parser rejects duplicate entries. */

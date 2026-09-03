@@ -190,14 +190,27 @@ public class ValidationService {
     /**
      * Parses JSON into a typed object using configured serializer settings.
      *
+     * <p>The JSON {@code null} literal deserializes to a Java {@code null} instead of failing, so
+     * it is rejected here: callers of this method dereference the result immediately, and an
+     * unguarded {@code null} would escape the contract layer's error mapping as a
+     * NullPointerException carrying no error code. The rejection mirrors {@link #parseJsonObject},
+     * which turns the same payload away on the untyped path. The shared {@link JsonUtil}
+     * deserializer stays permissive on purpose: it also reads back trusted ledger state, where an
+     * absent value is the registry's business rather than a caller payload defect.
+     *
      * @param <T> target object type
      * @param json JSON payload to deserialize
      * @param type target class token
-     * @return deserialized typed object
-     * @throws VdrException if JSON cannot be parsed into the target type
+     * @return deserialized typed object, never {@code null}
+     * @throws VdrException if JSON cannot be parsed into the target type, or is the {@code null}
+     *     literal rather than an object
      */
     public <T> T parseJson(final String json, final Class<T> type) {
-        return JsonUtil.fromJson(json, type);
+        final T parsed = JsonUtil.fromJson(json, type);
+        if (parsed == null) {
+            throw VdrException.invalid(type.getSimpleName() + " payload must be a JSON object");
+        }
+        return parsed;
     }
 
     /**

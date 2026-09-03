@@ -3,6 +3,7 @@ package com.example.vdr.e2e.steps;
 import com.example.vdr.e2e.entity.EntityHandlerRegistry;
 import com.example.vdr.e2e.support.ScenarioContext;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,12 @@ public class DidManagementSteps {
     public DidManagementSteps(final EntityHandlerRegistry registry, final ScenarioContext context) {
         this.registry = registry;
         this.context = context;
+    }
+
+    @When("I create a DID document with id {string} and the raw document payload {string}")
+    public void iCreateADidWithRawDocumentPayload(final String rawId, final String documentJson) {
+        registry.did().createWithRawDocument(rawId, documentJson);
+        LOGGER.info("Submitted createDid for {} with raw payload '{}'.", rawId, documentJson);
     }
 
     @Given("I hold the signing key for the DID {string}")

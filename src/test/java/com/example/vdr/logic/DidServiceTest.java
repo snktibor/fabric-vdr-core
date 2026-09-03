@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -112,6 +113,38 @@ class DidServiceTest {
     void createDidRejectsMalformedDid() {
         final String json = didJson("not-a-did");
         assertThrows(VdrException.class, () -> didService.createDid("not-a-did", json));
+    }
+
+    /**
+     * Verifies a document payload of the JSON {@code null} literal is rejected deterministically.
+     * Jackson maps that literal to a Java {@code null}, which the unguarded parse handed straight
+     * to the id check: a client could reach it with a four-character payload and fail the
+     * transaction with a null pointer that the contract layer maps to no error code at all.
+     */
+    @Test
+    void createDidRejectsNullLiteralDocument() {
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> didService.createDid("did:example:123", "null"));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
+        verify(didRegistry, never()).put(anyString(), any());
+    }
+
+    /** Verifies the same null-literal document payload is rejected on the update path too. */
+    @Test
+    void updateDidRejectsNullLiteralDocument() {
+        final DidDocument existing = new DidDocument();
+        existing.setId("did:example:123");
+        existing.setOwnerId("owner");
+        existing.setStatus(RecordStatus.ACTIVE);
+        when(didRegistry.get("did:example:123")).thenReturn(existing);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () -> didService.updateDid("owner", "did:example:123", "null"));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
+        verify(didRegistry, never()).put(anyString(), any());
     }
 
     /** Verifies deactivation requires owner identity match. */

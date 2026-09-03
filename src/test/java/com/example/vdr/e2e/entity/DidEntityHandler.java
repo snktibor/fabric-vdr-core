@@ -49,6 +49,18 @@ public class DidEntityHandler extends AbstractEntityHandler {
         executor.submit("createDid", did, CryptoUtils.buildDidJson(did, keyPair, null));
     }
 
+    /**
+     * Submits a creation with a caller-supplied raw document payload instead of the well-formed
+     * document {@link CryptoUtils#buildDidJson} mints. Used by negative paths that exercise
+     * malformed payloads on the wire; no key pair is registered, since the payload never gets far
+     * enough to be signed against.
+     */
+    public void createWithRawDocument(final String rawId, final String documentJson) {
+        final String did = "did:vdr:" + uuid7();
+        context.setEffectiveId(rawId, did);
+        executor.submit("createDid", did, documentJson);
+    }
+
     /** Setup variant: creating the prerequisite must not silently fail the scenario. */
     @Override
     public void existingOnLedger(final String rawId) {
