@@ -73,12 +73,14 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 127 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 131 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
 
-The E2E suite (20 Cucumber scenarios) drives the deployed chaincode through the Fabric
+The E2E suite (21 functional Cucumber scenarios, plus four concurrency scenarios that are
+[excluded by default](#concurrency-scenarios--excluded-by-default-one-is-red-on-purpose))
+drives the deployed chaincode through the Fabric
 Gateway SDK. It expects the companion network repo,
 [`vdr-network`](../), with this repository checked out **inside** it:
 
@@ -112,6 +114,39 @@ can be overridden for other checkout layouts with the system property
 ```bash
 mvn -Pe2e verify -Dvdr.e2e.cryptoPath=/path/to/crypto-config/peerOrganizations/org1.example.com
 ```
+
+### Concurrency scenarios — excluded by default, one is red on purpose
+
+> **`mvn -Pe2e verify` skips the four scenarios tagged `@concurrency`.** One of them, B1,
+> **fails by design** on today's chaincode: it is a measurement of a real gap, not a
+> broken test. Run them with a single command and expect exactly one failure (B1):
+>
+> ```bash
+> mvn -Pe2e verify -Dit.test=RunCucumberIT -Dcucumber.filter.tags='@concurrency'
+> ```
+
+The scenarios live in
+[`revregentry_concurrency.feature`](src/test/resources/features/revregentry_concurrency.feature)
+and measure what Fabric's commit-time MVCC validation does and does not serialise for
+revocation registry updates:
+
+| Scenario | What it shows | Today |
+|---|---|---|
+| A0 | control: two updates to one registry entry, applied one after the other | green |
+| A1 | two updates to the **same** entry, endorsed against the same state and released together: exactly one commits, the other is invalidated with `MVCC_READ_CONFLICT` | green |
+| B0 | control: two independent registries, each issuer re-checks the other before revoking, run **sequentially** | green |
+| B1 | the same check-then-revoke run **concurrently**: both revocations commit as `VALID` in the same block, so "at most one takes effect" does not hold | **red, by design** |
+
+B1 is red for the right reason. B0 runs the same operations with the same assertion and
+passes; A1 shows the same machinery detecting a real MVCC conflict when there is one. The
+gap is that the "is the other registry still unrevoked?" check is a client-side query,
+which forms no read set: the two submitted transactions have disjoint read and write sets,
+so commit-time validation has nothing to compare. B1 stays red until the chaincode offers
+a conditional update that reads the other registry **inside** the submitted transaction,
+and it is kept out of the default run so that `verify` stays green in the meantime.
+
+The default filter is the `cucumber.filter.tags` property in `pom.xml`
+(`not @concurrency`); any other tag expression can be passed the same way.
 
 ## Transaction reference
 
