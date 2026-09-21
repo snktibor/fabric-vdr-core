@@ -60,7 +60,11 @@ public final class TestVectors {
                     "accum-after-revocation", G1_TIMES_2,
                     "accum-unauthorized", G1_TIMES_3,
                     "accum-after-event", G1_TIMES_5,
-                    "accum-second", G1_TIMES_7);
+                    "accum-second", G1_TIMES_7,
+                    "accum-race-first", G1_TIMES_2,
+                    "accum-race-second", G1_TIMES_3,
+                    "accum-x-revoked", G1_TIMES_5,
+                    "accum-y-revoked", G1_TIMES_7);
 
     /** Utility class constructor is private to prevent instantiation. */
     private TestVectors() {}

@@ -16,6 +16,7 @@ import java.util.Map;
 public class EntityHandlerRegistry {
 
     private final Map<String, EntityHandler> handlers = new LinkedHashMap<>();
+    private final IndependentRegistryFixture independentRegistry;
 
     public EntityHandlerRegistry(
             final TransactionExecutor executor, final ScenarioContext context) {
@@ -33,6 +34,7 @@ public class EntityHandlerRegistry {
         register(credDefHandler);
         register(revRegDefHandler);
         register(revRegEntryHandler);
+        independentRegistry = new IndependentRegistryFixture(executor, context, didHandler);
     }
 
     private void register(final EntityHandler handler) {
@@ -60,5 +62,13 @@ public class EntityHandlerRegistry {
     /** Direct accessor for the revocation registry entry handler — useful for accumulator steps. */
     public RevRegEntryEntityHandler revRegEntry() {
         return (RevRegEntryEntityHandler) get(RevRegEntryEntityHandler.TYPE);
+    }
+
+    /**
+     * Fixture for registries that share no issuer and no parent objects. Not registered as an
+     * entity type: it provisions a whole chain rather than answering the generic entity steps.
+     */
+    public IndependentRegistryFixture independentRegistry() {
+        return independentRegistry;
     }
 }
