@@ -1,11 +1,15 @@
 package com.example.vdr.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +39,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * against the parent revocation registry definition's recorded owner — including a parent that
  * records no owner at all — and fail-fast rejection of malformed accumulator values, missing
  * parents, and duplicate entries.
+ *
+ * <p>The guarded update is covered on three axes: that a passing guard costs the guarded registry
+ * nothing (no write, no definition read), that a failing one costs the target everything (no write,
+ * no event), and that the order in which the checks run cannot be observed to leak — the malformed
+ * list is refused before any read, and a non-owner is refused before any guard read.
  */
 @SuppressWarnings("java:S1192")
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +53,10 @@ class RevRegEntryServiceTest {
     private static final String OTHER_DID = "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22";
     private static final String REV_REG_DEF_ID =
             ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c07-9e04-7ff1-a3c6-71b28e05d9a4";
+    private static final String GUARD_ONE_ID =
+            OTHER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c08-1a72-7c40-9e15-2d84f3b0a6c7";
+    private static final String GUARD_TWO_ID =
+            OTHER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c0a-53b9-7e88-8f21-c06d95e4718b";
     private static final Instant TX_TIME = Instant.parse("2026-07-12T10:15:30Z");
     private static final String GENESIS_ACCUM = TestVectors.G1_GENERATOR;
     private static final String NEXT_ACCUM = TestVectors.G1_TIMES_2;
@@ -298,5 +311,395 @@ class RevRegEntryServiceTest {
                                 revRegEntryService.updateRevRegEntry(
                                         ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM.toUpperCase()));
         assertEquals("INVALID_ARGUMENT", uppercase.getErrorCode());
+    }
+
+    /** Renders one guard element. */
+    private static String guard(final String revRegDefId, final long expectedVersion) {
+        return "{\"revRegDefId\":\""
+                + revRegDefId
+                + "\",\"expectedVersion\":"
+                + expectedVersion
+                + "}";
+    }
+
+    /** Joins pre-rendered guard elements into a guard array payload. */
+    private static String guards(final String... elements) {
+        return "[" + String.join(",", elements) + "]";
+    }
+
+    /** Builds a distinct guarded registry identifier for bulk fixtures. */
+    private static String guardId(final int index) {
+        return OTHER_DID
+                + "/anoncreds/v2/REV_REG_DEF/018f6c0c-0000-7000-8000-%012d".formatted(index);
+    }
+
+    /** Makes the target entry resolvable at the given version and owned by the issuer. */
+    private RevRegEntryRecord stubOwnedTarget(final long version) {
+        final RevRegEntryRecord existing =
+                new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, version);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
+        return existing;
+    }
+
+    /** Makes a guarded entry resolvable at the given version. */
+    private void stubGuardedEntry(final String revRegDefId, final long version) {
+        when(revRegEntryRegistry.get(revRegDefId))
+                .thenReturn(new RevRegEntryRecord(revRegDefId, GENESIS_ACCUM, version));
+    }
+
+    /** Runs a guarded update against the shared target with the given guard payload. */
+    private GuardedRevRegEntryUpdate guardedUpdate(final String guardsJson) {
+        return revRegEntryService.updateRevRegEntryIfGuardsUnchanged(
+                ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM, guardsJson);
+    }
+
+    /** Asserts a guard payload is refused as a malformed argument, leaving the ledger untouched. */
+    private void assertGuardsRejected(final String guardsJson) {
+        final VdrException exception =
+                assertThrows(VdrException.class, () -> guardedUpdate(guardsJson));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode(), guardsJson);
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies a matching external guard lets the update through with one write and one event. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedCommitsWhenExternalGuardMatches() {
+        stubOwnedTarget(0L);
+        stubGuardedEntry(GUARD_ONE_ID, 0L);
+
+        final GuardedRevRegEntryUpdate result = guardedUpdate(guards(guard(GUARD_ONE_ID, 0L)));
+
+        final ArgumentCaptor<RevRegEntryRecord> captor =
+                ArgumentCaptor.forClass(RevRegEntryRecord.class);
+        verify(revRegEntryRegistry, times(1)).put(eq(REV_REG_DEF_ID), captor.capture());
+        verify(revRegEntryRegistry, times(1)).put(anyString(), any());
+        assertEquals(NEXT_ACCUM, captor.getValue().getAccumValue());
+        assertEquals(1L, captor.getValue().getVersion());
+        assertEquals(1L, result.getEntry().getVersion());
+
+        final ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(eventEmitter, times(1))
+                .emit(eq(VdrEvents.REV_REG_ENTRY_UPDATED), payloadCaptor.capture());
+        verify(eventEmitter, times(1)).emit(anyString(), any());
+        final Map<?, ?> payload = (Map<?, ?>) payloadCaptor.getValue();
+        assertEquals(3, payload.size());
+        assertEquals(REV_REG_DEF_ID, payload.get("revRegDefId"));
+        assertEquals(NEXT_ACCUM, payload.get("accumValue"));
+        assertEquals(1L, payload.get("version"));
+
+        assertEquals(1, result.getCheckedGuards().size());
+        assertEquals(GUARD_ONE_ID, result.getCheckedGuards().get(0).getRevRegDefId());
+        assertEquals(0L, result.getCheckedGuards().get(0).getExpectedVersion());
+    }
+
+    /** Verifies passing guards are read only: no guard registry is written or resolved further. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedNeverWritesGuardedRegistries() {
+        stubOwnedTarget(2L);
+        stubGuardedEntry(GUARD_ONE_ID, 1L);
+        stubGuardedEntry(GUARD_TWO_ID, 5L);
+
+        final GuardedRevRegEntryUpdate result =
+                guardedUpdate(
+                        guards(
+                                guard(GUARD_ONE_ID, 1L),
+                                guard(GUARD_TWO_ID, 5L),
+                                guard(REV_REG_DEF_ID, 2L)));
+
+        assertEquals(3, result.getCheckedGuards().size());
+        verify(revRegEntryRegistry, times(1)).put(anyString(), any());
+        verify(revRegEntryRegistry, never()).put(eq(GUARD_ONE_ID), any());
+        verify(revRegEntryRegistry, never()).put(eq(GUARD_TWO_ID), any());
+        // Invariant: a guard's parent definition is never resolved — one read-set key per guard.
+        verify(revRegDefRegistry, never()).get(GUARD_ONE_ID);
+        verify(revRegDefRegistry, never()).get(GUARD_TWO_ID);
+    }
+
+    /** Verifies a self-guard is decided against the version the entry held before the mutation. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedChecksSelfGuardAgainstPreMutationVersion() {
+        stubOwnedTarget(3L);
+
+        final GuardedRevRegEntryUpdate result = guardedUpdate(guards(guard(REV_REG_DEF_ID, 3L)));
+
+        assertEquals(4L, result.getEntry().getVersion());
+        assertEquals(3L, result.getCheckedGuards().get(0).getExpectedVersion());
+        // The self-guard reuses the record already loaded; it must not cost a second read.
+        verify(revRegEntryRegistry, times(1)).get(REV_REG_DEF_ID);
+    }
+
+    /** Verifies a moved external guard rejects the update without writing or announcing it. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsStaleExternalGuard() {
+        stubOwnedTarget(0L);
+        stubGuardedEntry(GUARD_ONE_ID, 2L);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> guardedUpdate(guards(guard(GUARD_ONE_ID, 1L))));
+
+        assertEquals("FAILED_PRECONDITION", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies the last guard in the list is checked too, so no element is skipped. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsStaleLastGuard() {
+        stubOwnedTarget(0L);
+        stubGuardedEntry(GUARD_ONE_ID, 0L);
+        stubGuardedEntry(GUARD_TWO_ID, 3L);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                guardedUpdate(
+                                        guards(guard(GUARD_ONE_ID, 0L), guard(GUARD_TWO_ID, 0L))));
+
+        assertEquals("FAILED_PRECONDITION", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains(GUARD_TWO_ID), exception.getMessage());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies a self-guard pinned to the post-mutation version closes the last-write-wins gap. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsStaleSelfGuard() {
+        stubOwnedTarget(3L);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> guardedUpdate(guards(guard(REV_REG_DEF_ID, 4L))));
+
+        assertEquals("FAILED_PRECONDITION", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies an absent guarded entry is not silently a version-zero entry. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMissingGuardPinnedToVersionZero() {
+        stubOwnedTarget(0L);
+        when(revRegEntryRegistry.get(GUARD_ONE_ID)).thenReturn(null);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> guardedUpdate(guards(guard(GUARD_ONE_ID, 0L))));
+
+        assertEquals("NOT_FOUND", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies an absent guarded entry reports absence, not a version mismatch. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMissingGuardPinnedToNonZeroVersion() {
+        stubOwnedTarget(0L);
+        when(revRegEntryRegistry.get(GUARD_ONE_ID)).thenReturn(null);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> guardedUpdate(guards(guard(GUARD_ONE_ID, 4L))));
+
+        assertEquals("NOT_FOUND", exception.getErrorCode());
+    }
+
+    /** Verifies the first failure in submission order decides, so every endorser agrees. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedReportsFirstFailureInListOrder() {
+        stubOwnedTarget(0L);
+        when(revRegEntryRegistry.get(GUARD_ONE_ID)).thenReturn(null);
+        // The second guard is stale as well, but the loop must never reach it.
+        lenient()
+                .when(revRegEntryRegistry.get(GUARD_TWO_ID))
+                .thenReturn(new RevRegEntryRecord(GUARD_TWO_ID, GENESIS_ACCUM, 9L));
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                guardedUpdate(
+                                        guards(guard(GUARD_ONE_ID, 0L), guard(GUARD_TWO_ID, 0L))));
+
+        assertEquals("NOT_FOUND", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).get(GUARD_TWO_ID);
+    }
+
+    /** Verifies the owner check precedes every guard read, so guard existence cannot leak. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsNonOwnerBeforeReadingGuards() {
+        stubOwnedTarget(0L);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegEntryService.updateRevRegEntryIfGuardsUnchanged(
+                                        OTHER_DID,
+                                        REV_REG_DEF_ID,
+                                        HIJACK_ACCUM,
+                                        guards(guard(GUARD_ONE_ID, 0L))));
+
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).get(GUARD_ONE_ID);
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies a malformed guard list is settled before the transaction reads any state. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMalformedListBeforeAnyRead() {
+        final VdrException exception =
+                assertThrows(VdrException.class, () -> guardedUpdate("not json at all"));
+
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).get(anyString());
+        verify(revRegDefRegistry, never()).get(anyString());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies payloads that are not a JSON array are refused, the null literal included. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsNonArrayPayloads() {
+        assertGuardsRejected("not json at all");
+        assertGuardsRejected("null");
+        assertGuardsRejected(guard(GUARD_ONE_ID, 0L));
+        assertGuardsRejected("\"" + GUARD_ONE_ID + "\"");
+        assertGuardsRejected("7");
+    }
+
+    /** Verifies both ends of the list-size bound: an empty list and one element over the cap. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsListSizeOutOfBounds() {
+        assertGuardsRejected("[]");
+
+        final String[] tooMany = new String[ValidationService.MAX_GUARDS + 1];
+        for (int index = 0; index < tooMany.length; index++) {
+            tooMany[index] = guard(guardId(index), index);
+        }
+        assertGuardsRejected(guards(tooMany));
+    }
+
+    /** Verifies the cap is inclusive: exactly MAX_GUARDS guards still commit. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedAcceptsExactlyMaxGuards() {
+        stubOwnedTarget(0L);
+        final String[] elements = new String[ValidationService.MAX_GUARDS];
+        for (int index = 0; index < elements.length; index++) {
+            stubGuardedEntry(guardId(index), index);
+            elements[index] = guard(guardId(index), index);
+        }
+
+        final GuardedRevRegEntryUpdate result = guardedUpdate(guards(elements));
+
+        assertEquals(ValidationService.MAX_GUARDS, result.getCheckedGuards().size());
+        assertEquals(1L, result.getEntry().getVersion());
+        verify(revRegEntryRegistry, times(1)).put(anyString(), any());
+    }
+
+    /** Verifies each element must be an object carrying exactly the two guard fields. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMalformedGuardElements() {
+        assertGuardsRejected("[\"" + GUARD_ONE_ID + "\"]");
+        assertGuardsRejected("[[]]");
+        assertGuardsRejected("[null]");
+        assertGuardsRejected("[{\"revRegDefId\":\"" + GUARD_ONE_ID + "\"}]");
+        assertGuardsRejected("[{\"expectedVersion\":0}]");
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\""
+                        + GUARD_ONE_ID
+                        + "\",\"expectedVersion\":0,\"note\":\"x\"}]");
+        assertGuardsRejected("[{\"revRegDefId\":\"\",\"expectedVersion\":0}]");
+        assertGuardsRejected("[{\"revRegDefId\":\"   \",\"expectedVersion\":0}]");
+        assertGuardsRejected("[{\"revRegDefId\":7,\"expectedVersion\":0}]");
+    }
+
+    /** Verifies the expected version must be an integer inside the unsigned long-range window. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMalformedExpectedVersions() {
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\"" + GUARD_ONE_ID + "\",\"expectedVersion\":\"3\"}]");
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\"" + GUARD_ONE_ID + "\",\"expectedVersion\":3.0}]");
+        assertGuardsRejected(guards(guard(GUARD_ONE_ID, -1L)));
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\""
+                        + GUARD_ONE_ID
+                        + "\",\"expectedVersion\":9223372036854775808}]");
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\"" + GUARD_ONE_ID + "\",\"expectedVersion\":null}]");
+    }
+
+    /** Verifies a registry may not be guarded twice, whitespace-only differences included. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsDuplicateGuardedRegistry() {
+        assertGuardsRejected(guards(guard(GUARD_ONE_ID, 0L), guard(GUARD_ONE_ID, 0L)));
+        assertGuardsRejected(guards(guard(GUARD_ONE_ID, 0L), guard(GUARD_ONE_ID, 4L)));
+        assertGuardsRejected(guards(guard(GUARD_ONE_ID, 0L), guard("  " + GUARD_ONE_ID + " ", 4L)));
+    }
+
+    /**
+     * Verifies a repeated key inside a guard element is a parse error rather than a silent
+     * last-wins resolution, so the signed text has exactly one reading.
+     */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsDuplicateJsonKeys() {
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\""
+                        + GUARD_ONE_ID
+                        + "\",\"revRegDefId\":\""
+                        + GUARD_TWO_ID
+                        + "\",\"expectedVersion\":0}]");
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\""
+                        + GUARD_ONE_ID
+                        + "\",\"expectedVersion\":0,\"expectedVersion\":4}]");
+        // The decoded key name decides, so an escaped spelling is the same key.
+        assertGuardsRejected(
+                "[{\"revRegDefId\":\""
+                        + GUARD_ONE_ID
+                        + "\",\"\\u0072evRegDefId\":\""
+                        + GUARD_TWO_ID
+                        + "\",\"expectedVersion\":0}]");
+
+        // Neither reading of the repeated key reached the ledger.
+        verify(revRegEntryRegistry, never()).get(GUARD_ONE_ID);
+        verify(revRegEntryRegistry, never()).get(GUARD_TWO_ID);
+        verify(revRegEntryRegistry, never()).get(anyString());
+    }
+
+    /** Verifies content after the guard array is a parse error, not ignored trailing text. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsContentTrailingTheArray() {
+        assertGuardsRejected(
+                guards(guard(GUARD_ONE_ID, 0L)) + " " + guards(guard(GUARD_TWO_ID, 0L)));
+        assertGuardsRejected(guards(guard(GUARD_ONE_ID, 0L)) + " garbage");
+        assertGuardsRejected(guards(guard(GUARD_ONE_ID, 0L)) + " 7");
+        verify(revRegEntryRegistry, never()).get(anyString());
+    }
+
+    /** Verifies the rejection message names the registry and both versions, and claims no more. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedReportsVersionsWithoutClaimingRevocation() {
+        stubOwnedTarget(0L);
+        stubGuardedEntry(GUARD_ONE_ID, 5L);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class, () -> guardedUpdate(guards(guard(GUARD_ONE_ID, 2L))));
+
+        assertEquals(
+                "guard registry '"
+                        + GUARD_ONE_ID
+                        + "' is at version 5, expected 2: it has changed since the state this"
+                        + " operation was tested against",
+                exception.getMessage());
+        assertTrue(exception.getMessage().contains(GUARD_ONE_ID));
+        // The chain observes a version move, never a revocation; the message must not claim one.
+        assertFalse(exception.getMessage().toLowerCase().contains("revoked"));
     }
 }

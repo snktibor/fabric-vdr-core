@@ -71,6 +71,22 @@ public class VdrException extends RuntimeException {
     }
 
     /**
+     * Creates an exception for a request that is well formed and authorized but meets a world state
+     * the caller declared it was not expecting.
+     *
+     * <p>This is the only code that says nothing is wrong with the request itself: the arguments
+     * validated, the signer was entitled, and the transaction was refused solely because a state
+     * the caller pinned had moved on. Callers that retry after re-reading the moved state are
+     * behaving correctly, which is what separates this from the other five codes.
+     *
+     * @param message description naming the pinned state, the expected value, and the value found
+     * @return a {@link VdrException} with {@code FAILED_PRECONDITION} error code
+     */
+    public static VdrException failedPrecondition(final String message) {
+        return new VdrException("FAILED_PRECONDITION", message);
+    }
+
+    /**
      * Creates an exception for a chaincode invariant that only a code defect can break.
      *
      * <p>Unlike the other factories this one never reflects caller input: it marks a condition the

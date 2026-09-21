@@ -1,6 +1,7 @@
 package com.example.vdr.util;
 
 import com.example.vdr.exception.VdrException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,22 @@ public final class JsonUtil {
                     .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
                     .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
                     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+    /**
+     * Mapper for payloads whose exact text is covered by a client signature.
+     *
+     * <p>It differs from {@link #MAPPER} in exactly two leniencies, turned off here and nowhere
+     * else. Duplicate object keys, which Jackson otherwise resolves silently to the last
+     * occurrence, are a parse error; so is any content after the first complete JSON value, which
+     * Jackson otherwise stops before and ignores. Either leniency lets one signed byte string be
+     * read two ways, so signer, chaincode and a later auditor could each take a different meaning
+     * from the same audited text. The shared mapper deliberately keeps its behaviour: it also reads
+     * back trusted ledger state, where neither condition can arise from a caller.
+     */
+    private static final ObjectMapper STRICT_MAPPER =
+            MAPPER.copy()
+                    .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                    .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
 
     /** Utility class constructor is private to prevent instantiation. */
     private JsonUtil() {}
@@ -63,6 +80,27 @@ public final class JsonUtil {
     public static JsonNode readTree(final String json) {
         try {
             return MAPPER.readTree(json);
+        } catch (final Exception e) {
+            throw VdrException.invalid("Invalid JSON payload: " + safeMessage(e));
+        }
+    }
+
+    /**
+     * Parses JSON into a tree, requiring the payload to have exactly one reading.
+     *
+     * <p>Unlike {@link #readTree} this rejects duplicate keys inside an object and any content
+     * after the first complete JSON value. Reserved for caller payloads that are bound by a
+     * signature over their literal text: there, a payload that parses two ways is a payload two
+     * parties can disagree about while both quoting the same signed bytes.
+     *
+     * @param json JSON payload to parse
+     * @return parsed JSON node tree
+     * @throws VdrException if the payload is invalid, repeats an object key, or carries trailing
+     *     content
+     */
+    public static JsonNode readStrictTree(final String json) {
+        try {
+            return STRICT_MAPPER.readTree(json);
         } catch (final Exception e) {
             throw VdrException.invalid("Invalid JSON payload: " + safeMessage(e));
         }

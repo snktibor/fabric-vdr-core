@@ -2,6 +2,7 @@ package com.example.vdr.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,9 +15,11 @@ import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RegistryEntry;
 import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.DidService;
+import com.example.vdr.logic.GuardedRevRegEntryUpdate;
 import com.example.vdr.logic.JwtPrincipal;
 import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.RevRegDefService;
+import com.example.vdr.logic.RevRegEntryGuard;
 import com.example.vdr.logic.RevRegEntryService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.logic.VdrTypes;
@@ -27,8 +30,10 @@ import com.example.vdr.model.RevRegDefRecord;
 import com.example.vdr.model.RevRegEntryRecord;
 import com.example.vdr.model.SchemaRecord;
 import com.example.vdr.util.JsonUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +67,9 @@ class VdrContractTest {
 
     private static final String REV_REG_DEF_ID =
             ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c07-9e04-7ff1-a3c6-71b28e05d9a4";
+
+    private static final String GUARD_ID =
+            ISSUER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c08-1a72-7c40-9e15-2d84f3b0a6c7";
 
     @Mock private SsiContext ctx;
 
@@ -534,6 +542,155 @@ class VdrContractTest {
         assertEquals(JsonUtil.toCanonicalJson(erecord), result);
         verify(revRegEntryService)
                 .updateRevRegEntry("caller", REV_REG_DEF_ID, TestVectors.G1_TIMES_2);
+    }
+
+    /**
+     * Verifies the guarded update passes its arguments through unchanged and renders the two-part
+     * response.
+     *
+     * <p>The guard payload reaches the service as the literal string submitted: the token's scope
+     * digest is computed over the raw wire arguments, so any re-serialization on the way down would
+     * break every signed guarded call. The stub encodes that expectation — it answers only for the
+     * exact scope argument list {@code [revRegDefId, accumValue, guardsJson]}.
+     */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedReturnsEntryAndCheckedGuards() {
+        final VdrContract contract = new VdrContract();
+        final String jwt = "jwt";
+        final String guardsJson =
+                "[{\"revRegDefId\":\""
+                        + REV_REG_DEF_ID
+                        + "\", \"expectedVersion\": 3},{\"revRegDefId\":\""
+                        + GUARD_ID
+                        + "\", \"expectedVersion\": 7}]";
+        final RevRegEntryRecord erecord = new RevRegEntryRecord();
+        erecord.setRevRegDefId(REV_REG_DEF_ID);
+        erecord.setAccumValue(TestVectors.G1_TIMES_2);
+        erecord.setVersion(4L);
+
+        stubSignerDid(
+                jwt,
+                "caller",
+                "updateRevRegEntryIfGuardsUnchanged",
+                REV_REG_DEF_ID,
+                TestVectors.G1_TIMES_2,
+                guardsJson);
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(revRegEntryService.updateRevRegEntryIfGuardsUnchanged(
+                        "caller", REV_REG_DEF_ID, TestVectors.G1_TIMES_2, guardsJson))
+                .thenReturn(
+                        new GuardedRevRegEntryUpdate(
+                                erecord,
+                                List.of(
+                                        new RevRegEntryGuard(REV_REG_DEF_ID, 3L),
+                                        new RevRegEntryGuard(GUARD_ID, 7L))));
+
+        final String result =
+                contract.updateRevRegEntryIfGuardsUnchanged(
+                        ctx, REV_REG_DEF_ID, TestVectors.G1_TIMES_2, guardsJson, jwt);
+
+        verify(revRegEntryService)
+                .updateRevRegEntryIfGuardsUnchanged(
+                        "caller", REV_REG_DEF_ID, TestVectors.G1_TIMES_2, guardsJson);
+        verify(jwtValidator)
+                .validate(
+                        jwt,
+                        TX_TIME,
+                        "updateRevRegEntryIfGuardsUnchanged",
+                        List.of(REV_REG_DEF_ID, TestVectors.G1_TIMES_2, guardsJson));
+
+        final JsonNode response = JsonUtil.readTree(result);
+        assertEquals(2, response.size());
+        assertEquals(
+                JsonUtil.toCanonicalJson(erecord), JsonUtil.toCanonicalJson(response.get("entry")));
+        assertEquals(4L, response.get("entry").get("version").longValue());
+
+        final JsonNode guards = response.get("guards");
+        assertEquals(2, guards.size());
+        assertEquals(REV_REG_DEF_ID, guards.get(0).get("revRegDefId").asText());
+        assertEquals(GUARD_ID, guards.get(1).get("revRegDefId").asText());
+        assertEquals(7L, guards.get(1).get("checkedVersion").longValue());
+        for (final JsonNode guard : guards) {
+            // Two fields, and neither of them is called "version": the entry's version and the
+            // version a guard was checked against are different numbers with different uses.
+            assertEquals(2, guard.size());
+            assertNotNull(guard.get("revRegDefId"));
+            assertNotNull(guard.get("checkedVersion"));
+            assertNull(guard.get("version"));
+        }
+        // The self-guard was decided against the version before the mutation.
+        assertEquals(
+                response.get("entry").get("version").longValue() - 1L,
+                guards.get(0).get("checkedVersion").longValue());
+    }
+
+    /** Verifies the guarded update also enforces the jwt-is-final-argument convention. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsJwtNotInFinalPosition() {
+        final VdrContract contract = new VdrContract();
+
+        when(ctx.getServices()).thenReturn(services);
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(ctx.getStub()).thenReturn(stub);
+        // The guard payload, not the jwt, sits in the final wire position.
+        when(stub.getParameters())
+                .thenReturn(List.of(REV_REG_DEF_ID, TestVectors.G1_TIMES_2, "jwt", "[]"));
+
+        final ChaincodeException exception =
+                assertThrows(
+                        ChaincodeException.class,
+                        () ->
+                                contract.updateRevRegEntryIfGuardsUnchanged(
+                                        ctx, REV_REG_DEF_ID, TestVectors.G1_TIMES_2, "[]", "jwt"));
+        assertEquals(
+                "authorization failed: jwt must be the final transaction argument",
+                exception.getMessage());
+        assertEquals("UNAUTHORIZED", new String(exception.getPayload(), StandardCharsets.UTF_8));
+    }
+
+    /** Verifies the new precondition failure reaches the client as its own chaincode error code. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedWrapsFailedPrecondition() {
+        final VdrContract contract = new VdrContract();
+        final String jwt = "jwt";
+        final String guardsJson = "[{\"revRegDefId\":\"" + GUARD_ID + "\",\"expectedVersion\":7}]";
+
+        stubSignerDid(
+                jwt,
+                "caller",
+                "updateRevRegEntryIfGuardsUnchanged",
+                REV_REG_DEF_ID,
+                TestVectors.G1_TIMES_2,
+                guardsJson);
+        when(services.getRevRegEntryService()).thenReturn(revRegEntryService);
+        when(revRegEntryService.updateRevRegEntryIfGuardsUnchanged(
+                        "caller", REV_REG_DEF_ID, TestVectors.G1_TIMES_2, guardsJson))
+                .thenThrow(
+                        VdrException.failedPrecondition(
+                                "guard registry '"
+                                        + GUARD_ID
+                                        + "' is at version 9, expected 7: it has changed since the"
+                                        + " state this operation was tested against"));
+
+        final ChaincodeException exception =
+                assertThrows(
+                        ChaincodeException.class,
+                        () ->
+                                contract.updateRevRegEntryIfGuardsUnchanged(
+                                        ctx,
+                                        REV_REG_DEF_ID,
+                                        TestVectors.G1_TIMES_2,
+                                        guardsJson,
+                                        jwt));
+
+        assertEquals(
+                "FAILED_PRECONDITION", new String(exception.getPayload(), StandardCharsets.UTF_8));
+        assertEquals(
+                "guard registry '"
+                        + GUARD_ID
+                        + "' is at version 9, expected 7: it has changed since the state this"
+                        + " operation was tested against",
+                exception.getMessage());
     }
 
     /** Verifies entry history serializes revisions oldest-first in one uniform revision shape. */

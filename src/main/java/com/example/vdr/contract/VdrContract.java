@@ -4,6 +4,8 @@ import com.example.vdr.context.SsiContext;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RegistryEntry;
+import com.example.vdr.logic.GuardedRevRegEntryUpdate;
+import com.example.vdr.logic.RevRegEntryGuard;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RevRegDefRecord;
@@ -420,6 +422,78 @@ public class VdrContract implements ContractInterface {
                                                 requireSignerDid(ctx, jwt, "updateRevRegEntry"),
                                                 revRegDefId,
                                                 accumValue)));
+    }
+
+    /**
+     * Replaces the accumulator value of a Revocation Registry Entry only while every registry named
+     * in {@code guardsJson} still stands at the version the caller observed. Otherwise the
+     * transaction is rejected with {@code FAILED_PRECONDITION} and writes nothing.
+     *
+     * <p>This is the conditional counterpart of {@link #updateRevRegEntry}, not a replacement for
+     * it: the plain update stays the right call for an issuer whose revocation depends on no other
+     * registry's state. What the guarded path adds is that the guarded entries are read inside the
+     * transaction, so their keys join its read set and Fabric MVCC validation re-checks them at
+     * commit time — the check a client-side query before submitting cannot give. The target may
+     * name itself as a guard, turning the update into a compare-and-swap on its own version.
+     *
+     * <p>The response carries two version numbers under deliberately different names. {@code
+     * entry.version} is the target's version after this update, the value a later update of the
+     * same entry submits as its own expected version. Each {@code guards[i].checkedVersion} is the
+     * version that guard was tested against, the value a later update submits to guard that
+     * registry again. For a self-guard the two differ by exactly one, and swapping them fails.
+     *
+     * @param ctx The custom SSI transaction context.
+     * @param revRegDefId The ID of the parent revocation registry definition whose entry to update.
+     * @param accumValue The replacement accumulator value computed off chain by the issuer: a
+     *     compressed BLS12-381 G1 point as exactly 96 lowercase hex characters.
+     * @param guardsJson A JSON array of guards, each an object with exactly {@code revRegDefId} and
+     *     an integral {@code expectedVersion}. The array must be non-empty, may not name a registry
+     *     twice, may not repeat a key inside an element, and may not carry trailing content: the
+     *     token's scope digest binds this text literally, so it must have exactly one reading. A
+     *     client therefore serializes it once and submits the identical string it signed.
+     * @param jwt The JWT token containing the issuer claim for authentication and authorization.
+     * @return A canonical JSON object with {@code entry}, the updated {@link RevRegEntryRecord},
+     *     and {@code guards}, one {@code revRegDefId}/{@code checkedVersion} pair per guard in
+     *     submission order.
+     * @throws ChaincodeException If validation fails, the entry, its parent definition or a guarded
+     *     entry is missing, the caller does not own the parent revocation registry definition, or a
+     *     guarded registry has moved off its expected version.
+     */
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String updateRevRegEntryIfGuardsUnchanged(
+            final SsiContext ctx,
+            final String revRegDefId,
+            final String accumValue,
+            final String guardsJson,
+            final String jwt) {
+        return execute(
+                () -> {
+                    final GuardedRevRegEntryUpdate update =
+                            ctx.getServices()
+                                    .getRevRegEntryService()
+                                    .updateRevRegEntryIfGuardsUnchanged(
+                                            requireSignerDid(
+                                                    ctx, jwt, "updateRevRegEntryIfGuardsUnchanged"),
+                                            revRegDefId,
+                                            accumValue,
+                                            guardsJson);
+                    final ArrayNode guards = JsonUtil.arrayNode();
+                    for (final RevRegEntryGuard guard : update.getCheckedGuards()) {
+                        final ObjectNode item = JsonUtil.objectNode();
+                        item.put("revRegDefId", guard.getRevRegDefId());
+                        // A guard reaches the response only once the version read inside this
+                        // transaction equalled the expected one, so the expected version IS the
+                        // version the test was decided against.
+                        item.put("checkedVersion", guard.getExpectedVersion());
+                        guards.add(item);
+                    }
+                    final ObjectNode response = JsonUtil.objectNode();
+                    response.set(
+                            "entry",
+                            JsonUtil.readTree(JsonUtil.toCanonicalJson(update.getEntry())));
+                    response.set("guards", guards);
+                    return JsonUtil.toCanonicalJson(response);
+                });
     }
 
     /**

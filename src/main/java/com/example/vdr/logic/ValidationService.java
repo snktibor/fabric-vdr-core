@@ -54,6 +54,22 @@ public class ValidationService {
     static final String REVOCATION_VERIFYING_KEY_FIELD = "revocationVerifyingKey";
 
     /**
+     * Upper bound on the guards one guarded update may carry.
+     *
+     * <p>Every guard costs one world-state read and one read-set key, so the bound caps both the
+     * endorsement cost and the read set a single transaction commits against. A protocol run weighs
+     * the alternative branches of one decision point, which is a single-digit quantity; the bound
+     * is inclusive.
+     */
+    static final int MAX_GUARDS = 16;
+
+    /** Required (and only permitted) fields of a guard element. */
+    static final String GUARD_ID_FIELD = "revRegDefId";
+
+    /** Version field of a guard element; see {@link #GUARD_ID_FIELD}. */
+    static final String GUARD_VERSION_FIELD = "expectedVersion";
+
+    /**
      * Normalizes a text field and rejects blank or null values.
      *
      * @param value raw input value
@@ -267,6 +283,107 @@ public class ValidationService {
         }
 
         return List.copyOf(values);
+    }
+
+    /**
+     * Parses the guard list of a guarded revocation registry entry update.
+     *
+     * <p>The payload is read with {@link JsonUtil#readStrictTree} rather than the shared parser: a
+     * client signature covers the literal guard text, so a payload that admits two readings —
+     * through a repeated object key or through content trailing the array — is rejected instead of
+     * silently resolved. Every remaining rule below is likewise decidable from the text alone, so
+     * the whole list is settled before the transaction reads any business state.
+     *
+     * <p>The array must be non-empty and at most {@link #MAX_GUARDS} long. An empty list is refused
+     * rather than waved through: it would perform an unconditional write under a name that promises
+     * a condition. Each element must be an object carrying exactly {@value #GUARD_ID_FIELD} and
+     * {@value #GUARD_VERSION_FIELD} — a missing field leaves the guard underspecified, an extra one
+     * means the caller expected a check this registry does not make. The version must be an
+     * integral number in {@code [0, Long.MAX_VALUE]}. No registry may be guarded twice: with equal
+     * versions the repetition is redundant, with different ones it can never be satisfied, and
+     * either way the text alone decides it.
+     *
+     * @param json raw guard array payload
+     * @param fieldName logical field name for error reporting
+     * @return immutable guard list in submission order, with normalized identifiers
+     * @throws VdrException if the payload violates any rule above
+     */
+    public List<RevRegEntryGuard> parseRevRegEntryGuards(
+            final String json, final String fieldName) {
+        final JsonNode node = JsonUtil.readStrictTree(json);
+        if (!node.isArray()) {
+            throw VdrException.invalid(fieldName + " must be a JSON array");
+        }
+        if (node.isEmpty()) {
+            throw VdrException.invalid(fieldName + " must not be empty");
+        }
+        if (node.size() > MAX_GUARDS) {
+            throw VdrException.invalid(
+                    fieldName + " must not contain more than " + MAX_GUARDS + " entries");
+        }
+
+        final List<RevRegEntryGuard> guards = new ArrayList<>();
+        final Set<String> guardedIds = new LinkedHashSet<>();
+        final Iterator<JsonNode> elements = node.elements();
+        while (elements.hasNext()) {
+            final RevRegEntryGuard guard = parseRevRegEntryGuard(elements.next(), fieldName);
+            if (!guardedIds.add(guard.getRevRegDefId())) {
+                throw VdrException.invalid(
+                        fieldName
+                                + " must not guard the same registry twice: '"
+                                + guard.getRevRegDefId()
+                                + "'");
+            }
+            guards.add(guard);
+        }
+        return List.copyOf(guards);
+    }
+
+    /**
+     * Parses and validates a single guard element.
+     *
+     * @param element array element expected to be a guard object
+     * @param fieldName logical field name for error reporting
+     * @return guard carrying the normalized identifier and the expected version
+     * @throws VdrException if the element is not an object with exactly the two required fields, or
+     *     if either field value is of the wrong type or out of range
+     */
+    private RevRegEntryGuard parseRevRegEntryGuard(final JsonNode element, final String fieldName) {
+        if (!element.isObject()) {
+            throw VdrException.invalid(fieldName + " must contain JSON objects");
+        }
+        if (element.size() != 2
+                || !element.has(GUARD_ID_FIELD)
+                || !element.has(GUARD_VERSION_FIELD)) {
+            throw VdrException.invalid(
+                    fieldName
+                            + " element must contain exactly the fields '"
+                            + GUARD_ID_FIELD
+                            + "' and '"
+                            + GUARD_VERSION_FIELD
+                            + "'");
+        }
+
+        final JsonNode idNode = element.get(GUARD_ID_FIELD);
+        if (!idNode.isTextual()) {
+            throw VdrException.invalid(fieldName + "." + GUARD_ID_FIELD + " must be a string");
+        }
+        final String revRegDefId =
+                requireNotBlank(idNode.asText(), fieldName + "." + GUARD_ID_FIELD);
+
+        final JsonNode versionNode = element.get(GUARD_VERSION_FIELD);
+        if (!versionNode.isIntegralNumber()
+                || !versionNode.canConvertToLong()
+                || versionNode.longValue() < 0L) {
+            throw VdrException.invalid(
+                    fieldName
+                            + "."
+                            + GUARD_VERSION_FIELD
+                            + " must be an integer between 0 and "
+                            + Long.MAX_VALUE);
+        }
+
+        return new RevRegEntryGuard(revRegDefId, versionNode.longValue());
     }
 
     /**
