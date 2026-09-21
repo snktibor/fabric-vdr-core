@@ -42,7 +42,12 @@ Feature: Concurrent revocation registry writes
         And the registry "registry-y" should be at version 0
 
     @toctou
-    Scenario: B1. Both issuers observe the other unrevoked, then both revoke
+    # Characterisation of the unconditional update path. The "is the other registry still
+    # unrevoked?" check is a client-side query, so the two submissions carry disjoint read and
+    # write sets and commit-time validation has nothing to compare. The assertion "at most 1 of
+    # the revocations should have taken effect" belongs to the conditional update, which reads the
+    # guarded registry inside the submitted transaction.
+    Scenario: B1u. Characterisation — without a guard, both issuers observe the other unrevoked and both revocations commit
         Given an independent revocation registry "registry-x" exists with its own issuer
         And an independent revocation registry "registry-y" exists with its own issuer
         And retrying is disabled for this scenario
@@ -53,4 +58,6 @@ Feature: Concurrent revocation registry writes
             | x     | registry-x | accum-x-revoked |
             | y     | registry-y | accum-y-revoked |
         Then no concurrent submission should have failed on endorsement or on the network
-        And at most 1 of the revocations should have taken effect
+        And exactly 2 concurrent submissions should be committed
+        And the registry "registry-x" should be at version 1
+        And the registry "registry-y" should be at version 1

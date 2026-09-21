@@ -78,8 +78,8 @@ validation). No network or Docker required.
 
 ## End-to-end tests against a live network
 
-The E2E suite (21 functional Cucumber scenarios, plus four concurrency scenarios that are
-[excluded by default](#concurrency-scenarios--excluded-by-default-one-is-red-on-purpose))
+The E2E suite (25 Cucumber scenarios, four of them
+[concurrency scenarios](#concurrency-scenarios--part-of-the-default-run))
 drives the deployed chaincode through the Fabric
 Gateway SDK. It expects the companion network repo,
 [`vdr-network`](../), with this repository checked out **inside** it:
@@ -115,15 +115,14 @@ can be overridden for other checkout layouts with the system property
 mvn -Pe2e verify -Dvdr.e2e.cryptoPath=/path/to/crypto-config/peerOrganizations/org1.example.com
 ```
 
-### Concurrency scenarios — excluded by default, one is red on purpose
+### Concurrency scenarios — part of the default run
 
-> **`mvn -Pe2e verify` skips the four scenarios tagged `@concurrency`.** One of them, B1,
-> **fails by design** on today's chaincode: it is a measurement of a real gap, not a
-> broken test. Run them with a single command and expect exactly one failure (B1):
->
-> ```bash
-> mvn -Pe2e verify -Dit.test=RunCucumberIT -Dcucumber.filter.tags='@concurrency'
-> ```
+`mvn -Pe2e verify` runs the four scenarios tagged `@concurrency` along with the rest, and
+all four pass. To run only those four:
+
+```bash
+mvn -Pe2e verify -Dit.test=RunCucumberIT -Dcucumber.filter.tags='@concurrency'
+```
 
 The scenarios live in
 [`revregentry_concurrency.feature`](src/test/resources/features/revregentry_concurrency.feature)
@@ -135,18 +134,18 @@ revocation registry updates:
 | A0 | control: two updates to one registry entry, applied one after the other | green |
 | A1 | two updates to the **same** entry, endorsed against the same state and released together: exactly one commits, the other is invalidated with `MVCC_READ_CONFLICT` | green |
 | B0 | control: two independent registries, each issuer re-checks the other before revoking, run **sequentially** | green |
-| B1 | the same check-then-revoke run **concurrently**: both revocations commit as `VALID` in the same block, so "at most one takes effect" does not hold | **red, by design** |
+| B1u | characterisation of the same check-then-revoke run **concurrently**: both revocations commit as `VALID` and both registries end at version 1, because the client-side re-check forms no read set and the two transactions therefore have disjoint read and write sets | green |
 
-B1 is red for the right reason. B0 runs the same operations with the same assertion and
-passes; A1 shows the same machinery detecting a real MVCC conflict when there is one. The
-gap is that the "is the other registry still unrevoked?" check is a client-side query,
-which forms no read set: the two submitted transactions have disjoint read and write sets,
-so commit-time validation has nothing to compare. B1 stays red until the chaincode offers
-a conditional update that reads the other registry **inside** the submitted transaction,
-and it is kept out of the default run so that `verify` stays green in the meantime.
+B1u asserts what the unconditional update path measurably does, not what one might want it
+to do: "at most one of the two revocations takes effect" is not a property of
+`updateRevRegEntry`, because the "is the other registry still unrevoked?" check is a
+client-side query and commit-time validation has nothing to compare. The two controls keep
+that reading honest — B0 runs the same operations sequentially, where the re-check does
+hold, and A1 shows the same machinery detecting a real `MVCC_READ_CONFLICT` when there is
+one.
 
-The default filter is the `cucumber.filter.tags` property in `pom.xml`
-(`not @concurrency`); any other tag expression can be passed the same way.
+The build defines no default tag filter: `-Dcucumber.filter.tags` takes any tag expression
+on the command line, and without it every scenario runs.
 
 ## Transaction reference
 
