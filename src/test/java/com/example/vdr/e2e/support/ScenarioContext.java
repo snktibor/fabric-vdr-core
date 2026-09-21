@@ -16,6 +16,7 @@ public class ScenarioContext {
     private final Map<String, String> ownerDidByEffectiveId = new HashMap<>();
 
     private Exception lastTransactionException;
+    private TransactionResult lastTransactionResult;
     private String lastQueryResponse;
     private String heldSigningDid;
     private String lastChaincodeEventName;
@@ -81,6 +82,21 @@ public class ScenarioContext {
 
     public void setLastTransactionException(final Exception e) {
         this.lastTransactionException = e;
+    }
+
+    /**
+     * Returns the classified outcome of the last submit, or {@code null} if none ran.
+     *
+     * <p>Runs alongside {@link #lastTransactionException()} rather than replacing it: the exception
+     * answers "did it fail", this answers "how" — a refused endorsement, a commit-time MVCC
+     * invalidation and a dead transport are three different events.
+     */
+    public TransactionResult lastTransactionResult() {
+        return lastTransactionResult;
+    }
+
+    public void setLastTransactionResult(final TransactionResult result) {
+        this.lastTransactionResult = result;
     }
 
     public String lastQueryResponse() {
