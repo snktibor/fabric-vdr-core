@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.example.vdr.TestVectors;
 import com.example.vdr.e2e.entity.EntityHandlerRegistry;
 import com.example.vdr.e2e.support.ConcurrentSubmission;
+import com.example.vdr.e2e.support.GuardsJson;
 import com.example.vdr.e2e.support.RetryPolicy;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
@@ -38,6 +39,18 @@ import java.util.stream.Collectors;
 public class ConcurrencySteps {
 
     private static final String UPDATE_TX = "updateRevRegEntry";
+    private static final String GUARDED_UPDATE_TX = "updateRevRegEntryIfGuardsUnchanged";
+    private static final String GUARD_COLUMN = "guard";
+
+    /**
+     * The tail of the refusal a guard raises. The error code itself never reaches a Gateway client
+     * — it travels in the chaincode response payload, while the error detail carries only the
+     * status and the message — so the message is what separates a guard that fired from an
+     * ownership or argument refusal.
+     */
+    private static final String GUARD_REFUSAL =
+            "it has changed since the state this operation was tested against";
+
     private static final Pattern VERSION_PATTERN = Pattern.compile("\"version\"\\s*:\\s*(\\d+)");
 
     private final EntityHandlerRegistry registry;
@@ -111,6 +124,14 @@ public class ConcurrencySteps {
                         TestVectors.accumValue(accumAlias)));
     }
 
+    /**
+     * Races the listed updates, each one over the path its row asks for.
+     *
+     * <p>A row with no {@code guard} column, or an empty one, submits the unconditional update
+     * exactly as before. A row that names one or more registries — its own included, comma
+     * separated — submits the guarded update instead, pinning every named registry to the version
+     * this row's issuer observed earlier in the scenario.
+     */
     @When(
             "the following accumulator updates are endorsed against the same state and submitted"
                     + " together:")
@@ -118,14 +139,28 @@ public class ConcurrencySteps {
         final List<ConcurrentSubmission> submissions = new ArrayList<>();
         for (final Map<String, String> row : table.asMaps()) {
             final String handle = row.get("registry");
-            submissions.add(
-                    ConcurrentSubmission.signed(
-                            row.get("label"),
-                            UPDATE_TX,
-                            ownerOf(handle),
-                            keyPairOf(handle),
-                            revRegDefIdOf(handle),
-                            TestVectors.accumValue(row.get("accumulator"))));
+            final String guards = row.get(GUARD_COLUMN);
+            final String accumValue = TestVectors.accumValue(row.get("accumulator"));
+            if (guards == null || guards.trim().isEmpty()) {
+                submissions.add(
+                        ConcurrentSubmission.signed(
+                                row.get("label"),
+                                UPDATE_TX,
+                                ownerOf(handle),
+                                keyPairOf(handle),
+                                revRegDefIdOf(handle),
+                                accumValue));
+            } else {
+                submissions.add(
+                        ConcurrentSubmission.signed(
+                                row.get("label"),
+                                GUARDED_UPDATE_TX,
+                                ownerOf(handle),
+                                keyPairOf(handle),
+                                revRegDefIdOf(handle),
+                                accumValue,
+                                guardListOf(handle, guards).text()));
+            }
         }
         concurrentResults = executor.submitTogether(submissions);
     }
@@ -149,6 +184,58 @@ public class ConcurrencySteps {
                         "The race is only evidence if every submission reached validation. "
                                 + unrelated.size()
                                 + " did not. "
+                                + diagnostics());
+    }
+
+    /**
+     * The guarded counterpart of {@link #noSubmissionFailedForAnUnrelatedReason}, for races where
+     * losing on a guard is the measured behaviour rather than noise.
+     *
+     * <p>A guarded loser ends in one of two ways, and both are correct: refused at endorsement when
+     * the guarded registry moved before the proposal was simulated, invalidated at commit time when
+     * it moved after. Everything else that stops a submission short of validation — a transport
+     * failure, an ownership refusal, a malformed argument — is still a broken fixture rather than a
+     * result, and still fails the scenario.
+     */
+    @Then("no concurrent submission should have failed for a reason other than its guard")
+    public void noSubmissionFailedForAReasonOtherThanItsGuard() {
+        requireConcurrentResults();
+        final List<TransactionResult> unrelated =
+                concurrentResults.stream()
+                        .filter(r -> !refusedByItsGuard(r))
+                        .filter(
+                                r ->
+                                        r.outcome() == TransactionOutcome.ENDORSEMENT_REJECTED
+                                                || r.outcome() == TransactionOutcome.NETWORK_FAILURE
+                                                || r.outcome()
+                                                        == TransactionOutcome.COMMIT_STATUS_UNKNOWN
+                                                || r.outcome() == TransactionOutcome.OTHER_FAILURE)
+                        .collect(Collectors.toList());
+        assertTrue(
+                unrelated.isEmpty(),
+                () ->
+                        "A guarded race is only evidence if every submission either reached"
+                                + " validation or was refused by its own guard. "
+                                + unrelated.size()
+                                + " ended some other way. "
+                                + diagnostics());
+    }
+
+    @Then("{int} concurrent submission(s) should have been refused by its guard")
+    public void nSubmissionsRefusedByTheirGuard(final int expected) {
+        requireConcurrentResults();
+        final long refused = concurrentResults.stream().filter(this::refusedByItsGuard).count();
+        assertEquals(
+                (long) expected,
+                refused,
+                () ->
+                        "Expected "
+                                + expected
+                                + " of the "
+                                + concurrentResults.size()
+                                + " concurrent submissions to lose on the guard it carried, but "
+                                + refused
+                                + " did. "
                                 + diagnostics());
     }
 
@@ -230,6 +317,43 @@ public class ConcurrencySteps {
                                 + diagnostics());
     }
 
+    /**
+     * Counts how the independent registries ended up without naming which one won.
+     *
+     * <p>Both issuers acted on the same information, so which of them commits is the ledger's
+     * choice and not a property under test; an assertion that named a winner would be asserting the
+     * ordering service's timing. What is under test is that one registry moved and the other did
+     * not.
+     */
+    @Then(
+            "exactly {int} of the independent registries should be at version {long} and the"
+                    + " other(s) at version {long}")
+    public void exactlyNRegistriesAdvanced(
+            final int expected, final long advanced, final long untouched) {
+        final List<String> handles = registry.independentRegistry().provisionedHandles();
+        if (handles.isEmpty()) {
+            fail("No independent registries were provisioned; this step has nothing to count.");
+        }
+        final Map<String, Long> versions = new LinkedHashMap<>();
+        handles.forEach(h -> versions.put(h, currentVersion(h)));
+        final long advancedCount = versions.values().stream().filter(v -> v == advanced).count();
+        final boolean restUntouched =
+                versions.values().stream().allMatch(v -> v == advanced || v == untouched);
+        assertTrue(
+                advancedCount == expected && restUntouched,
+                () ->
+                        "Expected exactly "
+                                + expected
+                                + " of the independent registries at version "
+                                + advanced
+                                + " and every other one at version "
+                                + untouched
+                                + ", but they read "
+                                + versions
+                                + ". "
+                                + diagnostics());
+    }
+
     @Then("the last transaction outcome should be {string}")
     public void theLastTransactionOutcomeShouldBe(final String outcomeName) {
         final TransactionResult result = context.lastTransactionResult();
@@ -244,6 +368,66 @@ public class ConcurrencySteps {
         if (concurrentResults.isEmpty()) {
             fail("No concurrent submissions were made; run the submit-together step first.");
         }
+    }
+
+    /**
+     * Whether one submission lost on the guard list it carried, in either of the two ways it can.
+     *
+     * <p>Refused at endorsement, the chaincode names the registry and the two versions, and that
+     * message is the only thing that distinguishes the refusal from any other the chaincode could
+     * raise. Invalidated at commit, there is no message at all: the evidence is the validation
+     * code, and the read set that produced it exists only because the transaction read the guarded
+     * entry itself.
+     *
+     * <p>Both require the submission to have gone over the guarded path — an unguarded update
+     * losing the same race says nothing about a guard.
+     */
+    private boolean refusedByItsGuard(final TransactionResult result) {
+        if (!GUARDED_UPDATE_TX.equals(result.txName())) {
+            return false;
+        }
+        if (result.outcome() == TransactionOutcome.MVCC_CONFLICT) {
+            return true;
+        }
+        return result.outcome() == TransactionOutcome.ENDORSEMENT_REJECTED
+                && result.failure() != null
+                && result.failure().getMessage() != null
+                && result.failure().getMessage().contains(GUARD_REFUSAL);
+    }
+
+    /**
+     * Builds one submission's guard list from what its own issuer observed earlier in the scenario.
+     *
+     * <p>Expected versions are observed, never written into the feature file: the guard's claim is
+     * about a version somebody actually read, and a literal would keep passing for the wrong reason
+     * the moment the fixture gained a step. A guard the issuer never looked at is therefore a fault
+     * in the scenario and says so — substituting a default would guard against a version nobody
+     * checked and still go green.
+     *
+     * <p>The list is rendered exactly once, here; that one string is what the token is minted over
+     * and what is submitted.
+     */
+    private GuardsJson guardListOf(final String handle, final String guardCell) {
+        final GuardsJson.Builder guards = GuardsJson.builder();
+        for (final String guard : guardCell.split(",")) {
+            final String target = guard.trim();
+            final String observation = handle + " read " + target;
+            final Long observed = observations.get(observation);
+            if (observed == null) {
+                fail(
+                        "The submission of '"
+                                + handle
+                                + "' guards '"
+                                + target
+                                + "' at the version its issuer observed, but no observation step"
+                                + " recorded '"
+                                + observation
+                                + "'. "
+                                + diagnostics());
+            }
+            guards.guard(revRegDefIdOf(target), observed);
+        }
+        return guards.build();
     }
 
     private String revRegDefIdOf(final String handle) {
