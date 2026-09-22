@@ -55,16 +55,24 @@ public final class TestVectors {
      * compressed G1 points.
      */
     private static final Map<String, String> ACCUM_ALIASES =
-            Map.of(
-                    "accum-genesis", G1_GENERATOR,
-                    "accum-after-revocation", G1_TIMES_2,
-                    "accum-unauthorized", G1_TIMES_3,
-                    "accum-after-event", G1_TIMES_5,
-                    "accum-second", G1_TIMES_7,
-                    "accum-race-first", G1_TIMES_2,
-                    "accum-race-second", G1_TIMES_3,
-                    "accum-x-revoked", G1_TIMES_5,
-                    "accum-y-revoked", G1_TIMES_7);
+            Map.ofEntries(
+                    Map.entry("accum-genesis", G1_GENERATOR),
+                    Map.entry("accum-after-revocation", G1_TIMES_2),
+                    Map.entry("accum-unauthorized", G1_TIMES_3),
+                    Map.entry("accum-after-event", G1_TIMES_5),
+                    Map.entry("accum-second", G1_TIMES_7),
+                    Map.entry("accum-race-first", G1_TIMES_2),
+                    Map.entry("accum-race-second", G1_TIMES_3),
+                    Map.entry("accum-x-revoked", G1_TIMES_5),
+                    Map.entry("accum-y-revoked", G1_TIMES_7),
+                    // Guarded-update aliases. A scenario needs the value a registry ends up
+                    // holding to name which write won, so the values a single registry passes
+                    // through are kept distinct from one another.
+                    Map.entry("accum-guarded-write", G1_TIMES_2),
+                    Map.entry("accum-guarded-write-again", G1_TIMES_3),
+                    Map.entry("accum-bump", G1_TIMES_5),
+                    Map.entry("accum-bump-again", G1_TIMES_7),
+                    Map.entry("accum-bump-third", G1_TIMES_3));
 
     /** Utility class constructor is private to prevent instantiation. */
     private TestVectors() {}

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.example.vdr.TestVectors;
+import com.example.vdr.e2e.support.GuardsJson;
 import com.example.vdr.e2e.support.ScenarioContext;
 import com.example.vdr.e2e.support.TransactionExecutor;
 import java.security.KeyPair;
@@ -13,6 +14,7 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
     public static final String TYPE = "revocation registry entry";
     private static final String DEFAULT_REV_REG_DEF_SEED = "revregdef-revregentry-default";
     private static final String NON_OWNER_DID_SEED = "revregentry-non-owner-did";
+    private static final String GUARDED_UPDATE_TX = "updateRevRegEntryIfGuardsUnchanged";
     // Genuine compressed G1 vectors; Gherkin refers to them via TestVectors aliases.
     private static final String GENESIS_ACCUM_VALUE = TestVectors.accumValue("accum-genesis");
     private static final String UNAUTHORIZED_ACCUM_VALUE =
@@ -20,6 +22,8 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
 
     private final DidEntityHandler didHandler;
     private final RevRegDefEntityHandler revRegDefHandler;
+
+    private String lastGuardedResponse;
 
     public RevRegEntryEntityHandler(
             final TransactionExecutor executor,
@@ -98,6 +102,62 @@ public class RevRegEntryEntityHandler extends AbstractEntityHandler {
         final KeyPair keyPair = context.requireDidKeyPair(nonOwnerDid);
         executor.submitSigned(
                 "updateRevRegEntry", nonOwnerDid, keyPair, revRegDefId, UNAUTHORIZED_ACCUM_VALUE);
+    }
+
+    /**
+     * Submits an accumulator update over the guarded path, signed by the recorded owner of the
+     * parent definition.
+     *
+     * <p>The guard list travels as the one text {@link GuardsJson} already rendered, and that same
+     * string is both digested into the token and submitted as the argument. A second rendering here
+     * would change nothing about what the caller meant and everything about what the chaincode
+     * verifies, which is why the text and not the guard values is what gets passed around.
+     *
+     * @return the response payload, or {@code null} if the update was refused
+     */
+    public String updateAccumulatorIfGuardsUnchanged(
+            final String rawId, final String newAccumAlias, final GuardsJson guards) {
+        final String revRegDefId = resolveId(rawId);
+        final String ownerDid = context.requireOwner(revRegDefId);
+        final KeyPair keyPair = context.requireDidKeyPair(ownerDid);
+        lastGuardedResponse =
+                executor.submitSignedForPayload(
+                        GUARDED_UPDATE_TX,
+                        ownerDid,
+                        keyPair,
+                        revRegDefId,
+                        TestVectors.accumValue(newAccumAlias),
+                        guards.text());
+        return lastGuardedResponse;
+    }
+
+    /**
+     * Submits a guarded accumulator update signed by the same validly registered, ACTIVE non-owner
+     * issuer the unguarded path uses, so a rejection is provably the chaincode's ownership check
+     * and not an upstream token or DID failure.
+     *
+     * <p>The guarded path runs the ownership check before it reads any guard, so this is also how a
+     * scenario shows that the guard list — however broken — cannot change the error a non-owner
+     * sees.
+     */
+    public void updateAccumulatorIfGuardsUnchangedWithUnauthorizedActor(
+            final String rawId, final String newAccumAlias, final GuardsJson guards) {
+        final String revRegDefId = resolveId(rawId);
+        final String nonOwnerDid = ensureNonOwnerDid();
+        final KeyPair keyPair = context.requireDidKeyPair(nonOwnerDid);
+        lastGuardedResponse =
+                executor.submitSignedForPayload(
+                        GUARDED_UPDATE_TX,
+                        nonOwnerDid,
+                        keyPair,
+                        revRegDefId,
+                        TestVectors.accumValue(newAccumAlias),
+                        guards.text());
+    }
+
+    /** The payload of the last guarded update, or {@code null} if it was refused. */
+    public String lastGuardedResponse() {
+        return lastGuardedResponse;
     }
 
     /** Evaluates the entry's accumulator history and stores the response for later assertions. */

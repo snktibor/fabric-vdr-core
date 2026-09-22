@@ -58,21 +58,37 @@ public class TransactionExecutor {
 
     /** Submits an unprotected transaction (no JWT). Captures any failure into the context. */
     public void submit(final String txName, final String... args) {
+        submitCapturingPayload(txName, args);
+    }
+
+    /**
+     * {@link #submit} with the response payload returned instead of discarded — {@code null} when
+     * the submission did not commit. Everything else is unchanged: nothing is thrown, and the
+     * failure stays readable from the context.
+     *
+     * <p>Added because a guarded update answers with the state it wrote and the versions it tested
+     * against, and a caller that continues from that answer alone — without querying the ledger
+     * again — has to be able to read it.
+     */
+    public String submitCapturingPayload(final String txName, final String... args) {
         context.setLastTransactionException(null);
         context.setLastTransactionResult(null);
         try {
-            connection.contract().submitTransaction(txName, args);
+            final byte[] payload = connection.contract().submitTransaction(txName, args);
             LOGGER.info("Transaction {} submitted successfully.", txName);
             context.setLastTransactionResult(TransactionResult.committed(txName, txName, 1));
+            return new String(payload, StandardCharsets.UTF_8);
         } catch (EndorseException e) {
             final IllegalStateException flattened = flatten(e);
             context.setLastTransactionException(flattened);
             context.setLastTransactionResult(classify(txName, txName, e, flattened, 1));
             LOGGER.error("{} endorsement failed: {}", txName, e.getMessage(), e);
+            return null;
         } catch (Exception e) {
             context.setLastTransactionException(e);
             context.setLastTransactionResult(classify(txName, txName, e, e, 1));
             LOGGER.error("{} submission failed.", txName, e);
+            return null;
         }
     }
 
@@ -98,6 +114,24 @@ public class TransactionExecutor {
      */
     public void submitWithJwt(final String txName, final String jwt, final String... payloadArgs) {
         submit(txName, withJwt(jwt, payloadArgs));
+    }
+
+    /**
+     * {@link #submitSigned} with the response payload returned instead of discarded — {@code null}
+     * when the submission did not commit.
+     *
+     * <p>The token is minted from the very array that is submitted, so a payload argument whose
+     * exact characters are part of the digest — a guard list, for instance — is bound to the
+     * invocation by construction and cannot drift between the two.
+     */
+    public String submitSignedForPayload(
+            final String txName,
+            final String signerDid,
+            final KeyPair keyPair,
+            final String... payloadArgs) {
+        final String jwt =
+                CryptoUtils.buildDidJwt(signerDid, keyPair, txName, Arrays.asList(payloadArgs));
+        return submitCapturingPayload(txName, withJwt(jwt, payloadArgs));
     }
 
     /** Evaluates a read-only transaction and returns the UTF-8 response, throwing on failure. */
