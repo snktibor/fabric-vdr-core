@@ -7,16 +7,16 @@ import java.util.List;
  * Outcome of a guarded revocation registry entry update: the mutated entry, plus the guards that
  * were checked to let it through.
  *
- * <p>The guard list is the caller's list, in submission order and with normalized identifiers, and
- * it is carried out of the service so the contract layer can report what the update was conditioned
- * on without re-reading or re-parsing anything. A guard only reaches this outcome once the version
- * read inside the transaction equalled the version it pinned, so for every element here the
- * expected version is also the version the test was decided against.
+ * <p>The guard list follows the caller's submission order and carries the normalized identifiers,
+ * so the contract layer can report what the update was conditioned on without re-reading or
+ * re-parsing anything. Each element carries the version the chain actually read for that entry
+ * inside this transaction — not the version the caller submitted — because only what the ledger
+ * held is evidence.
  */
 public final class GuardedRevRegEntryUpdate {
 
     private final RevRegEntryRecord entry;
-    private final List<RevRegEntryGuard> checkedGuards;
+    private final List<CheckedRevRegEntryGuard> checkedGuards;
 
     /**
      * Creates an immutable outcome snapshot.
@@ -25,7 +25,7 @@ public final class GuardedRevRegEntryUpdate {
      * @param checkedGuards guards that passed, in submission order
      */
     public GuardedRevRegEntryUpdate(
-            final RevRegEntryRecord entry, final List<RevRegEntryGuard> checkedGuards) {
+            final RevRegEntryRecord entry, final List<CheckedRevRegEntryGuard> checkedGuards) {
         this.entry = entry;
         this.checkedGuards = List.copyOf(checkedGuards);
     }
@@ -42,9 +42,9 @@ public final class GuardedRevRegEntryUpdate {
     /**
      * Returns the guards this update was conditioned on, in submission order.
      *
-     * @return immutable list of passed guards, never empty
+     * @return immutable list of passed guards with the versions read for them, never empty
      */
-    public List<RevRegEntryGuard> getCheckedGuards() {
+    public List<CheckedRevRegEntryGuard> getCheckedGuards() {
         return checkedGuards;
     }
 }

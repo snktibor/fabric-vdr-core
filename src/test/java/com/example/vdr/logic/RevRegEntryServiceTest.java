@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -42,8 +43,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
  *
  * <p>The guarded update is covered on three axes: that a passing guard costs the guarded registry
  * nothing (no write, no definition read), that a failing one costs the target everything (no write,
- * no event), and that the order in which the checks run cannot be observed to leak — the malformed
- * list is refused before any read, and a non-owner is refused before any guard read.
+ * no event), and that the checks run in an order that keeps the error semantics clean — the
+ * malformed list is refused before any read, and a non-owner is refused before any guard read, so
+ * an argument or authorization failure always wins over whatever the guarded registries hold.
  */
 @SuppressWarnings("java:S1192")
 @ExtendWith(MockitoExtension.class)
@@ -391,7 +393,41 @@ class RevRegEntryServiceTest {
 
         assertEquals(1, result.getCheckedGuards().size());
         assertEquals(GUARD_ONE_ID, result.getCheckedGuards().get(0).getRevRegDefId());
-        assertEquals(0L, result.getCheckedGuards().get(0).getExpectedVersion());
+        assertEquals(0L, result.getCheckedGuards().get(0).getCheckedVersion());
+    }
+
+    /**
+     * Verifies the guarded entry is read and that its reported version is neither of the target's.
+     *
+     * <p>What this pins: the guarded record is interrogated rather than assumed, and the version
+     * reported for the guard is distinct from the target's version both before (2) and after (3)
+     * the mutation, so a value taken from the wrong record fails here instead of silently agreeing.
+     * {@code …CommitsWhenExternalGuardMatches} cannot catch that, since there every number is 0.
+     *
+     * <p>What this does NOT pin, and no service-level test can: that the reported version came from
+     * the read rather than from the caller's submitted one. A guard only reaches the response when
+     * those two numbers are equal — that equality is the test — so at this layer they are
+     * indistinguishable, and {@code verify(guarded).getVersion()} passes either way because the
+     * comparison interrogates the record regardless. Measured, not assumed: an implementation that
+     * compares against the read version but reports the submitted one passes this whole suite. What
+     * actually keeps the submitted value out of the response is {@link CheckedRevRegEntryGuard}
+     * carrying no expected version at all, so the contract layer has nothing else to write; {@code
+     * VdrContractTest} asserts that propagation with numbers driven deliberately apart.
+     */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedReadsGuardedEntryAndReportsItsOwnVersion() {
+        stubOwnedTarget(2L);
+        final RevRegEntryRecord guarded = mock(RevRegEntryRecord.class);
+        when(guarded.getVersion()).thenReturn(6L);
+        when(revRegEntryRegistry.get(GUARD_ONE_ID)).thenReturn(guarded);
+
+        final GuardedRevRegEntryUpdate result = guardedUpdate(guards(guard(GUARD_ONE_ID, 6L)));
+
+        verify(guarded).getVersion();
+        assertEquals(GUARD_ONE_ID, result.getCheckedGuards().get(0).getRevRegDefId());
+        assertEquals(6L, result.getCheckedGuards().get(0).getCheckedVersion());
+        // The target moved 2 -> 3 in the same transaction; neither number is the guard's.
+        assertEquals(3L, result.getEntry().getVersion());
     }
 
     /** Verifies passing guards are read only: no guard registry is written or resolved further. */
@@ -425,7 +461,7 @@ class RevRegEntryServiceTest {
         final GuardedRevRegEntryUpdate result = guardedUpdate(guards(guard(REV_REG_DEF_ID, 3L)));
 
         assertEquals(4L, result.getEntry().getVersion());
-        assertEquals(3L, result.getCheckedGuards().get(0).getExpectedVersion());
+        assertEquals(3L, result.getCheckedGuards().get(0).getCheckedVersion());
         // The self-guard reuses the record already loaded; it must not cost a second read.
         verify(revRegEntryRegistry, times(1)).get(REV_REG_DEF_ID);
     }
@@ -528,7 +564,7 @@ class RevRegEntryServiceTest {
         verify(revRegEntryRegistry, never()).get(GUARD_TWO_ID);
     }
 
-    /** Verifies the owner check precedes every guard read, so guard existence cannot leak. */
+    /** Verifies the owner check precedes every guard read, so the authorization failure wins. */
     @Test
     void updateRevRegEntryIfGuardsUnchangedRejectsNonOwnerBeforeReadingGuards() {
         stubOwnedTarget(0L);

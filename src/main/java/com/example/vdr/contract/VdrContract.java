@@ -4,8 +4,8 @@ import com.example.vdr.context.SsiContext;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RegistryEntry;
+import com.example.vdr.logic.CheckedRevRegEntryGuard;
 import com.example.vdr.logic.GuardedRevRegEntryUpdate;
-import com.example.vdr.logic.RevRegEntryGuard;
 import com.example.vdr.model.CredentialDefinitionRecord;
 import com.example.vdr.model.DidDocument;
 import com.example.vdr.model.RevRegDefRecord;
@@ -478,13 +478,11 @@ public class VdrContract implements ContractInterface {
                                             accumValue,
                                             guardsJson);
                     final ArrayNode guards = JsonUtil.arrayNode();
-                    for (final RevRegEntryGuard guard : update.getCheckedGuards()) {
+                    for (final CheckedRevRegEntryGuard guard : update.getCheckedGuards()) {
                         final ObjectNode item = JsonUtil.objectNode();
                         item.put("revRegDefId", guard.getRevRegDefId());
-                        // A guard reaches the response only once the version read inside this
-                        // transaction equalled the expected one, so the expected version IS the
-                        // version the test was decided against.
-                        item.put("checkedVersion", guard.getExpectedVersion());
+                        // The version the service read out of world state, not the one submitted.
+                        item.put("checkedVersion", guard.getCheckedVersion());
                         guards.add(item);
                     }
                     final ObjectNode response = JsonUtil.objectNode();

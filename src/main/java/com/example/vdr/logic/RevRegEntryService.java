@@ -9,6 +9,7 @@ import com.example.vdr.ledger.VdrEvents;
 import com.example.vdr.model.RevRegDefRecord;
 import com.example.vdr.model.RevRegEntryRecord;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -185,21 +186,27 @@ public class RevRegEntryService {
         final List<RevRegEntryGuard> guards =
                 validationService.parseRevRegEntryGuards(guardsJson, "guards");
 
-        // The owner check runs before any guard is read, so a caller who does not own the target
-        // cannot learn from the error code whether a guarded registry exists.
+        // The owner check runs before any guard is read, so an authorization failure always wins:
+        // a caller who does not own the target gets UNAUTHORIZED whatever it named as a guard.
         final RevRegEntryRecord existing = requireOwnedEntry(signerDid, normalizedRevRegDefId);
 
+        final List<CheckedRevRegEntryGuard> checkedGuards = new ArrayList<>();
         for (final RevRegEntryGuard guard : guards) {
-            assertGuardUnchanged(guard, normalizedRevRegDefId, existing);
+            checkedGuards.add(checkGuardUnchanged(guard, normalizedRevRegDefId, existing));
         }
 
         applyAccumulatorUpdate(existing, normalizedRevRegDefId, normalizedAccumValue);
-        return new GuardedRevRegEntryUpdate(existing, guards);
+        return new GuardedRevRegEntryUpdate(existing, checkedGuards);
     }
 
     /**
      * Reads one guarded entry inside the transaction and requires it to stand at the pinned
      * version.
+     *
+     * <p>The version read here is the single source for all three uses that follow: the comparison
+     * that decides the guard, the message if it fails, and the value reported back if it passes.
+     * The submitted expected version is used for the comparison and nowhere else — a caller's claim
+     * about world state is not evidence about world state, so it never reaches the response.
      *
      * <p>A guard naming the entry being updated is answered from the record already loaded, whose
      * key is in the read set since the target was resolved, and whose version is still the one it
@@ -215,36 +222,55 @@ public class RevRegEntryService {
      * @param guard guard to check
      * @param targetRevRegDefId identifier of the entry this transaction updates
      * @param target entry this transaction updates, in its pre-mutation state
+     * @return the guard together with the version read for it
      * @throws VdrException {@code NOT_FOUND} if the guarded entry does not exist, or {@code
      *     FAILED_PRECONDITION} if it stands at a different version
      */
-    private void assertGuardUnchanged(
+    private CheckedRevRegEntryGuard checkGuardUnchanged(
             final RevRegEntryGuard guard,
             final String targetRevRegDefId,
             final RevRegEntryRecord target) {
-        final long currentVersion;
-        if (guard.getRevRegDefId().equals(targetRevRegDefId)) {
-            currentVersion = target.getVersion();
-        } else {
-            final RevRegEntryRecord guarded = revRegEntryRegistry.get(guard.getRevRegDefId());
-            if (guarded == null) {
-                throw VdrException.notFound("revregentry", guard.getRevRegDefId());
-            }
-            currentVersion = guarded.getVersion();
-        }
+        final CheckedRevRegEntryGuard checked =
+                new CheckedRevRegEntryGuard(
+                        guard.getRevRegDefId(),
+                        readGuardedVersion(guard, targetRevRegDefId, target));
 
-        if (currentVersion != guard.getExpectedVersion()) {
+        if (checked.getCheckedVersion() != guard.getExpectedVersion()) {
             // The chaincode knows only that the version moved, never why; the message must not
             // suggest a revocation took place.
             throw VdrException.failedPrecondition(
                     "guard registry '"
                             + guard.getRevRegDefId()
                             + "' is at version "
-                            + currentVersion
+                            + checked.getCheckedVersion()
                             + ", expected "
                             + guard.getExpectedVersion()
                             + ": it has changed since the state this operation was tested against");
         }
+        return checked;
+    }
+
+    /**
+     * Resolves the current version of one guarded entry from world state.
+     *
+     * @param guard guard naming the entry to read
+     * @param targetRevRegDefId identifier of the entry this transaction updates
+     * @param target entry this transaction updates, in its pre-mutation state
+     * @return version the guarded entry stands at inside this transaction
+     * @throws VdrException {@code NOT_FOUND} if the guarded entry does not exist
+     */
+    private long readGuardedVersion(
+            final RevRegEntryGuard guard,
+            final String targetRevRegDefId,
+            final RevRegEntryRecord target) {
+        if (guard.getRevRegDefId().equals(targetRevRegDefId)) {
+            return target.getVersion();
+        }
+        final RevRegEntryRecord guarded = revRegEntryRegistry.get(guard.getRevRegDefId());
+        if (guarded == null) {
+            throw VdrException.notFound("revregentry", guard.getRevRegDefId());
+        }
+        return guarded.getVersion();
     }
 
     /**

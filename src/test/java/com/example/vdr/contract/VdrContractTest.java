@@ -13,13 +13,13 @@ import com.example.vdr.context.SsiServices;
 import com.example.vdr.exception.VdrException;
 import com.example.vdr.ledger.KeyRevision;
 import com.example.vdr.ledger.RegistryEntry;
+import com.example.vdr.logic.CheckedRevRegEntryGuard;
 import com.example.vdr.logic.CredentialDefinitionService;
 import com.example.vdr.logic.DidService;
 import com.example.vdr.logic.GuardedRevRegEntryUpdate;
 import com.example.vdr.logic.JwtPrincipal;
 import com.example.vdr.logic.JwtValidator;
 import com.example.vdr.logic.RevRegDefService;
-import com.example.vdr.logic.RevRegEntryGuard;
 import com.example.vdr.logic.RevRegEntryService;
 import com.example.vdr.logic.SchemaService;
 import com.example.vdr.logic.VdrTypes;
@@ -546,12 +546,18 @@ class VdrContractTest {
 
     /**
      * Verifies the guarded update passes its arguments through unchanged and renders the two-part
-     * response.
+     * response out of the versions the service reports.
      *
      * <p>The guard payload reaches the service as the literal string submitted: the token's scope
      * digest is computed over the raw wire arguments, so any re-serialization on the way down would
      * break every signed guarded call. The stub encodes that expectation — it answers only for the
      * exact scope argument list {@code [revRegDefId, accumValue, guardsJson]}.
+     *
+     * <p>The submitted expected versions (3 and 7) and the versions the stubbed service reports
+     * back (9 and 11) are deliberately different numbers. A real transaction cannot tell them
+     * apart, because a guard only passes when they are equal; only a mocked service can drive them
+     * apart, and only here can an assertion therefore state which of the two the response carries.
+     * Every number asserted below is the service's, never the caller's.
      */
     @Test
     void updateRevRegEntryIfGuardsUnchangedReturnsEntryAndCheckedGuards() {
@@ -566,7 +572,7 @@ class VdrContractTest {
         final RevRegEntryRecord erecord = new RevRegEntryRecord();
         erecord.setRevRegDefId(REV_REG_DEF_ID);
         erecord.setAccumValue(TestVectors.G1_TIMES_2);
-        erecord.setVersion(4L);
+        erecord.setVersion(10L);
 
         stubSignerDid(
                 jwt,
@@ -582,8 +588,8 @@ class VdrContractTest {
                         new GuardedRevRegEntryUpdate(
                                 erecord,
                                 List.of(
-                                        new RevRegEntryGuard(REV_REG_DEF_ID, 3L),
-                                        new RevRegEntryGuard(GUARD_ID, 7L))));
+                                        new CheckedRevRegEntryGuard(REV_REG_DEF_ID, 9L),
+                                        new CheckedRevRegEntryGuard(GUARD_ID, 11L))));
 
         final String result =
                 contract.updateRevRegEntryIfGuardsUnchanged(
@@ -603,13 +609,16 @@ class VdrContractTest {
         assertEquals(2, response.size());
         assertEquals(
                 JsonUtil.toCanonicalJson(erecord), JsonUtil.toCanonicalJson(response.get("entry")));
-        assertEquals(4L, response.get("entry").get("version").longValue());
+        assertEquals(10L, response.get("entry").get("version").longValue());
 
         final JsonNode guards = response.get("guards");
         assertEquals(2, guards.size());
         assertEquals(REV_REG_DEF_ID, guards.get(0).get("revRegDefId").asText());
         assertEquals(GUARD_ID, guards.get(1).get("revRegDefId").asText());
-        assertEquals(7L, guards.get(1).get("checkedVersion").longValue());
+        // 9 and 11 are the service's numbers; 3 and 7 are the caller's. The response carries the
+        // service's, so a response ever assembled from the submitted list fails right here.
+        assertEquals(9L, guards.get(0).get("checkedVersion").longValue());
+        assertEquals(11L, guards.get(1).get("checkedVersion").longValue());
         for (final JsonNode guard : guards) {
             // Two fields, and neither of them is called "version": the entry's version and the
             // version a guard was checked against are different numbers with different uses.
