@@ -73,7 +73,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 131 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 155 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation). No network or Docker required.
 
 ## End-to-end tests against a live network
@@ -229,6 +229,7 @@ definition, so the parent's DID URL addresses it unambiguously (see
 |---|---|---|---|
 | `createRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue` (compressed G1 hex, see [below](#wire-encodings-and-type-identifiers)), `jwt` | created entry record |
 | `updateRevRegEntry` | SUBMIT | `revRegDefId`, `accumValue`, `jwt` | updated entry record (audit `version` incremented) |
+| `updateRevRegEntryIfGuardsUnchanged` | SUBMIT | `revRegDefId`, `accumValue`, `guardsJson` (see [below](#conditional-updates-guards)), `jwt` | `{entry, guards}`: the updated entry record plus the version each guarded registry was checked at |
 | `getRevRegEntry` | EVALUATE | `revRegDefId` | entry record |
 | `getRevRegEntryHistory` | EVALUATE | `revRegDefId` | JSON array of all entry revisions, **oldest first**, every element the same shape: `{txId, timestamp, deleted, accumValue, version}` (a hypothetical future deletion sets `deleted: true` and both record fields to `null`); empty array if no entry was ever created |
 
@@ -237,6 +238,109 @@ Clients observe accumulator changes by subscribing to the
 resolves the accumulator value that was current at a past point (entry updates
 overwrite the value in place, which VB20 witness/proof checks against historical
 accumulator states need).
+
+#### Conditional updates: guards
+
+`updateRevRegEntryIfGuardsUnchanged` writes the same accumulator as `updateRevRegEntry`,
+but only if the registries it names are still where the caller last observed them.
+`guardsJson` is a JSON array with one element per guarded registry — an entry's id and the
+version it is expected to stand at:
+
+```json
+[
+  {"revRegDefId": "<issuer-did>/anoncreds/v2/REV_REG_DEF/<UUIDv7>", "expectedVersion": 3},
+  {"revRegDefId": "<other-did>/anoncreds/v2/REV_REG_DEF/<UUIDv7>", "expectedVersion": 0}
+]
+```
+
+The list must be non-empty and hold at most 16 elements; each element must be an object
+with exactly those two fields and no others; `expectedVersion` must be a non-negative JSON
+integer that fits a signed 64-bit value (`"3"` and `3.0` are rejected); and no registry may
+appear twice. The payload is parsed strictly: a duplicate JSON key is rejected rather than
+silently resolved last-wins, and so is anything following the array, so the text the token
+signs has exactly one reading. Every one of these is `INVALID_ARGUMENT`, decided before any
+registry is read.
+
+The transaction then runs in two parts. The **test** reads each guarded entry *inside the
+submitted transaction* and compares its version with the submitted one, in list order, the
+first mismatch refusing the whole transaction. The **set** replaces the target's
+accumulator and increments its `version`, exactly as `updateRevRegEntry` does. Nothing is
+written to any registry other than the target: a guard that is not the target is read and
+nothing more, and when the target names itself the write is the set part, never the guard.
+No guard's parent definition is read either. Reading each guard inside the transaction is
+what admits its key to the read set, so a guard that still held at endorsement but is
+overwritten before this transaction commits is caught a second time, by Fabric's
+commit-time MVCC validation — that is the race the
+[concurrency scenarios](#concurrency-scenarios--part-of-the-default-run) measure.
+
+A registry may guard **itself**, which makes the update a compare-and-swap on its own
+version: the write lands only if the entry is still the one the new accumulator was
+computed from. That closes the last-write-wins gap two writers of the same registry have
+when they update one after the other on the unconditional path, each from the version it
+read first, and the later write silently overwrites the earlier revocation. (In a *race*
+on one registry a self-guard changes nothing — the write set already decides that one, as
+scenario A2 shows.) A self-guard costs no second read — the target entry is already
+loaded — and the version it is tested against is the one *before* this transaction's
+mutation. It does not make the accumulator monotone: an owner can still read the current
+version and write an older value back under it.
+
+The response is a JSON object with two members:
+
+```json
+{
+  "entry": {"revRegDefId": "…", "accumValue": "…", "createdAt": "…", "updatedAt": "…", "version": 4},
+  "guards": [
+    {"revRegDefId": "<target id>", "checkedVersion": 3},
+    {"revRegDefId": "<other id>", "checkedVersion": 0}
+  ]
+}
+```
+
+| Field | What it is |
+|---|---|
+| `entry.version` | the target's version **after** the mutation |
+| `guards[i].checkedVersion` | the version a guard was **found at** when the test decided — read out of world state inside the transaction, never the number the caller submitted |
+
+`guards` follows the submitted order and carries no field named `version`: the two numbers
+mean different things and are deliberately named apart. For a self-guard `checkedVersion` is
+the pre-mutation version, exactly one less than `entry.version`.
+
+**Chaining.** A follow-up conditional update takes the target's own expected version from
+the previous response's `entry.version`, and each external guard's expected version from
+that response's `guards[i].checkedVersion`. The latter is not an assumption that the guarded
+registry has stayed put — a successful update guarantees nothing past its own commit — it is
+fail-safe: if the registry has moved since, the guard refuses, because every write
+increments `version`; if it has not, the version match is a state match, so the off-chain
+check made against that state still holds. Submitting a `checkedVersion` where
+`entry.version` belongs is refused, which is the correct answer.
+
+Which code comes back when:
+
+| Condition | Code |
+|---|---|
+| blank `revRegDefId`, malformed `accumValue`, or a `guardsJson` breaking any rule above | `INVALID_ARGUMENT` |
+| the target's entry or its parent revocation registry definition does not exist | `NOT_FOUND` |
+| the signer does not own the target's parent definition | `UNAUTHORIZED` |
+| a guarded registry has **no entry** — the identifier names nothing at all, or names a definition whose genesis entry was never created | `NOT_FOUND`, **including** under `expectedVersion: 0` |
+| a guarded entry stands at a version other than the submitted one | `FAILED_PRECONDITION` |
+
+An absent record is not a version-zero record: "does not exist" is not a state a caller
+could have observed and pinned, and treating it as a match would let a guard naming a typo
+pass unconditionally. The ownership check on the target runs before any guard is read, so a
+caller that does not own the target gets `UNAUTHORIZED` whatever it named as a guard, and
+the guard-specific codes only ever reach a caller authorized to write. Every check precedes
+the mutation: a refused transaction writes nothing and emits no event.
+
+`updateRevRegEntry` is unchanged and not deprecated — for an issuer whose update depends on
+no other registry it remains the correct and cheaper call. It gives **no cross-registry
+guarantee**: two issuers who each re-check the other's registry and then revoke on that path
+can both commit, because a client-side query forms no read set and commit-time validation
+has nothing to compare (measured, not hypothetical — scenario B1u). The conditional path is
+**opt-in**, and what it guarantees is one thing: that this caller's guards were unchanged
+from the state it observed up to its own commit. "At most one of a set of mutually
+conditional revocations takes effect" therefore holds only if **every** competing writer
+takes the guarded path and names the others as guards; if one writes on the unconditional
+path, its revocation and a guarded one can both take effect.
 
 ## Wire encodings and type identifiers
 
@@ -311,7 +415,7 @@ Payloads are canonical JSON (sorted keys, deterministic across endorsers).
 | `CredDefCreated` | `createCredDef` | `{id, issuerId, schemaId}` |
 | `RevRegDefCreated` | `createRevRegDef` | `{id, issuerId, credDefId}` |
 | `RevRegEntryCreated` | `createRevRegEntry` | `{revRegDefId, accumValue, version}` |
-| `RevRegEntryUpdated` | `updateRevRegEntry` | `{revRegDefId, accumValue, version}` |
+| `RevRegEntryUpdated` | `updateRevRegEntry`, `updateRevRegEntryIfGuardsUnchanged` | `{revRegDefId, accumValue, version}` |
 
 `RevRegEntryUpdated` is the event holders of VB20-accumulator-backed credentials must
 subscribe to: after
@@ -321,7 +425,10 @@ fixed-size digest) so no follow-up query is needed. It carries no timestamp: the
 time value available on chain is the submitter's unattested channel-header time, which
 a subscriber receiving it "from the chain" would reasonably mistake for network-attested
 — `version` orders entry states, and subscribers observe delivery themselves.
-`EVALUATE` transactions emit nothing.
+A [conditional update](#conditional-updates-guards) emits that same `RevRegEntryUpdated`
+event with the same payload as an unconditional one, so the event stays a pure
+accumulator-change signal; the evidence that the guards held goes to the caller in the
+response, not to witness-refresh subscribers. `EVALUATE` transactions emit nothing.
 
 ## Record timestamps
 
@@ -411,7 +518,13 @@ Identity is two-level:
       string arguments in order, **excluding** the trailing `jwt` argument, each encoded
       as 4-byte big-endian UTF-8 byte length + bytes. The single-sourced definition
       (constants and digest code) is `com.example.vdr.logic.JwtBinding`. A token minted
-      for one operation, or for different arguments, is rejected on any other.
+      for one operation, or for different arguments, is rejected on any other. Arguments
+      are digested **as submitted**, with no canonicalization step in between, so a
+      JSON-valued argument is bound byte for byte — for
+      `updateRevRegEntryIfGuardsUnchanged`, the exact `guardsJson` text the client sends,
+      whitespace and key order included. Serialize the guard list **once** and hand that
+      same string to both the token and the invocation; serializing it a second time for
+      the call yields a different digest, and the transaction is rejected as out of scope.
     - `jti` is mandatory; each (issuer DID, `jti`) pair is accepted **once**. On success
       it is consumed into the `JWTNONCE` world-state namespace (with the token expiry, so
       entries are prunable by future housekeeping), and any later transaction presenting
@@ -455,7 +568,14 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `ALREADY_EXISTS` | an object with the given id already exists |
 | `NOT_FOUND` | the requested object, or one it references, does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed, or the acting DID is deactivated |
+| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)) |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
+
+`FAILED_PRECONDITION` says only that the guarded registry's `version` moved — **not** that
+anything was revoked in it, and not that whatever changed bears on the credential at hand.
+The chaincode computes no cryptography and compares nothing but versions, and any write to
+that entry moves its version. The accompanying message names the registry and both the
+found and the expected version, but the code is the stable part to branch on.
 
 ## Architecture
 
