@@ -78,7 +78,7 @@ validation). No network or Docker required.
 
 ## End-to-end tests against a live network
 
-The E2E suite (25 Cucumber scenarios, four of them
+The E2E suite (43 Cucumber scenarios, six of them
 [concurrency scenarios](#concurrency-scenarios--part-of-the-default-run))
 drives the deployed chaincode through the Fabric
 Gateway SDK. It expects the companion network repo,
@@ -117,8 +117,8 @@ mvn -Pe2e verify -Dvdr.e2e.cryptoPath=/path/to/crypto-config/peerOrganizations/o
 
 ### Concurrency scenarios — part of the default run
 
-`mvn -Pe2e verify` runs the four scenarios tagged `@concurrency` along with the rest, and
-all four pass. To run only those four:
+`mvn -Pe2e verify` runs the six scenarios tagged `@concurrency` along with the rest, and
+all six pass. To run only those six:
 
 ```bash
 mvn -Pe2e verify -Dit.test=RunCucumberIT -Dcucumber.filter.tags='@concurrency'
@@ -133,8 +133,10 @@ revocation registry updates:
 |---|---|---|
 | A0 | control: two updates to one registry entry, applied one after the other | green |
 | A1 | two updates to the **same** entry, endorsed against the same state and released together: exactly one commits, the other is invalidated with `MVCC_READ_CONFLICT` | green |
+| A2 | the same race with each update guarded by the very registry it writes — a compare-and-swap on itself: the outcome is A1's, because the write set already decides that race | green |
 | B0 | control: two independent registries, each issuer re-checks the other before revoking, run **sequentially** | green |
 | B1u | characterisation of the same check-then-revoke run **concurrently**: both revocations commit as `VALID` and both registries end at version 1, because the client-side re-check forms no read set and the two transactions therefore have disjoint read and write sets | green |
+| B1 | the same race with each revocation made conditional on the other registry: exactly one commits as `VALID`, the other is invalidated with `MVCC_READ_CONFLICT`, and one registry ends at version 1 with the other still at 0 | green |
 
 B1u asserts what the unconditional update path measurably does, not what one might want it
 to do: "at most one of the two revocations takes effect" is not a property of
@@ -143,6 +145,24 @@ client-side query and commit-time validation has nothing to compare. The two con
 that reading honest — B0 runs the same operations sequentially, where the re-check does
 hold, and A1 shows the same machinery detecting a real `MVCC_READ_CONFLICT` when there is
 one.
+
+B1 closes that window, and it is the same fixture, the same observations and the same
+release machinery as B1u — the only difference is that each update names the other registry
+as a guard. A guarded update re-reads every registry it names **inside the submitted
+transaction** and compares it with the version the caller observed, so that key joins the
+transaction's read set. The two transactions, which in B1u overlapped nowhere, now each
+read what the other writes; whichever is validated second finds its read set stale and is
+invalidated. The client-side check has become a ledger-enforced precondition, re-checked at
+commit time by the same MVCC validation A1 exercises on a single registry. Neither issuer
+is favoured — which one wins varies between runs, and no assertion names a winner.
+
+A guarded update can also be refused before it is ordered, with `FAILED_PRECONDITION`, when
+the registry it guards moved before the proposal was simulated. That is the sequential
+case, measured by the scenarios tagged `@guard` in
+[`revregentry_guarded_update.feature`](src/test/resources/features/revregentry_guarded_update.feature).
+In B1 every proposal is endorsed against the same committed state before any of them is
+submitted, so no guard can have moved by then and the refusal necessarily falls to
+commit-time validation instead.
 
 The build defines no default tag filter: `-Dcucumber.filter.tags` takes any tag expression
 on the command line, and without it every scenario runs.
