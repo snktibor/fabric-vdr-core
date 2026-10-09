@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "fabric-vdr-core: an AnonCreds v2 Verifiable Data Registry chaincode for Hyperledger Fabric"
+type: software
+authors:
+  - family-names: Sinka
+    given-names: Tibor
+    affiliation: "Budapest University of Technology and Economics"
+repository-code: "https://github.com/snktibor/fabric-vdr-core"
+license: Apache-2.0
+keywords:
+  - hyperledger-fabric
+  - verifiable-data-registry
+  - anoncreds
+  - self-sovereign-identity
+  - revocation
+  - chaincode

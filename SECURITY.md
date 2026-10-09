@@ -31,8 +31,12 @@ This project is a prototype-stage Verifiable Data Registry. In particular, the
 following are *known, documented* limitations rather than reportable
 vulnerabilities (see the [README](README.md)):
 
-- `type` strings and the `accumValue` / `publicKeys` payloads are not validated
-  or size-bounded by the chaincode.
+- `accumValue` and `publicKeys` are validated for **format only** (length,
+  lowercase hex, compression and infinity flags). The chaincode does not check
+  on-curve or subgroup membership; resolvers must (see the README's
+  [validation scope](README.md#validation-scope-what-the-chaincode-does-and-does-not-check)).
+- `publicMetadata` is only checked to be a JSON object, and no JSON payload is
+  size-bounded beyond Fabric's own limits.
 - Read transactions (`get*`, `list*`) are unauthenticated by design — the
   registry stores public data.
 - DID deactivation is irreversible and freezes the issuer's registries.
