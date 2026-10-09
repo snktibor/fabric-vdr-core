@@ -1,0 +1,196 @@
+package io.github.snktibor.vdr.logic;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import io.github.snktibor.vdr.exception.VdrException;
+import io.github.snktibor.vdr.ledger.ChaincodeEventEmitter;
+import io.github.snktibor.vdr.ledger.CredentialDefinitionRegistry;
+import io.github.snktibor.vdr.ledger.DidRegistry;
+import io.github.snktibor.vdr.ledger.SchemaRegistry;
+import io.github.snktibor.vdr.model.CredentialDefinitionRecord;
+import io.github.snktibor.vdr.model.DidDocument;
+import io.github.snktibor.vdr.model.RecordStatus;
+import io.github.snktibor.vdr.model.SchemaRecord;
+import java.time.Instant;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+/**
+ * Unit tests for {@link CredentialDefinitionService} creation semantics.
+ *
+ * <p>The suite verifies owner attribution on persistence and fail-fast rejection when referenced
+ * schema dependencies are missing.
+ */
+@SuppressWarnings("java:S1192")
+@ExtendWith(MockitoExtension.class)
+class CredentialDefinitionServiceTest {
+
+    private static final String ISSUER_DID = "did:vdr:018f6c02-3a5e-7cbb-9d3e-5f2a4b6c8d0e";
+
+    private static final String OTHER_DID = "did:vdr:018f6c09-2c55-7d61-b4a8-6f03e19b7c22";
+
+    private static final String SCHEMA_ID =
+            ISSUER_DID + "/anoncreds/v2/SCHEMA/018f6c05-1b22-7aa0-8c31-9e77d0f6a4b1";
+
+    private static final String CRED_DEF_ID =
+            ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/018f6c06-4d13-7b58-b0e2-3a91c4d7e2f0";
+
+    private static final Instant TX_TIME = Instant.parse("2026-07-12T10:15:30Z");
+
+    @Mock private CredentialDefinitionRegistry credDefRegistry;
+
+    @Mock private SchemaRegistry schemaRegistry;
+
+    @Mock private DidRegistry didRegistry;
+
+    @Mock private ChaincodeEventEmitter eventEmitter;
+
+    private CredentialDefinitionService credentialDefinitionService;
+
+    /** Initializes service under test with mocked registries and real validators. */
+    @BeforeEach
+    void setUp() {
+        final AuthorizationService authorizationService = new AuthorizationService();
+        final ValidationService validationService = new ValidationService();
+        credentialDefinitionService =
+                new CredentialDefinitionService(
+                        credDefRegistry,
+                        schemaRegistry,
+                        new DidService(
+                                didRegistry,
+                                authorizationService,
+                                validationService,
+                                eventEmitter,
+                                TX_TIME),
+                        authorizationService,
+                        validationService,
+                        eventEmitter,
+                        TX_TIME);
+    }
+
+    /** Verifies newly created credential definitions persist signer DID ownership. */
+    @Test
+    void createCredDefSetsOwner() {
+        when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
+        when(schemaRegistry.get(SCHEMA_ID)).thenReturn(new SchemaRecord());
+        final DidDocument issuer = new DidDocument();
+        issuer.setId(ISSUER_DID);
+        issuer.setStatus(RecordStatus.ACTIVE);
+        when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
+
+        final String publicMetadata = "{\"type\":\"BBS\"}";
+        credentialDefinitionService.createCredDef(
+                ISSUER_DID,
+                CRED_DEF_ID,
+                SCHEMA_ID,
+                VdrTypes.CRED_DEF_BBS_V1,
+                "TAG",
+                publicMetadata);
+
+        final ArgumentCaptor<CredentialDefinitionRecord> captor =
+                ArgumentCaptor.forClass(CredentialDefinitionRecord.class);
+        verify(credDefRegistry).put(anyString(), captor.capture());
+        assertEquals(ISSUER_DID, captor.getValue().getOwnerId());
+    }
+
+    /**
+     * Verifies creation rejects an id whose object segment is not a UUIDv7 before ledger access.
+     */
+    @Test
+    void createCredDefRejectsMalformedId() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        credentialDefinitionService.createCredDef(
+                                ISSUER_DID,
+                                ISSUER_DID + "/anoncreds/v2/PUBLIC_CRED_DEF/not-a-uuid-v7",
+                                SCHEMA_ID,
+                                VdrTypes.CRED_DEF_BBS_V1,
+                                "TAG",
+                                "{\"type\":\"BBS\"}"));
+    }
+
+    /** Verifies creation fails when the referenced schema does not exist. */
+    @Test
+    void createCredDefRejectsMissingSchema() {
+        when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
+        when(schemaRegistry.get(SCHEMA_ID)).thenReturn(null);
+
+        final String publicMetadata = "{\"type\":\"BBS\"}";
+        assertThrows(
+                VdrException.class,
+                () ->
+                        credentialDefinitionService.createCredDef(
+                                ISSUER_DID,
+                                CRED_DEF_ID,
+                                SCHEMA_ID,
+                                VdrTypes.CRED_DEF_BBS_V1,
+                                "TAG",
+                                publicMetadata));
+    }
+
+    /**
+     * Verifies creation fails when the signer is not the issuer DID the id is rooted at, so no
+     * caller can publish a credential definition whose identifier attributes it to somebody else.
+     */
+    @Test
+    void createCredDefRejectsSignerMismatch() {
+        assertThrows(
+                VdrException.class,
+                () ->
+                        credentialDefinitionService.createCredDef(
+                                OTHER_DID,
+                                CRED_DEF_ID,
+                                SCHEMA_ID,
+                                VdrTypes.CRED_DEF_BBS_V1,
+                                "TAG",
+                                "{\"type\":\"BBS\"}"));
+    }
+
+    /**
+     * Verifies creation fails when the issuer DID is not active, with the unauthorized code the
+     * shared DID guard reports.
+     */
+    @Test
+    void createCredDefRejectsInactiveIssuer() {
+        when(credDefRegistry.exists(CRED_DEF_ID)).thenReturn(false);
+        when(schemaRegistry.get(SCHEMA_ID)).thenReturn(new SchemaRecord());
+        final DidDocument issuer = new DidDocument();
+        issuer.setId(ISSUER_DID);
+        issuer.setStatus(RecordStatus.INACTIVE);
+        when(didRegistry.get(ISSUER_DID)).thenReturn(issuer);
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                credentialDefinitionService.createCredDef(
+                                        ISSUER_DID,
+                                        CRED_DEF_ID,
+                                        SCHEMA_ID,
+                                        VdrTypes.CRED_DEF_BBS_V1,
+                                        "TAG",
+                                        "{\"type\":\"BBS\"}"));
+        assertEquals("UNAUTHORIZED", exception.getErrorCode());
+    }
+
+    /** Verifies non-allowlisted credential definition types are rejected. */
+    @Test
+    void createCredDefRejectsUnknownType() {
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                credentialDefinitionService.createCredDef(
+                                        ISSUER_DID, CRED_DEF_ID, SCHEMA_ID, "CL", "TAG", "{}"));
+        assertEquals("INVALID_ARGUMENT", exception.getErrorCode());
+    }
+}

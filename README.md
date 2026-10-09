@@ -364,7 +364,7 @@ are serde-tagged by Rust type name and its only scheme strings are transcript
 domain-separation labels. The scheme tokens are the reference's module names
 (`credx::knox::bbs`, `::ps`, `::accumulator::vb20`), the only stable names it offers.
 If the specification later canonicalizes identifiers, they can be added to the
-allowlist alongside these (single-sourced in `com.example.vdr.logic.VdrTypes`).
+allowlist alongside these (single-sourced in `io.github.snktibor.vdr.logic.VdrTypes`).
 
 ### accumValue
 
@@ -521,7 +521,7 @@ Identity is two-level:
       authorized — the plain method name (e.g. `createSchema`) followed by the submitted
       string arguments in order, **excluding** the trailing `jwt` argument, each encoded
       as 4-byte big-endian UTF-8 byte length + bytes. The single-sourced definition
-      (constants and digest code) is `com.example.vdr.logic.JwtBinding`. A token minted
+      (constants and digest code) is `io.github.snktibor.vdr.logic.JwtBinding`. A token minted
       for one operation, or for different arguments, is rejected on any other. Arguments
       are digested **as submitted**, with no canonicalization step in between, so a
       JSON-valued argument is bound byte for byte — for
