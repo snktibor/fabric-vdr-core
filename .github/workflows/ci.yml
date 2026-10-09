@@ -3,6 +3,8 @@ name: Java CI with Maven
 on:
   push:
     branches: ["main"]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -19,10 +21,12 @@ jobs:
           cache: "maven"
 
       - name: Check Code Formatting (Spotless)
-        run: mvn spotless:check
+        run: mvn -B spotless:check
 
+      # Unit tests only: the integration tests in the verify phase need a live
+      # Fabric network (see the README).
       - name: Run Unit Tests
-        run: mvn test
+        run: mvn -B test
 
       - name: Build with Maven
-        run: mvn clean package -DskipTests
+        run: mvn -B clean package -DskipTests
