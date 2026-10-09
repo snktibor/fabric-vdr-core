@@ -36,7 +36,7 @@ mvn spotless:apply       # format (google-java-format, AOSP style)
 ```
 
 For the end-to-end suite, bring up the companion
-[`vdr-network`](README.md#end-to-end-tests-against-a-live-network) and run:
+[`anoncreds-vdr-demo`](README.md#end-to-end-tests-against-a-live-network) and run:
 
 ```bash
 mvn -Pe2e verify

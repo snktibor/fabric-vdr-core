@@ -34,21 +34,24 @@ import org.junit.jupiter.api.Test;
  * fill.
  *
  * <p>Run it on its own. {@code -Dit.test} overrides the failsafe includes so {@code
- * RunCucumberIT}'s scenarios do not also run; the surefire pair silences the 121 unit tests. Do
+ * RunCucumberIT}'s scenarios do not also run; the surefire pair silences the 155 unit tests. Do
  * <em>not</em> reach for {@code -DskipTests} here — failsafe binds its own {@code skipTests} to the
  * same {@code ${skipTests}} property, so it would skip this integration test too:
  *
  * <pre>{@code
  * cd anoncreds-vdr-demo && cargo run -- emit
- * cd ../fabric-vdr-core && mvn verify -Dit.test=AnonCredsDemoIT \
+ * cd fabric-vdr-core && mvn verify -Dit.test=AnonCredsDemoIT \
  *     -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false
- * cd ../anoncreds-vdr-demo && cargo run -- verify
+ * cd .. && cargo run -- verify
  * }</pre>
  */
 public class AnonCredsDemoIT {
 
-    /** Where the Rust side wrote its artifacts, relative to this module. */
-    private static final String DEFAULT_STAGE3_DIR = "../anoncreds-vdr-demo/target/stage3";
+    /**
+     * Where the Rust side wrote its artifacts, relative to this module, which is checked out inside
+     * anoncreds-vdr-demo.
+     */
+    private static final String DEFAULT_STAGE3_DIR = "../target/stage3";
 
     private static final String BUNDLE_FILE = "bundle.json";
     private static final String REPORT_FILE = "vdr-report.json";

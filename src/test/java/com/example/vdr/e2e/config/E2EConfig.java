@@ -25,7 +25,7 @@ public final class E2EConfig {
     /**
      * Resolves a configuration value from a system property, then an environment variable, then a
      * built-in default matching the standard nested checkout layout (this repository inside
-     * vdr-network).
+     * anoncreds-vdr-demo).
      */
     private static String resolve(
             final String propertyName, final String envName, final String defaultValue) {

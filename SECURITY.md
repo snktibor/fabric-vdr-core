@@ -14,7 +14,7 @@ Please include as much of the following as you can:
 - A description of the vulnerability and its impact (e.g. unauthorized state
   mutation, authentication bypass, denial of service of the chaincode or peers).
 - Steps to reproduce, ideally as a failing test or a transaction sequence against
-  the `vdr-network` development network.
+  the development network from [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo).
 - Affected version / commit hash.
 
 ## What to expect
