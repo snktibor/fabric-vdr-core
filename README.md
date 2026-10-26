@@ -601,9 +601,10 @@ same registry are serialized by Fabric's MVCC validation.
 - [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo) — the Fabric
   network recipe this chaincode is deployed with, and an end-to-end AnonCreds v2 demo
   that publishes real `credx` objects through it.
-- [Hyperledger Fabric AnonCreds Method](https://github.com/snktibor/anoncreds-vdr-demo/blob/main/docs/anoncreds-method.md)
-  — the objects-method specification this chaincode implements, including the
-  conditional update (`updateRevRegEntryIfGuardsUnchanged`).
+
+The objects-method specification this chaincode implements, including the conditional
+update (`updateRevRegEntryIfGuardsUnchanged`), is
+[Hyperledger Fabric AnonCreds Method](docs/anoncreds-method.md).
 
 To cite this software, use the metadata in [CITATION.cff](CITATION.cff).
 
