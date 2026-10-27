@@ -44,3 +44,4 @@ build/
 Thumbs.db
 
 dependency-reduced-pom.xml
+bench/work/
