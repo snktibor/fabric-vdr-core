@@ -30,3 +30,55 @@ jobs:
 
       - name: Build with Maven
         run: mvn -B clean package -DskipTests
+
+  # What a reviewer gets from `docker run`: the unit tests, the Lean proofs of argos-formal with
+  # its mutation check, and the committed scalability results.
+  reviewer-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build the reviewer image
+        run: docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
+
+      - name: Run it (just check)
+        run: docker run --rm fabric-vdr-reproduce
+
+  # The parts that need a live Fabric network: the E2E suite and a short scalability run. The
+  # paper's numbers come from the full matrix on stated hardware (results/), not from this runner.
+  live-network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "maven"
+      - name: Set up just
+        uses: extractions/setup-just@v2
+      - name: Install Fablo 2.6.0
+        run: |
+          sudo curl -sSfL https://github.com/hyperledger-labs/fablo/releases/download/2.6.0/fablo.sh \
+            -o /usr/local/bin/fablo
+          sudo chmod +x /usr/local/bin/fablo
+
+      - name: E2E suite on a live network
+        run: just e2e
+
+      - name: Scalability smoke test
+        run: just benchmark --smoke
+
+      - name: Upload the smoke-test measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scalability-smoke
+          path: out/results-smoke/
+          if-no-files-found: ignore

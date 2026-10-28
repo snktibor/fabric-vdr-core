@@ -26,8 +26,54 @@ AnonCreds v2 reference implementation actually ships.
 > the VB20 accumulator; ALLOSAUR (eprint 2022/1362) is an unimplemented multi-party
 > witness-update layer on top of it, and this VDR deliberately does not claim it.
 
+## Reproduce
+
+[![CI](https://github.com/snktibor/fabric-vdr-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/snktibor/fabric-vdr-core/actions/workflows/ci.yml?query=branch%3Amain)
+
+This repository is the artifact of the TDK paper *Decentralized verifiable credential
+revocation with atomic test-and-set for cross-organizational settings* (Tibor Sinka, BME, 2026).
+The [CI run on `main`](https://github.com/snktibor/fabric-vdr-core/actions/workflows/ci.yml?query=branch%3Amain)
+shows every check below on a GitHub runner: the unit tests, the Lean proofs, the E2E suite on a
+live Fabric network, and a short scalability run, whose CSVs it keeps as an artifact.
+
+With only Docker installed:
+
+```bash
+docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
+docker run --rm fabric-vdr-reproduce
+```
+
+This runs the unit tests, builds the Lean model and proofs of
+[`argos-formal`](https://github.com/snktibor/argos-formal) at the commit the paper cites, checks
+that each of its eight mutations breaks a proof, and prints the committed scalability results.
+
+The E2E suite and the measurement need a live Fabric network, so they run on the host. With
+JDK 17, Maven, Docker, [Fablo 2.6.0](https://github.com/hyperledger-labs/fablo),
+[just](https://github.com/casey/just) and [elan](https://github.com/leanprover/elan) installed:
+
+```bash
+just reproduce --smoke   # all of the above, the E2E suite, and a four-minute measurement
+just reproduce           # the same with the full matrix, about an hour per topology
+```
+
+| Claim | Recipe | Evidence |
+|---|---|---|
+| The services, registries, contract routing and JWT checks behave as specified | `just test` | 157 JUnit 5 tests, under a minute |
+| In the Lean model, two parties that guard each other's registries do not both commit, and a guarded check still holds when the revocation commits | `just formal` | `lake build --wfail` over `argos-formal`; `Axioms.lean` fails the build on a `sorry` or an extra axiom |
+| Leaving out one part of the design or one hypothesis breaks a proof | `just formal` | `mutations/check.sh`: each of the eight mutations breaks the build |
+| On a live network, the unguarded check-then-revoke race lets both revocations commit (B1u) and the guarded update lets exactly one commit (B1) | `just e2e` | 43 Cucumber scenarios, A0 to B1 among them ([below](#concurrency-scenarios--part-of-the-default-run)) |
+| Cost of the guards, throughput under load, and rejections under contention (W1 to W3) | `just benchmark` | `results/<topology>/<run>/summary.csv` ([`results/`](results/README.md), [`bench/`](bench/README.md)) |
+
+**What does not reproduce exactly.** Latency and throughput depend on the machine: the paper's
+numbers come from the runs in [`results/`](results/README.md), each with its `environment.txt`,
+and the CI runner only shows that the measurement runs. In B1 either issuer may win, and no
+assertion names the winner. The credx integration test (`AnonCredsDemoIT`) is skipped unless
+`VDR_DEMO_STAGE3_DIR` points at the output of
+[`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo).
+
 ## Contents
 
+- [Reproduce](#reproduce)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
 - [Unit tests](#unit-tests)
@@ -49,7 +95,10 @@ AnonCreds v2 reference implementation actually ships.
 |---|---|---|
 | JDK | **17** | The build targets Java 17 (`maven.compiler.release=17`); the unit-test toolchain also requires a JDK 17 runtime (the pinned JaCoCo 0.8.12 agent cannot read newer JDKs' class files). |
 | Maven | 3.9+ | |
-| Docker | recent | Only needed for the end-to-end suite (Docker Desktop or OrbStack; Apple Silicon works — see [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo), which holds the network recipe). |
+| Docker | recent | Needed for the reviewer image and the end-to-end suite (Docker Desktop or OrbStack; Apple Silicon works — see [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo), which holds the network recipe). |
+| [just](https://github.com/casey/just) | 1.21+ | Runs the recipes in the `justfile`. Optional: each recipe is a few plain commands. |
+| [Fablo](https://github.com/hyperledger-labs/fablo) | 2.6.0 | Brings up the network for `just e2e` and `just benchmark`. |
+| [elan](https://github.com/leanprover/elan) | recent | Installs the Lean toolchain `argos-formal` pins, for `just formal`. |
 
 ## Build
 
@@ -74,8 +123,8 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 155 JUnit 5 unit tests (services, registries, contract routing, JWT
-validation). No network or Docker required.
+Runs the 157 JUnit 5 unit tests (services, registries, contract routing, JWT
+validation, and two for the scalability harness). No network or Docker required.
 
 Use `mvn test`, not a bare `mvn verify`, when no network is running: the `verify`
 phase also runs the integration tests below, which need a live Fabric network.
@@ -108,6 +157,10 @@ anoncreds-vdr-demo/
    ```bash
    mvn -Pe2e verify
    ```
+
+Without `anoncreds-vdr-demo`, `just e2e` brings up the same network from
+[`bench/fablo/1org-solo.json`](bench/fablo/1org-solo.json), runs the suite against it and tears
+it down.
 
 The suite connects as `Org1` admin to `localhost:7041` on channel `my-channel1` and
 reads the crypto material generated by Fablo. The crypto path defaults to
