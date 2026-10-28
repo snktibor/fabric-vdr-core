@@ -45,9 +45,9 @@ import org.junit.jupiter.api.Test;
  */
 class ScalabilityBench {
 
-    private static final String UNGUARDED_TX = "updateRevRegEntry";
-    private static final String GUARDED_TX = "updateRevRegEntryIfGuardsUnchanged";
-    private static final String ACCUM_VALUE = TestVectors.accumValue("accum-after-revocation");
+    static final String UNGUARDED_TX = "updateRevRegEntry";
+    static final String GUARDED_TX = "updateRevRegEntryIfGuardsUnchanged";
+    static final String ACCUM_VALUE = TestVectors.accumValue("accum-after-revocation");
     private static final int PROVISIONING_THREADS = 16;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -167,7 +167,7 @@ class ScalabilityBench {
      * transaction a client waits {@link #jitter} up to {@code jitterMs}, from a generator seeded
      * with {@code seed} plus its index.
      */
-    private static List<Row> runPoint(
+    static List<Row> runPoint(
             final FabricConnectionManager connection,
             final List<Registry> targets,
             final List<Registry> guarded,
@@ -285,7 +285,7 @@ class ScalabilityBench {
     }
 
     /** The version a client observes the hot registry at, right before it guards on it. */
-    private static long version(final TransactionExecutor executor, final Registry registry)
+    static long version(final TransactionExecutor executor, final Registry registry)
             throws Exception {
         return MAPPER.readTree(executor.evaluate("getRevRegEntry", registry.id()))
                 .get("version")
@@ -296,7 +296,7 @@ class ScalabilityBench {
      * A fresh executor with retries off: a retried loser would hide the very conflict W3 measures.
      * Each thread gets its own, since {@link ScenarioContext} is not thread-safe.
      */
-    private static TransactionExecutor executor(final FabricConnectionManager connection) {
+    static TransactionExecutor executor(final FabricConnectionManager connection) {
         final TransactionExecutor executor =
                 new TransactionExecutor(connection, new ScenarioContext());
         executor.setRetryPolicy(RetryPolicy.none());
@@ -308,7 +308,7 @@ class ScalabilityBench {
      * definition, genesis entry) in parallel, outside any timed window. They share no ledger key,
      * so parallel provisioning cannot conflict.
      */
-    private static List<Registry> provision(
+    static List<Registry> provision(
             final FabricConnectionManager connection, final int count) throws Exception {
         final ExecutorService pool =
                 Executors.newFixedThreadPool(Math.max(1, Math.min(PROVISIONING_THREADS, count)));
@@ -401,7 +401,7 @@ class ScalabilityBench {
         return sorted.get(Math.max(0, rank - 1));
     }
 
-    private static String csv(final Row row) {
+    static String csv(final Row row) {
         final TransactionResult result = row.result();
         return String.join(
                 ",",
@@ -429,7 +429,7 @@ class ScalabilityBench {
         return "OTHER";
     }
 
-    private static PrintWriter appender(final Path file, final String header) throws IOException {
+    static PrintWriter appender(final Path file, final String header) throws IOException {
         final boolean fresh = !Files.exists(file);
         final PrintWriter writer =
                 new PrintWriter(
@@ -446,7 +446,7 @@ class ScalabilityBench {
     }
 
     /** System property, then environment variable ({@code bench.k} → {@code BENCH_K}). */
-    private static String param(final String name, final String defaultValue) {
+    static String param(final String name, final String defaultValue) {
         final String fromProperty = System.getProperty(name);
         if (fromProperty != null && !fromProperty.isBlank()) {
             return fromProperty;
