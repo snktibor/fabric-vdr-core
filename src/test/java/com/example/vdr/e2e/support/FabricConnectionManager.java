@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import org.hyperledger.fabric.client.CallOption;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Network;
@@ -83,6 +84,12 @@ public class FabricConnectionManager {
                         .identity(identity)
                         .signer(signer)
                         .connection(channel)
+                        // A transaction lost in a crashed orderer would otherwise block its caller
+                        // forever; these are the fabric-samples defaults.
+                        .evaluateOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+                        .endorseOptions(CallOption.deadlineAfter(15, TimeUnit.SECONDS))
+                        .submitOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+                        .commitStatusOptions(CallOption.deadlineAfter(1, TimeUnit.MINUTES))
                         .connect();
 
         network = gateway.getNetwork(E2EConfig.CHANNEL_NAME);

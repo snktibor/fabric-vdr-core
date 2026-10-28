@@ -104,6 +104,28 @@ Expected runtime: about 2 hours 15 minutes. Each topology takes about 1 hour: 45
 about 14 minutes: 9 runs × 70 s plus the start. The first run on a fresh VM also pulls the Fabric
 images and the Maven dependencies, about 10 more minutes.
 
+## 3b. Robustness runs (fault injection, 3org-raft only)
+
+`WORKLOADS=F` runs `RobustnessBench`: the W2 load (`k` = 2, `c` = 4) plus a stream of mutually
+guarded pairs, while `bench/fault.sh` kills part of the network 30 s into the measured window and
+restarts it 30 s later. Faults: `none` (baseline), `peer` (peer0 of Org2), `org` (both Org2 peers),
+`leader` (the current Raft leader), `quorum` (the leader and one follower: beyond what Raft
+tolerates), and `solo` (guarded updates endorsed by Org1 alone, then by Org1 + Org2 as control).
+Each run is 10 s warm-up + 120 s measured; 3 repetitions take about 35 minutes.
+
+```bash
+nohup env WORKLOADS=F bench/run-matrix.sh 3org-raft > run-faults.log 2>&1 &
+python3 bench/analyze-faults.py results/3org-raft/<timestamp>    # after it finishes
+```
+
+Smoke test, about 6 minutes: `WORKLOADS=F REPS=1 F_DURATION=90 F_FAULTS=none,leader,solo bench/run-matrix.sh 3org-raft`.
+Keep `F_DURATION` above 60, since the fault starts at 30 s and the restart comes at 60 s.
+
+Extra output in the results directory: `pairs.csv` (one row per pair: both outcomes and whether
+each registry advanced on the ledger; a pair where both advanced breaks the at-most-one guarantee),
+`faults.csv` (fault and restart times, the containers touched, the versions of the pair registries
+before and after), `solo.csv`. `analyze-faults.py` writes `faults-summary.csv` and `timeline.csv`.
+
 ## 4. Copy the results back
 
 On the Mac:
