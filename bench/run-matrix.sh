@@ -13,6 +13,7 @@
 #   W3_C W3_R  clients / writes per s, W3  (default 4 / 0,0.5,1,2,5)
 #   WARMUP DURATION REPS                   (default 10 / 60 / 3, seconds and count)
 #   FABLO      Fablo launcher              (default "fablo" on PATH)
+#   RESULTS_DIR  absolute output root      (default <repo>/results)
 set -euo pipefail
 
 TOPOLOGY="${1:?usage: $0 <1org-solo|3org-raft>}"
@@ -20,7 +21,7 @@ BENCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$BENCH_DIR")"
 CONFIG="$BENCH_DIR/fablo/$TOPOLOGY.json"
 WORK_DIR="$BENCH_DIR/work/$TOPOLOGY"
-OUT="$REPO_DIR/results/$TOPOLOGY/$(date +%Y%m%d-%H%M%S)"
+OUT="${RESULTS_DIR:-$REPO_DIR/results}/$TOPOLOGY/$(date +%Y%m%d-%H%M%S)"
 FABLO="${FABLO:-fablo}"
 IMAGE="vdr-chaincode:bench"
 

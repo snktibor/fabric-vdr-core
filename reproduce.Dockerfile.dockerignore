@@ -1,0 +1,5 @@
+.git
+target
+out
+bench/work
+results/*/*/bench.log
