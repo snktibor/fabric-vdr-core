@@ -1,16 +1,16 @@
-package com.example.vdr.bench;
+package io.github.snktibor.vdr.bench;
 
-import com.example.vdr.TestVectors;
-import com.example.vdr.e2e.entity.DidEntityHandler;
-import com.example.vdr.e2e.entity.IndependentRegistryFixture;
-import com.example.vdr.e2e.support.FabricConnectionManager;
-import com.example.vdr.e2e.support.GuardsJson;
-import com.example.vdr.e2e.support.RetryPolicy;
-import com.example.vdr.e2e.support.ScenarioContext;
-import com.example.vdr.e2e.support.TransactionExecutor;
-import com.example.vdr.e2e.support.TransactionOutcome;
-import com.example.vdr.e2e.support.TransactionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.snktibor.vdr.TestVectors;
+import io.github.snktibor.vdr.e2e.entity.DidEntityHandler;
+import io.github.snktibor.vdr.e2e.entity.IndependentRegistryFixture;
+import io.github.snktibor.vdr.e2e.support.FabricConnectionManager;
+import io.github.snktibor.vdr.e2e.support.GuardsJson;
+import io.github.snktibor.vdr.e2e.support.RetryPolicy;
+import io.github.snktibor.vdr.e2e.support.ScenarioContext;
+import io.github.snktibor.vdr.e2e.support.TransactionExecutor;
+import io.github.snktibor.vdr.e2e.support.TransactionOutcome;
+import io.github.snktibor.vdr.e2e.support.TransactionResult;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;

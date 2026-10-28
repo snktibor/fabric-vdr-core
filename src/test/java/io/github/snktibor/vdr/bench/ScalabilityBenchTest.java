@@ -1,9 +1,9 @@
-package com.example.vdr.bench;
+package io.github.snktibor.vdr.bench;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.example.vdr.e2e.support.TransactionOutcome;
-import com.example.vdr.e2e.support.TransactionResult;
+import io.github.snktibor.vdr.e2e.support.TransactionOutcome;
+import io.github.snktibor.vdr.e2e.support.TransactionResult;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

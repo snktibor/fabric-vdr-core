@@ -13,7 +13,7 @@ are created before the timed window. Every write carries a fresh DID-JWT.
 
 Files:
 
-- `src/test/java/com/example/vdr/bench/ScalabilityBench.java` is the load generator. Its name matches neither
+- `src/test/java/io/github/snktibor/vdr/bench/ScalabilityBench.java` is the load generator. Its name matches neither
   `*Test` nor `*IT`, so `mvn test` and `mvn -Pe2e verify` never run it.
 - `bench/fablo/1org-solo.json` is the root `fablo-config.json` (1 org, 2 peers, Solo).
   `bench/fablo/3org-raft.json` has 3 orgs × 2 peers, 3 Raft orderers, and a 2-of-3 endorsement policy.
