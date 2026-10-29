@@ -121,6 +121,11 @@ python3 bench/analyze-faults.py results/3org-raft/<timestamp>-bt250ms    # after
 Smoke test, about 6 minutes: `WORKLOADS=F REPS=1 F_DURATION=90 F_FAULTS=none,leader,solo bench/run-matrix.sh 3org-raft`.
 Keep `F_DURATION` above 60, since the fault starts at 30 s and the restart comes at 60 s.
 
+When a Raft leader crashes, it can lose transactions it has already accepted. With the default
+60 s commit-status deadline, each client then waits 60 s, which hides the election. The Raft rerun
+shortens the deadline to 2 s (the slowest commit of the first run took 0.74 s), about 15 minutes:
+`WORKLOADS=F F_FAULTS=leader,quorum COMMIT_STATUS_S=2 bench/run-matrix.sh 3org-raft`.
+
 Extra output in the results directory: `pairs.csv` (one row per pair: both outcomes and whether
 each registry advanced on the ledger; a pair where both advanced breaks the at-most-one guarantee),
 `faults.csv` (fault and restart times, the containers touched, the versions of the pair registries
