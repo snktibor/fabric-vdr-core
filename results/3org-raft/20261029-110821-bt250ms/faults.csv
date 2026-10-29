@@ -1,0 +1,7 @@
+run_id,fault,repetition,measure_from_ms,down_ms,up_ms,end_ms,touched,a_initial,b_initial,a_final,b_final
+F-leader-rep1,leader,1,1793268586599,1793268616599,1793268646599,1793268706599,orderer1.group1.orderer.example.com,0,0,179,166
+F-quorum-rep1,quorum,1,1793268716960,1793268746960,1793268776960,1793268836960,orderer2.group1.orderer.example.com orderer0.group1.orderer.example.com,179,166,306,296
+F-leader-rep2,leader,2,1793268847049,1793268877050,1793268907049,1793268967049,orderer1.group1.orderer.example.com,306,296,489,466
+F-quorum-rep2,quorum,2,1793268977172,1793269007172,1793269037172,1793269097172,orderer2.group1.orderer.example.com orderer0.group1.orderer.example.com,489,466,620,600
+F-leader-rep3,leader,3,1793269107237,1793269137237,1793269167237,1793269227237,orderer0.group1.orderer.example.com,620,600,794,784
+F-quorum-rep3,quorum,3,1793269237583,1793269267583,1793269297584,1793269357583,orderer2.group1.orderer.example.com orderer0.group1.orderer.example.com,794,784,908,914
