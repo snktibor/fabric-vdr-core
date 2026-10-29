@@ -13,6 +13,7 @@
 #   W2_K W2_C  guards / clients of W2      (default 2 / 1,4,16,32)
 #   W3_C W3_R  clients / writes per s, W3  (default 4 / 0,0.5,1,2,5)
 #   F_FAULTS F_DURATION                    (default none,peer,org,leader,quorum,solo / 120)
+#   COMMIT_STATUS_S  the clients' commit-status deadline in seconds (default 60)
 #   WARMUP DURATION REPS                   (default 10 / 60 / 3, seconds and count)
 #   BATCH_TIMEOUT  orderer BatchTimeout    (default 250ms; the 2 s reference: BATCH_TIMEOUT=2s)
 #   BENCH_W3_JITTERMS  max random wait of a W3 client before it reads H (default: the batch timeout)
@@ -76,6 +77,7 @@ fi
   echo "date_utc: $(date -u +%FT%TZ)"
   echo "topology: $TOPOLOGY"
   echo "batch_timeout: $BATCH_TIMEOUT"
+  echo "commit_status_deadline_s: ${COMMIT_STATUS_S:-60}"
   echo "uname: $(uname -a)"
   echo "host_cpus: $(getconf _NPROCESSORS_ONLN)"
   if command -v free >/dev/null; then
@@ -97,6 +99,7 @@ bench() {
     -Dorg.slf4j.simpleLogger.defaultLogLevel=warn \
     -Dvdr.e2e.cryptoPath="$WORK_DIR/fablo-target/fabric-config/crypto-config/peerOrganizations/org1.example.com" \
     -Dbench.topology="$TOPOLOGY" -Dbench.out="$OUT" -Dbench.batchTimeoutMs="$BATCH_TIMEOUT_MS" \
+    -Dbench.commitStatusSeconds="${COMMIT_STATUS_S:-60}" \
     -Dbench.warmup="${WARMUP:-10}" -Dbench.duration="${DURATION:-60}" -Dbench.reps="${REPS:-3}" \
     "$@") 2>&1 | tee -a "$OUT/bench.log"
 }
