@@ -115,7 +115,7 @@ Each run is 10 s warm-up + 120 s measured; 3 repetitions take about 35 minutes.
 
 ```bash
 nohup env WORKLOADS=F bench/run-matrix.sh 3org-raft > run-faults.log 2>&1 &
-python3 bench/analyze-faults.py results/3org-raft/<timestamp>    # after it finishes
+python3 bench/analyze-faults.py results/3org-raft/<timestamp>-bt250ms    # after it finishes
 ```
 
 Smoke test, about 6 minutes: `WORKLOADS=F REPS=1 F_DURATION=90 F_FAULTS=none,leader,solo bench/run-matrix.sh 3org-raft`.
@@ -133,6 +133,9 @@ On the Mac:
 ```bash
 scp -r USER@VM:fabric-vdr-core-bench/results ~/Documents/Projects/vdr-network/fabric-vdr-core-bench/
 ```
+
+`bench/aggregate.py results <output dir>` writes one CSV per workload: the median and the min-max
+spread over the repetitions of each point. It skips the robustness directories.
 
 ## 5. Tear down
 

@@ -1,0 +1,22 @@
+date_utc: 2026-10-28T23:40:21Z
+topology: 1org-solo
+batch_timeout: 2s
+uname: Linux cloud-28950 6.8.0-100-generic #100-Ubuntu SMP PREEMPT_DYNAMIC Tue Jan 13 16:40:06 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+host_cpus: 8
+host_memory_bytes: 16768651264
+docker_engine: 29.9.2
+docker_cpus_memory_bytes: 8 16768651264
+java: openjdk version "17.0.20.1" 2026-08-18
+chaincode: "version": "0.0.7", image vdr-chaincode:bench sha256:f85f51332ef277e8c6f4f0fe244c53b4700185091ab4b38e01c19f5663dfa185, commit 38e76f5ecb62bb13afd571c5d166e7c57ea2d095
+containers:
+ca.orderer.example.com hyperledger/fabric-ca:1.5.16
+ca.org1.example.com hyperledger/fabric-ca:1.5.16
+ccaas_peer0.org1.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+ccaas_peer1.org1.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+cli.orderer.example.com hyperledger/fabric-tools:2.5.15
+cli.org1.example.com hyperledger/fabric-tools:2.5.15
+fablo-rest.orderer.example.com ghcr.io/fablo-io/fablo-rest:0.2.0
+fablo-rest.org1.example.com ghcr.io/fablo-io/fablo-rest:0.2.0
+orderer0.group1.orderer.example.com hyperledger/fabric-orderer:2.5.15
+peer0.org1.example.com hyperledger/fabric-peer:2.5.15
+peer1.org1.example.com hyperledger/fabric-peer:2.5.15
