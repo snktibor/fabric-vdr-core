@@ -46,7 +46,7 @@ e2e:
     mvn -B -Pe2e verify \
       -Dvdr.e2e.cryptoPath="$work/fablo-target/fabric-config/crypto-config/peerOrganizations/org1.example.com"
 
-# Scalability W1-W3 on both topologies into results/ (~1 h each); --smoke: 4 min into out/.
+# Scalability W1-W3 on both topologies and the W1 reference at a 2 s batch timeout into results/ (~2 h); --smoke: 4 min into out/.
 benchmark *flags:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -56,7 +56,13 @@ benchmark *flags:
     else
       bench/run-matrix.sh 1org-solo
       bench/run-matrix.sh 3org-raft
+      WORKLOADS=W1 W1_K=0,4,16 BATCH_TIMEOUT=2s bench/run-matrix.sh 1org-solo
     fi
+
+# Fault injection on 3org-raft into results/, then the Raft faults with a 2 s commit-status deadline (~50 min).
+robustness:
+    WORKLOADS=F bench/run-matrix.sh 3org-raft
+    WORKLOADS=F F_FAULTS=leader,quorum COMMIT_STATUS_S=2 bench/run-matrix.sh 3org-raft
 
 # The committed measurements, one row per point and repetition (columns: bench/README.md).
 results:
@@ -73,7 +79,7 @@ results:
       cut -d, -f3- "$f" | column -t -s,
     done
 
-# What the reviewer image runs: everything that needs no Fabric network.
+# What the reproduce image runs: everything that needs no Fabric network.
 check: test formal results
 
 # Everything, live network included; `just reproduce --smoke` shortens the measurement.
