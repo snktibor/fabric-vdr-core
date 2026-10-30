@@ -1,0 +1,38 @@
+date_utc: 2026-10-28T23:52:45Z
+topology: 3org-raft
+batch_timeout: 250ms
+uname: Linux cloud-28950 6.8.0-100-generic #100-Ubuntu SMP PREEMPT_DYNAMIC Tue Jan 13 16:40:06 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+host_cpus: 8
+host_memory_bytes: 16768651264
+docker_engine: 29.9.2
+docker_cpus_memory_bytes: 8 16768651264
+java: openjdk version "17.0.20.1" 2026-08-18
+chaincode: "version": "0.0.7", image vdr-chaincode:bench sha256:935ed9cf1f0a11c24f57d1e1c18e6abfef8f3f1fb0025fe5c5610ac0b92bbbc9, commit 38e76f5ecb62bb13afd571c5d166e7c57ea2d095
+containers:
+ca.orderer.example.com hyperledger/fabric-ca:1.5.16
+ca.org1.example.com hyperledger/fabric-ca:1.5.16
+ca.org2.example.com hyperledger/fabric-ca:1.5.16
+ca.org3.example.com hyperledger/fabric-ca:1.5.16
+ccaas_peer0.org1.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+ccaas_peer0.org2.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+ccaas_peer0.org3.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+ccaas_peer1.org1.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+ccaas_peer1.org2.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+ccaas_peer1.org3.example.com_my-channel1_vdrchaincode_0.0.7 vdr-chaincode:bench
+cli.orderer.example.com hyperledger/fabric-tools:2.5.15
+cli.org1.example.com hyperledger/fabric-tools:2.5.15
+cli.org2.example.com hyperledger/fabric-tools:2.5.15
+cli.org3.example.com hyperledger/fabric-tools:2.5.15
+fablo-rest.orderer.example.com ghcr.io/fablo-io/fablo-rest:0.2.0
+fablo-rest.org1.example.com ghcr.io/fablo-io/fablo-rest:0.2.0
+fablo-rest.org2.example.com ghcr.io/fablo-io/fablo-rest:0.2.0
+fablo-rest.org3.example.com ghcr.io/fablo-io/fablo-rest:0.2.0
+orderer0.group1.orderer.example.com hyperledger/fabric-orderer:2.5.15
+orderer1.group1.orderer.example.com hyperledger/fabric-orderer:2.5.15
+orderer2.group1.orderer.example.com hyperledger/fabric-orderer:2.5.15
+peer0.org1.example.com hyperledger/fabric-peer:2.5.15
+peer0.org2.example.com hyperledger/fabric-peer:2.5.15
+peer0.org3.example.com hyperledger/fabric-peer:2.5.15
+peer1.org1.example.com hyperledger/fabric-peer:2.5.15
+peer1.org2.example.com hyperledger/fabric-peer:2.5.15
+peer1.org3.example.com hyperledger/fabric-peer:2.5.15

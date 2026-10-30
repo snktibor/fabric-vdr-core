@@ -312,9 +312,19 @@ public class RevRegEntryService {
      * @param revRegDefId normalized storage key of the entry
      * @param accumValue validated replacement accumulator value
      * @return the mutated and persisted entry record
+     * @throws VdrException {@code FAILED_PRECONDITION} if the entry is already at {@link
+     *     Long#MAX_VALUE}, before anything is written
      */
     private RevRegEntryRecord applyAccumulatorUpdate(
             final RevRegEntryRecord existing, final String revRegDefId, final String accumValue) {
+        if (existing.getVersion() == Long.MAX_VALUE) {
+            // One more increment would wrap to a negative version, and a guard pinned at an
+            // earlier version could then match again.
+            throw VdrException.failedPrecondition(
+                    "revocation registry entry '"
+                            + revRegDefId
+                            + "' is at the largest version and accepts no further update");
+        }
         existing.setAccumValue(accumValue);
         existing.setVersion(existing.getVersion() + 1);
         existing.setUpdatedAt(txTimeIso());

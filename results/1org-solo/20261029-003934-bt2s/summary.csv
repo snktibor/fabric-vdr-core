@@ -1,0 +1,10 @@
+run_id,topology,batch_timeout_ms,workload,k,c,r,repetition,duration_s,committed_tps,p50_ms,p95_ms,p99_ms,committed,mvcc_conflict,endorsement_rejected,commit_rejected,network_failure,commit_status_unknown,other_failure,failed_precondition,writer_committed,writer_total
+W1-k0-c4-r0.0-rep1,1org-solo,2000,W1,0,4,0.0,1,60,1.933,2070,2094,2101,116,0,0,0,0,0,0,0,0,0
+W1-k4-c4-r0.0-rep1,1org-solo,2000,W1,4,4,0.0,1,60,1.933,2068,2096,2097,116,0,0,0,0,0,0,0,0,0
+W1-k16-c4-r0.0-rep1,1org-solo,2000,W1,16,4,0.0,1,60,1.933,2082,2093,2094,116,0,0,0,0,0,0,0,0,0
+W1-k0-c4-r0.0-rep2,1org-solo,2000,W1,0,4,0.0,2,60,1.933,2058,2083,2089,116,0,0,0,0,0,0,0,0,0
+W1-k4-c4-r0.0-rep2,1org-solo,2000,W1,4,4,0.0,2,60,1.933,2062,2080,2137,116,0,0,0,0,0,0,0,0,0
+W1-k16-c4-r0.0-rep2,1org-solo,2000,W1,16,4,0.0,2,60,1.933,2071,2078,2114,116,0,0,0,0,0,0,0,0,0
+W1-k0-c4-r0.0-rep3,1org-solo,2000,W1,0,4,0.0,3,60,2.000,2054,2070,2097,120,0,0,0,0,0,0,0,0,0
+W1-k4-c4-r0.0-rep3,1org-solo,2000,W1,4,4,0.0,3,60,2.000,2058,2070,2073,120,0,0,0,0,0,0,0,0,0
+W1-k16-c4-r0.0-rep3,1org-solo,2000,W1,16,4,0.0,3,60,1.933,2073,2079,2096,116,0,0,0,0,0,0,0,0,0
