@@ -224,6 +224,47 @@ class RevRegEntryServiceTest {
         assertEquals(3, payload.size());
     }
 
+    /**
+     * Verifies an entry at the largest version is refused instead of wrapping to a negative one.
+     */
+    @Test
+    void updateRevRegEntryRejectsEntryAtMaximumVersion() {
+        final RevRegEntryRecord existing =
+                new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, Long.MAX_VALUE);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () ->
+                                revRegEntryService.updateRevRegEntry(
+                                        ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM));
+        assertEquals("FAILED_PRECONDITION", exception.getErrorCode());
+        assertEquals(Long.MAX_VALUE, existing.getVersion());
+        assertEquals(GENESIS_ACCUM, existing.getAccumValue());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
+    /** Verifies the guarded path refuses an entry at the largest version too, guards passing. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsEntryAtMaximumVersion() {
+        final RevRegEntryRecord existing =
+                new RevRegEntryRecord(REV_REG_DEF_ID, GENESIS_ACCUM, Long.MAX_VALUE);
+        when(revRegEntryRegistry.get(REV_REG_DEF_ID)).thenReturn(existing);
+        when(revRegDefRegistry.get(REV_REG_DEF_ID)).thenReturn(parentOwnedBy(ISSUER_DID));
+
+        final VdrException exception =
+                assertThrows(
+                        VdrException.class,
+                        () -> guardedUpdate(guards(guard(REV_REG_DEF_ID, Long.MAX_VALUE))));
+        assertEquals("FAILED_PRECONDITION", exception.getErrorCode());
+        assertEquals(Long.MAX_VALUE, existing.getVersion());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
+    }
+
     /** Verifies updates from a non-owner signer are rejected without any ledger write. */
     @Test
     void updateRevRegEntryRejectsNonOwnerSigner() {

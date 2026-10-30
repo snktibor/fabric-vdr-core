@@ -58,7 +58,7 @@ just reproduce           # the same with the full matrix, about an hour per topo
 
 | Claim | Recipe | Evidence |
 |---|---|---|
-| The services, registries, contract routing and JWT checks behave as specified | `just test` | 158 JUnit 5 tests, under a minute |
+| The services, registries, contract routing and JWT checks behave as specified | `just test` | 160 JUnit 5 tests, under a minute |
 | In the Lean model, two parties that guard each other's registries do not both commit, and a guarded check still holds when the revocation commits | `just formal` | `lake build --wfail` over `argos-formal`; `Axioms.lean` fails the build on a `sorry` or an extra axiom |
 | Leaving out one part of the design or one hypothesis breaks a proof | `just formal` | `mutations/check.sh`: each of the eight mutations breaks the build |
 | On a live network, the unguarded check-then-revoke race lets both revocations commit (B1u) and the guarded update lets exactly one commit (B1) | `just e2e` | 43 Cucumber scenarios, A0 to B1 among them ([below](#concurrency-scenarios--part-of-the-default-run)) |
@@ -125,7 +125,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 158 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 160 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation, and three for the scalability harness). No network or Docker required.
 
 Use `mvn test`, not a bare `mvn verify`, when no network is running: the `verify`
@@ -382,6 +382,7 @@ Which code comes back when:
 | the signer does not own the target's parent definition | `UNAUTHORIZED` |
 | a guarded registry has **no entry** — the identifier names nothing at all, or names a definition whose genesis entry was never created | `NOT_FOUND`, **including** under `expectedVersion: 0` |
 | a guarded entry stands at a version other than the submitted one | `FAILED_PRECONDITION` |
+| the target already stands at the largest version, 2⁶³ − 1, which this update or `updateRevRegEntry` would wrap to a negative one | `FAILED_PRECONDITION` |
 
 An absent record is not a version-zero record: "does not exist" is not a state a caller
 could have observed and pinned, and treating it as a match would let a guard naming a typo
@@ -627,7 +628,7 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `ALREADY_EXISTS` | an object with the given id already exists |
 | `NOT_FOUND` | the requested object, or one it references, does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed, or the acting DID is deactivated |
-| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)) |
+| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)), or the entry to update already stands at the largest version |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
 `FAILED_PRECONDITION` says only that the guarded registry's `version` moved — **not** that
