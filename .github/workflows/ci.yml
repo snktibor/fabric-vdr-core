@@ -31,16 +31,16 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean package -DskipTests
 
-  # What a reviewer gets from `docker run`: the unit tests, the Lean proofs of argos-formal with
+  # What `docker run` of the reproduce image shows: the unit tests, the Lean proofs of argos-formal with
   # its mutation check, and the committed scalability results.
-  reviewer-image:
+  reproduce-image:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build the reviewer image
+      - name: Build the reproduce image
         run: docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
 
       - name: Run it (just check)

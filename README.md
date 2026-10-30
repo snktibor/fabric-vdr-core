@@ -58,16 +58,18 @@ just reproduce           # the same with the full matrix, about an hour per topo
 
 | Claim | Recipe | Evidence |
 |---|---|---|
-| The services, registries, contract routing and JWT checks behave as specified | `just test` | 157 JUnit 5 tests, under a minute |
+| The services, registries, contract routing and JWT checks behave as specified | `just test` | 160 JUnit 5 tests, under a minute |
 | In the Lean model, two parties that guard each other's registries do not both commit, and a guarded check still holds when the revocation commits | `just formal` | `lake build --wfail` over `argos-formal`; `Axioms.lean` fails the build on a `sorry` or an extra axiom |
 | Leaving out one part of the design or one hypothesis breaks a proof | `just formal` | `mutations/check.sh`: each of the eight mutations breaks the build |
 | On a live network, the unguarded check-then-revoke race lets both revocations commit (B1u) and the guarded update lets exactly one commit (B1) | `just e2e` | 43 Cucumber scenarios, A0 to B1 among them ([below](#concurrency-scenarios--part-of-the-default-run)) |
 | Cost of the guards, throughput under load, and rejections under contention (W1 to W3) | `just benchmark` | `results/<topology>/<run>/summary.csv` ([`results/`](results/README.md), [`bench/`](bench/README.md)) |
+| Under a crashed peer, organisation, Raft leader or Raft majority, at most one revocation of each mutually guarded pair commits, and Org1 alone cannot change the ledger | `just robustness` | `pairs.csv`, `faults.csv` and `solo.csv` of the `3org-raft` runs in [`results/`](results/README.md); `bench/analyze-faults.py` summarises them |
 
 **What does not reproduce exactly.** Latency and throughput depend on the machine: the paper's
 numbers come from the runs in [`results/`](results/README.md), each with its `environment.txt`,
 and the CI runner only shows that the measurement runs. In B1 either issuer may win, and no
-assertion names the winner. The credx integration test (`AnonCredsDemoIT`) is skipped unless
+assertion names the winner. In the robustness runs, how long a Raft fault stalls the clients depends on
+their commit-status deadline (`COMMIT_STATUS_S`), so the paper reports those faults at 60 s and at 2 s. The credx integration test (`AnonCredsDemoIT`) is skipped unless
 `VDR_DEMO_STAGE3_DIR` points at the output of
 [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo).
 
@@ -95,7 +97,7 @@ assertion names the winner. The credx integration test (`AnonCredsDemoIT`) is sk
 |---|---|---|
 | JDK | **17** | The build targets Java 17 (`maven.compiler.release=17`); the unit-test toolchain also requires a JDK 17 runtime (the pinned JaCoCo 0.8.12 agent cannot read newer JDKs' class files). |
 | Maven | 3.9+ | |
-| Docker | recent | Needed for the reviewer image and the end-to-end suite (Docker Desktop or OrbStack; Apple Silicon works — see [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo), which holds the network recipe). |
+| Docker | recent | Needed for the reproduce image and the end-to-end suite (Docker Desktop or OrbStack; Apple Silicon works — see [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo), which holds the network recipe). |
 | [just](https://github.com/casey/just) | 1.21+ | Runs the recipes in the `justfile`. Optional: each recipe is a few plain commands. |
 | [Fablo](https://github.com/hyperledger-labs/fablo) | 2.6.0 | Brings up the network for `just e2e` and `just benchmark`. |
 | [elan](https://github.com/leanprover/elan) | recent | Installs the Lean toolchain `argos-formal` pins, for `just formal`. |
@@ -123,8 +125,8 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 157 JUnit 5 unit tests (services, registries, contract routing, JWT
-validation, and two for the scalability harness). No network or Docker required.
+Runs the 160 JUnit 5 unit tests (services, registries, contract routing, JWT
+validation, and three for the scalability harness). No network or Docker required.
 
 Use `mvn test`, not a bare `mvn verify`, when no network is running: the `verify`
 phase also runs the integration tests below, which need a live Fabric network.
@@ -380,6 +382,7 @@ Which code comes back when:
 | the signer does not own the target's parent definition | `UNAUTHORIZED` |
 | a guarded registry has **no entry** — the identifier names nothing at all, or names a definition whose genesis entry was never created | `NOT_FOUND`, **including** under `expectedVersion: 0` |
 | a guarded entry stands at a version other than the submitted one | `FAILED_PRECONDITION` |
+| the target already stands at the largest version, 2⁶³ − 1, which this update or `updateRevRegEntry` would wrap to a negative one | `FAILED_PRECONDITION` |
 
 An absent record is not a version-zero record: "does not exist" is not a state a caller
 could have observed and pinned, and treating it as a match would let a guard naming a typo
@@ -625,7 +628,7 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `ALREADY_EXISTS` | an object with the given id already exists |
 | `NOT_FOUND` | the requested object, or one it references, does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed, or the acting DID is deactivated |
-| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)) |
+| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)), or the entry to update already stands at the largest version |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
 `FAILED_PRECONDITION` says only that the guarded registry's `version` moved — **not** that

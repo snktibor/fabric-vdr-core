@@ -1,10 +1,12 @@
 package io.github.snktibor.vdr.bench;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.snktibor.vdr.e2e.support.TransactionOutcome;
 import io.github.snktibor.vdr.e2e.support.TransactionResult;
 import java.util.List;
+import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 class ScalabilityBenchTest {
@@ -15,6 +17,19 @@ class ScalabilityBenchTest {
         assertEquals(20L, ScalabilityBench.percentile(sorted, 50));
         assertEquals(40L, ScalabilityBench.percentile(sorted, 95));
         assertEquals(-1L, ScalabilityBench.percentile(List.of(), 50));
+    }
+
+    @Test
+    void jitterStaysWithinBounds() {
+        final Random random = new Random(42);
+        long max = 0;
+        for (int i = 0; i < 10_000; i++) {
+            final long wait = ScalabilityBench.jitter(random, 250);
+            assertTrue(wait >= 0 && wait <= 250, "jitter " + wait);
+            max = Math.max(max, wait);
+        }
+        assertTrue(max > 200, "jitter never came near the bound: " + max);
+        assertEquals(0L, ScalabilityBench.jitter(random, 0));
     }
 
     @Test
@@ -42,6 +57,9 @@ class ScalabilityBenchTest {
         assertEquals("1.000,100,300,300,2,0,1,0,0,0,0,1,1,1", summary);
         assertEquals(
                 ScalabilityBench.SUMMARY_HEADER.split(",").length,
-                7 + 1 + summary.split(",").length);
+                8 + 1 + summary.split(",").length);
+        assertEquals(
+                ScalabilityBench.TX_HEADER.indexOf("batch_timeout_ms"),
+                ScalabilityBench.SUMMARY_HEADER.indexOf("batch_timeout_ms"));
     }
 }

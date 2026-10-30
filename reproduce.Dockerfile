@@ -1,4 +1,4 @@
-# The reviewer image. With nothing but Docker on the host,
+# The reproduce image. With nothing but Docker on the host,
 #   docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
 #   docker run --rm fabric-vdr-reproduce
 # runs `just check`: the unit tests, the Lean proofs of argos-formal with its mutation check, and
