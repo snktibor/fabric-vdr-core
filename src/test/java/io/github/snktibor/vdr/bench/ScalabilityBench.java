@@ -24,6 +24,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -44,18 +45,18 @@ import org.junit.jupiter.api.Test;
  */
 class ScalabilityBench {
 
-    private static final String UNGUARDED_TX = "updateRevRegEntry";
-    private static final String GUARDED_TX = "updateRevRegEntryIfGuardsUnchanged";
-    private static final String ACCUM_VALUE = TestVectors.accumValue("accum-after-revocation");
+    static final String UNGUARDED_TX = "updateRevRegEntry";
+    static final String GUARDED_TX = "updateRevRegEntryIfGuardsUnchanged";
+    static final String ACCUM_VALUE = TestVectors.accumValue("accum-after-revocation");
     private static final int PROVISIONING_THREADS = 16;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static final String TX_HEADER =
-            "run_id,topology,workload,k,c,r,repetition,client,submit_ms,final_ms,outcome,"
-                    + "validation_code,error_code";
+            "run_id,topology,batch_timeout_ms,workload,k,c,r,repetition,client,submit_ms,"
+                    + "final_ms,outcome,validation_code,error_code";
     static final String SUMMARY_HEADER =
-            "run_id,topology,workload,k,c,r,repetition,duration_s,committed_tps,p50_ms,p95_ms,"
-                    + "p99_ms,"
+            "run_id,topology,batch_timeout_ms,workload,k,c,r,repetition,duration_s,committed_tps,"
+                    + "p50_ms,p95_ms,p99_ms,"
                     + Arrays.stream(TransactionOutcome.values())
                             .map(o -> o.name().toLowerCase())
                             .collect(Collectors.joining(","))
@@ -86,6 +87,10 @@ class ScalabilityBench {
         final int duration = Integer.parseInt(param("bench.duration", "60"));
         final int reps = Integer.parseInt(param("bench.reps", "3"));
         final String topology = param("bench.topology", "1org-solo");
+        final String batchTimeoutMs = param("bench.batchTimeoutMs", "250");
+        // W3 only: a closed-loop client would otherwise read H right after each block commits.
+        final long jitterMs =
+                contention ? Long.parseLong(param("bench.w3.jitterMs", batchTimeoutMs)) : 0L;
         final Path out = Path.of(param("bench.out", "target/bench"));
         Files.createDirectories(out);
 
@@ -117,12 +122,16 @@ class ScalabilityBench {
                                             ",",
                                             runId,
                                             topology,
+                                            batchTimeoutMs,
                                             workload,
                                             Integer.toString(k),
                                             Integer.toString(c),
                                             Double.toString(r),
                                             Integer.toString(rep));
-                            System.out.printf("bench: %s started%n", runId);
+                            final long seed = runId.hashCode();
+                            System.out.printf(
+                                    "bench: %s started (jitter 0..%d ms, client i seeds %d + i)%n",
+                                    runId, jitterMs, seed);
                             final List<Row> rows =
                                     runPoint(
                                             connection,
@@ -131,7 +140,9 @@ class ScalabilityBench {
                                             hot,
                                             r,
                                             warmup,
-                                            duration);
+                                            duration,
+                                            jitterMs,
+                                            seed);
                             for (final Row row : rows) {
                                 txOut.println(prefix + "," + csv(row));
                             }
@@ -152,16 +163,20 @@ class ScalabilityBench {
     /**
      * Runs one point: {@code targets.size()} closed-loop clients for warm-up plus measured time,
      * each revoking in its own target registry, and, under contention, a background writer on the
-     * hot registry. Only transactions submitted inside the measured window are returned.
+     * hot registry. Only transactions submitted inside the measured window are returned. Before
+     * each transaction a client waits {@link #jitter} up to {@code jitterMs}, from a generator
+     * seeded with {@code seed} plus its index.
      */
-    private static List<Row> runPoint(
+    static List<Row> runPoint(
             final FabricConnectionManager connection,
             final List<Registry> targets,
             final List<Registry> guarded,
             final Registry hot,
             final double writesPerSecond,
             final int warmupSeconds,
-            final int durationSeconds)
+            final int durationSeconds,
+            final long jitterMs,
+            final long seed)
             throws Exception {
         final long measureFrom = System.currentTimeMillis() + warmupSeconds * 1000L;
         final long end = measureFrom + durationSeconds * 1000L;
@@ -188,11 +203,13 @@ class ScalabilityBench {
             for (int i = 0; i < targets.size(); i++) {
                 final Registry target = targets.get(i);
                 final String client = "c" + i;
+                final Random random = new Random(seed + i);
                 futures.add(
                         clients.submit(
                                 () -> {
                                     final TransactionExecutor executor = executor(connection);
                                     while (System.currentTimeMillis() < end) {
+                                        Thread.sleep(jitter(random, jitterMs));
                                         final String guards =
                                                 hot != null
                                                         ? GuardsJson.builder()
@@ -268,7 +285,7 @@ class ScalabilityBench {
     }
 
     /** The version a client observes the hot registry at, right before it guards on it. */
-    private static long version(final TransactionExecutor executor, final Registry registry)
+    static long version(final TransactionExecutor executor, final Registry registry)
             throws Exception {
         return MAPPER.readTree(executor.evaluate("getRevRegEntry", registry.id()))
                 .get("version")
@@ -279,7 +296,7 @@ class ScalabilityBench {
      * A fresh executor with retries off: a retried loser would hide the very conflict W3 measures.
      * Each thread gets its own, since {@link ScenarioContext} is not thread-safe.
      */
-    private static TransactionExecutor executor(final FabricConnectionManager connection) {
+    static TransactionExecutor executor(final FabricConnectionManager connection) {
         final TransactionExecutor executor =
                 new TransactionExecutor(connection, new ScenarioContext());
         executor.setRetryPolicy(RetryPolicy.none());
@@ -291,8 +308,8 @@ class ScalabilityBench {
      * definition, genesis entry) in parallel, outside any timed window. They share no ledger key,
      * so parallel provisioning cannot conflict.
      */
-    private static List<Registry> provision(
-            final FabricConnectionManager connection, final int count) throws Exception {
+    static List<Registry> provision(final FabricConnectionManager connection, final int count)
+            throws Exception {
         final ExecutorService pool =
                 Executors.newFixedThreadPool(Math.max(1, Math.min(PROVISIONING_THREADS, count)));
         try {
@@ -370,6 +387,11 @@ class ScalabilityBench {
         return String.join(",", columns);
     }
 
+    /** A uniform wait in [0, maxMs] ms; 0 when {@code maxMs} is 0. */
+    static long jitter(final Random random, final long maxMs) {
+        return maxMs <= 0 ? 0L : random.nextLong(maxMs + 1);
+    }
+
     /** Nearest-rank percentile of a sorted list; -1 when there is no committed transaction. */
     static long percentile(final List<Long> sorted, final int p) {
         if (sorted.isEmpty()) {
@@ -379,7 +401,7 @@ class ScalabilityBench {
         return sorted.get(Math.max(0, rank - 1));
     }
 
-    private static String csv(final Row row) {
+    static String csv(final Row row) {
         final TransactionResult result = row.result();
         return String.join(
                 ",",
@@ -407,7 +429,7 @@ class ScalabilityBench {
         return "OTHER";
     }
 
-    private static PrintWriter appender(final Path file, final String header) throws IOException {
+    static PrintWriter appender(final Path file, final String header) throws IOException {
         final boolean fresh = !Files.exists(file);
         final PrintWriter writer =
                 new PrintWriter(
@@ -424,7 +446,7 @@ class ScalabilityBench {
     }
 
     /** System property, then environment variable ({@code bench.k} → {@code BENCH_K}). */
-    private static String param(final String name, final String defaultValue) {
+    static String param(final String name, final String defaultValue) {
         final String fromProperty = System.getProperty(name);
         if (fromProperty != null && !fromProperty.isBlank()) {
             return fromProperty;
