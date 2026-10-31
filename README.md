@@ -64,7 +64,7 @@ just reproduce           # the same with the full matrix, about an hour per topo
 
 | Claim | Recipe | Evidence |
 |---|---|---|
-| The services, registries, contract routing and JWT checks behave as specified | `just test` | 160 JUnit 5 tests, under a minute |
+| The services, registries, contract routing and JWT checks behave as specified | `just test` | the JUnit 5 unit tests, under a minute |
 | In the Lean model, two parties that guard each other's registries do not both commit, and a guarded check still holds when the revocation commits | `just formal` | `lake build --wfail` over `argos-formal`; `Axioms.lean` fails the build on a `sorry` or an extra axiom |
 | Leaving out one part of the design or one hypothesis breaks a proof | `just formal` | `mutations/check.sh`: each of the eight mutations breaks the build |
 | On a live network, the unguarded check-then-revoke race lets both revocations commit (B1u) and the guarded update lets exactly one commit (B1) | `just e2e` | 43 Cucumber scenarios, A0 to B1 among them ([below](#concurrency-scenarios--part-of-the-default-run)) |
