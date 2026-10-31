@@ -1,0 +1,15 @@
+# Publication hygiene on every push: secrets (gitleaks, whole history), private links, local
+# paths, paper sources, agent commit identities and agent files in the archive. History
+# findings only warn here; `just hygiene --strict` must pass before the repository goes public.
+name: hygiene
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Secrets (gitleaks)
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose
+      - name: Links, paths, paper sources, agent identities and files
+        run: python3 scripts/hygiene.py

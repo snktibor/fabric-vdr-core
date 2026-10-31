@@ -117,13 +117,18 @@ shortens the deadline to 2 s (the slowest commit of the first run took 0.74 s), 
 Extra output in the results directory: `pairs.csv` (one row per pair: both outcomes and whether
 each registry advanced on the ledger; a pair where both advanced breaks the at-most-one guarantee),
 `faults.csv` (fault and restart times, the containers touched, the versions of the pair registries
-before and after), `solo.csv`. `analyze-faults.py` writes `faults-summary.csv` and `timeline.csv`.
+before and after), `solo.csv`. `analyze-faults.py <run> [<out dir>]` writes `faults-summary.csv` and `timeline.csv`, into
+the run directory unless an out dir is given.
 
 ## 4. Aggregate
 
 `bench/aggregate.py results <output dir>` writes one CSV per workload: the median and the min-max
 spread over the repetitions of each point. It skips the robustness directories. The runs behind the
 paper are committed under [`results/`](../results/README.md).
+
+`just figures` runs the whole chain on the committed runs and writes the CSVs that the paper's
+figures plot to `out/figures/data/`: `aggregate.py` for the scalability figure, `analyze-faults.py`
+on both robustness runs, and `bin-timeline.py` for the 5 s bins of the fault timeline.
 
 ## 5. Tear down
 
