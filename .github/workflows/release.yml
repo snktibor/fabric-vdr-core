@@ -1,0 +1,20 @@
+# On a published release: build the reproduce image and publish it to the GitHub Container Registry
+# under the release's tag, so the Zenodo version and the image match. Zenodo archives the release
+# itself. The README's `docker run ghcr.io/snktibor/fabric-vdr-core:<tag>` pulls this image.
+name: release
+on:
+  release: { types: [published] }
+permissions: { contents: read, packages: write }
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: reproduce.Dockerfile
+          push: true
+          tags: "ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}"
