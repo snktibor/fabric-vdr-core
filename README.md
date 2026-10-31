@@ -125,13 +125,46 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 160 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the JUnit 5 unit tests (services, registries, contract routing, JWT
 validation, and three for the scalability harness). No network or Docker required.
 
 Use `mvn test`, not a bare `mvn verify`, when no network is running: the `verify`
 phase also runs the integration tests below, which need a live Fabric network.
 
+The checked version arithmetic and record contracts also have an
+[exact-source KeY proof and replay check](verification/key/README.md). Its documented
+scope excludes the full service and Fabric protocol.
+
+The [independent Lean reconstruction](verification/lean/README.md) proves the abstract
+guarded-update protocol, including independently timed checks and arbitrary interleavings.
+Its frozen specifications, witnesses and axiom audit are replayed by the Lean CI workflow.
+This is an independent formalization from the TDK paper. The original model is now
+available in [argos-formal](https://github.com/snktibor/argos-formal); source equivalence
+with this reconstruction has not been established.
+The [concrete ledger refinement](verification/ledger-refinement/README.md) also proves
+the connection from bounded counters, creation and atomic extra writes to that protocol.
+It keeps application versions separate from ledger revisions and preserves independently
+timed checks. One malformed initial specification is retained and refuted; its separately
+frozen correction is proved.
+
+The [conditional service trace bridge](verification/service-trace-bridge/README.md)
+proves that captured reads and immutable write images satisfying its explicit operation
+postconditions refine that ledger. Its [premise inventory](verification/service-trace-bridge/JML-PREMISES.md)
+separates the Java, codec, caller and platform obligations from the Lean theorems.
+
+Actual Java call traces, deployed Fabric behavior and faithful accumulator interpretation
+still require their documented correspondence arguments. These results do not establish
+whole-chaincode verification.
+
 ## End-to-end tests against a live network
+
+An [independent isolated harness](verification/live-fabric/README.md) can run these tests
+without the companion network checkout. Its [recorded Fabric 2.5.15 run](verification/live-fabric/evidence/20261026/README.md)
+passed all six concurrency and all 43 E2E scenarios against the October 26 jar.
+That archived run predates the current package rename and rebase; it is not runtime
+evidence for this revision.
+The dedicated workflow checks the runner on pull requests and runs the live network when
+manually dispatched. Hosted execution of that workflow has not yet been performed.
 
 The E2E suite (43 Cucumber scenarios, six of them
 [concurrency scenarios](#concurrency-scenarios--part-of-the-default-run))
@@ -628,14 +661,14 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `ALREADY_EXISTS` | an object with the given id already exists |
 | `NOT_FOUND` | the requested object, or one it references, does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed, or the acting DID is deactivated |
-| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)), or the entry to update already stands at the largest version |
+| `FAILED_PRECONDITION` | a guard version does not match, or the target's stored version is negative or exhausted at `Long.MAX_VALUE` (see [conditional updates](#conditional-updates-guards)) |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
-`FAILED_PRECONDITION` says only that the guarded registry's `version` moved — **not** that
-anything was revoked in it, and not that whatever changed bears on the credential at hand.
-The chaincode computes no cryptography and compares nothing but versions, and any write to
-that entry moves its version. The accompanying message names the registry and both the
-found and the expected version, but the code is the stable part to branch on.
+For a guard mismatch, `FAILED_PRECONDITION` reports differing versions; it does not establish
+that a credential was revoked or that the change concerns the credential at hand. The message
+names the guarded registry and the found and expected versions. The same code also rejects
+a negative or exhausted target version before target mutation, registry writes or events.
+Those state errors require repair or migration; retrying does not make the update valid.
 
 ## Architecture
 

@@ -1,0 +1,98 @@
+[
+  {
+    "scenario": "A1",
+    "tx": "updateRevRegEntry",
+    "outcome": "COMMITTED",
+    "validationCode": "VALID",
+    "block": "15",
+    "txId": "09ca4ddac5dd19692a6ce1004e97ab83f2a77b9d16f6b35b2c3383d6639cfb79",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 0,
+    "block_sha256": "2eb5838695d5b36d486c1e40a210eefda90577be731c706cdf01fa74c9b35c6f"
+  },
+  {
+    "scenario": "A1",
+    "tx": "updateRevRegEntry",
+    "outcome": "MVCC_CONFLICT",
+    "validationCode": "MVCC_READ_CONFLICT",
+    "block": "15",
+    "txId": "2c85187f1a6d6e52e6ffacd1781c8f55aa946136ff784ffb4c9ab78da1c70364",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 11,
+    "block_sha256": "2eb5838695d5b36d486c1e40a210eefda90577be731c706cdf01fa74c9b35c6f"
+  },
+  {
+    "scenario": "A2",
+    "tx": "updateRevRegEntryIfGuardsUnchanged",
+    "outcome": "COMMITTED",
+    "validationCode": "VALID",
+    "block": "21",
+    "txId": "7a419012f4b2a468a7cfd0d23b4c27b126e93f228c76caf064d0e38692c0fda0",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 0,
+    "block_sha256": "47827c7ddf71734dbe852f5f53f13cb9fc07af0e885284364119e1f705198b39"
+  },
+  {
+    "scenario": "A2",
+    "tx": "updateRevRegEntryIfGuardsUnchanged",
+    "outcome": "MVCC_CONFLICT",
+    "validationCode": "MVCC_READ_CONFLICT",
+    "block": "21",
+    "txId": "fce1e89792430d587ae531d2e73e47a204530366ad3f826de6c4c7df6702ff1f",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 11,
+    "block_sha256": "47827c7ddf71734dbe852f5f53f13cb9fc07af0e885284364119e1f705198b39"
+  },
+  {
+    "scenario": "B1u",
+    "tx": "updateRevRegEntry",
+    "outcome": "COMMITTED",
+    "validationCode": "VALID",
+    "block": "43",
+    "txId": "526049bd6846854e76b0e1794730d0ecdb709f38c953a6ac42c14f3dc1809466",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 0,
+    "block_sha256": "0ac8e4bc74283de422654a50ce275e2e5635dac3be914e1417492d652ee2f158"
+  },
+  {
+    "scenario": "B1u",
+    "tx": "updateRevRegEntry",
+    "outcome": "COMMITTED",
+    "validationCode": "VALID",
+    "block": "43",
+    "txId": "15f6aa8048c3bd643f1c35a24798f5d79a4c6fb75f26e6c488e3c27b3d976677",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 0,
+    "block_sha256": "0ac8e4bc74283de422654a50ce275e2e5635dac3be914e1417492d652ee2f158"
+  },
+  {
+    "scenario": "B1",
+    "tx": "updateRevRegEntryIfGuardsUnchanged",
+    "outcome": "MVCC_CONFLICT",
+    "validationCode": "MVCC_READ_CONFLICT",
+    "block": "54",
+    "txId": "f19ab8f3c011cc5eba13e01448118212edb450dcac799cfcd306066f24a02ac7",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 11,
+    "block_sha256": "525926f9cee7c96c664929e853cc8cc11cea2835d7f95e559d0b2ccd8f45dd08"
+  },
+  {
+    "scenario": "B1",
+    "tx": "updateRevRegEntryIfGuardsUnchanged",
+    "outcome": "COMMITTED",
+    "validationCode": "VALID",
+    "block": "54",
+    "txId": "ee540ed067eb1726f94deda1167449cb7070ea4ce570f27eca5fc6d969afc907",
+    "attempts": "1",
+    "error": "none",
+    "ledger_validation_byte": 0,
+    "block_sha256": "525926f9cee7c96c664929e853cc8cc11cea2835d7f95e559d0b2ccd8f45dd08"
+  }
+]

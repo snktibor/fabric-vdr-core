@@ -1,0 +1,1247 @@
+{
+  "captured_utc": "2026-10-25T23:34:18.890271+00:00",
+  "frozen_contract_sha256": "6a7d3d5c3700c29058bf86663e72565c0154752d571e6d5fd08c7de99eecc76c",
+  "live_contract_sha256": "6a7d3d5c3700c29058bf86663e72565c0154752d571e6d5fd08c7de99eecc76c",
+  "case_count": 37,
+  "cases": [
+    {
+      "name": "S1-helper-normal",
+      "method": "applyAccumulatorUpdate",
+      "jml_sha256": "a6bdc2e9cba22654d9d1a1c7d5d4c40421d809e0b9a55fecda208ec850799155",
+      "clauses": [
+        "S1-helper-normal.R01",
+        "S1-helper-normal.R02",
+        "S1-helper-normal.R03",
+        "S1-helper-normal.E01",
+        "S1-helper-normal.E02",
+        "S1-helper-normal.E03",
+        "S1-helper-normal.E04",
+        "S1-helper-normal.E05",
+        "S1-helper-normal.E06",
+        "S1-helper-normal.E07",
+        "S1-helper-normal.E08",
+        "S1-helper-normal.E09",
+        "S1-helper-normal.E10",
+        "S1-helper-normal.E11",
+        "S1-helper-normal.E12",
+        "S1-helper-normal.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-11/results.json",
+          "report_sha256": "0369f8f9251be6c5a0e89d1a5847260c7f90d295730357b459fc688403333758",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-12/results.json",
+          "report_sha256": "1a0be801f6c23b6a77c9def3f36c341ec329f5e9442c4dfdb162a39a6308571a",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-13/results.json",
+          "report_sha256": "7a7d0acae9273dbc9649c720b4be1c666fb3a0a617c39e79c74ac3578653c514",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-14/results.json",
+          "report_sha256": "561e385f7dfba450420390828897331727163ad70cef243911d6eb3d62f42898",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-15/results.json",
+          "report_sha256": "561e385f7dfba450420390828897331727163ad70cef243911d6eb3d62f42898",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-15/S1-helper-normal/result.json",
+          "report_sha256": "f2861b4d479cec6eaea8a48e09a1538c31d037e62e083d23d867814b51b8ccb6",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-14/S1-helper-normal/result.json",
+          "report_sha256": "f2861b4d479cec6eaea8a48e09a1538c31d037e62e083d23d867814b51b8ccb6",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-13/S1-helper-normal/result.json",
+          "report_sha256": "f2861b4d479cec6eaea8a48e09a1538c31d037e62e083d23d867814b51b8ccb6",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-12/S1-helper-normal/result.json",
+          "report_sha256": "f2861b4d479cec6eaea8a48e09a1538c31d037e62e083d23d867814b51b8ccb6",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-11/S1-helper-normal/result.json",
+          "report_sha256": "f2861b4d479cec6eaea8a48e09a1538c31d037e62e083d23d867814b51b8ccb6",
+          "status": "FAILED",
+          "proof_sha256": null
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S2-helper-invalid",
+      "method": "applyAccumulatorUpdate",
+      "jml_sha256": "664df7c4b43ab1290f7fcbe8883563a44cae0e4f8b83456a4861c38ee7402943",
+      "clauses": [
+        "S2-helper-invalid.R01",
+        "S2-helper-invalid.R02",
+        "S2-helper-invalid.O01",
+        "S2-helper-invalid.S01",
+        "S2-helper-invalid.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-07/results.json",
+          "report_sha256": "b42c74016f81db5a7d1bc62a3cee213576ec823e42cabaac01744cf662d4e15e",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "e5ae1e51d32e5eca24d683ca23b8783ac552f20794d882c6ec2b9586748bfee3"
+        },
+        {
+          "path": "java-service/attempt-07/S2-helper-invalid/result.json",
+          "report_sha256": "d2cf74fdc6899ed43b1a718d51f1010ed4dc51b0fcf7fcdd76e99f14f32da443",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "e5ae1e51d32e5eca24d683ca23b8783ac552f20794d882c6ec2b9586748bfee3"
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S4-owned-normal",
+      "method": "requireOwnedEntry",
+      "jml_sha256": "3adfed4a5794d9324d24dfd9daf030693bccd7f493c07267354e7c6511cca5ca",
+      "clauses": [
+        "S4-owned-normal.R01",
+        "S4-owned-normal.R02",
+        "S4-owned-normal.R03",
+        "S4-owned-normal.R04",
+        "S4-owned-normal.R05",
+        "S4-owned-normal.R06",
+        "S4-owned-normal.E01",
+        "S4-owned-normal.E02",
+        "S4-owned-normal.E03",
+        "S4-owned-normal.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-07/results.json",
+          "report_sha256": "b42c74016f81db5a7d1bc62a3cee213576ec823e42cabaac01744cf662d4e15e",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-09/results.json",
+          "report_sha256": "f34d9c407e3c70a48dc7937d12357b51bcb31529b746d92c9f898d877bfc8a2e",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-10/results.json",
+          "report_sha256": "1279e4f4bc951e4e359a0fdbed4e8c6d42dde1b204300a90d1f24ee9fb7649e8",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-11/results.json",
+          "report_sha256": "0369f8f9251be6c5a0e89d1a5847260c7f90d295730357b459fc688403333758",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-12/results.json",
+          "report_sha256": "1a0be801f6c23b6a77c9def3f36c341ec329f5e9442c4dfdb162a39a6308571a",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-13/results.json",
+          "report_sha256": "7a7d0acae9273dbc9649c720b4be1c666fb3a0a617c39e79c74ac3578653c514",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-13/S4-owned-normal/result.json",
+          "report_sha256": "c75ba09aad9a4d65e73aa8883f55f835b22d20ca564284ae1aba40848cdf70cd",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-12/S4-owned-normal/result.json",
+          "report_sha256": "c75ba09aad9a4d65e73aa8883f55f835b22d20ca564284ae1aba40848cdf70cd",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-11/S4-owned-normal/result.json",
+          "report_sha256": "c75ba09aad9a4d65e73aa8883f55f835b22d20ca564284ae1aba40848cdf70cd",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-10/S4-owned-normal/result.json",
+          "report_sha256": "c75ba09aad9a4d65e73aa8883f55f835b22d20ca564284ae1aba40848cdf70cd",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-09/S4-owned-normal/result.json",
+          "report_sha256": "c75ba09aad9a4d65e73aa8883f55f835b22d20ca564284ae1aba40848cdf70cd",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-07/S4-owned-normal/result.json",
+          "report_sha256": "c75ba09aad9a4d65e73aa8883f55f835b22d20ca564284ae1aba40848cdf70cd",
+          "status": "FAILED",
+          "proof_sha256": null
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S4-missing-entry",
+      "method": "requireOwnedEntry",
+      "jml_sha256": "c19a4213fc451cd87952d55ce9f5a487d4128b6f18bb41723be5dca59341f335",
+      "clauses": [
+        "S4-missing-entry.R01",
+        "S4-missing-entry.R02",
+        "S4-missing-entry.R03",
+        "S4-missing-entry.O01",
+        "S4-missing-entry.S01",
+        "S4-missing-entry.S02",
+        "S4-missing-entry.S03",
+        "S4-missing-entry.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S4-missing-parent",
+      "method": "requireOwnedEntry",
+      "jml_sha256": "9e716c45aec4f2f7b0ffc9aea271d64c1b64e485f9586cca98cd5aab836852d3",
+      "clauses": [
+        "S4-missing-parent.R01",
+        "S4-missing-parent.R02",
+        "S4-missing-parent.R03",
+        "S4-missing-parent.R04",
+        "S4-missing-parent.R05",
+        "S4-missing-parent.O01",
+        "S4-missing-parent.S01",
+        "S4-missing-parent.S02",
+        "S4-missing-parent.S03",
+        "S4-missing-parent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S4-unauthorized",
+      "method": "requireOwnedEntry",
+      "jml_sha256": "95a8c07b1e55c81dbbfaa6fe143972d3504bdff47938ac977ede9d8c934ab39f",
+      "clauses": [
+        "S4-unauthorized.R01",
+        "S4-unauthorized.R02",
+        "S4-unauthorized.R03",
+        "S4-unauthorized.R04",
+        "S4-unauthorized.R05",
+        "S4-unauthorized.R06",
+        "S4-unauthorized.O01",
+        "S4-unauthorized.S01",
+        "S4-unauthorized.S02",
+        "S4-unauthorized.S03",
+        "S4-unauthorized.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S5-read-self",
+      "method": "readGuardedVersion",
+      "jml_sha256": "08df57903e5c4c93f3b8a590718d3bf771134388a5e03557497649a4f9c39e81",
+      "clauses": [
+        "S5-read-self.R01",
+        "S5-read-self.R02",
+        "S5-read-self.R03",
+        "S5-read-self.E01",
+        "S5-read-self.E02",
+        "S5-read-self.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-05/results.json",
+          "report_sha256": "4a9ca94e0f4a6994c34db886a91680d44f1479ea364f08a8ffaa8291c6149560",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "52b4962bf3b9e0d244021e614f61809a79da7cbb411197380c264af395ce342d"
+        },
+        {
+          "path": "java-service/attempt-06/results.json",
+          "report_sha256": "9d60172480afed0effabf6f5c28dba77e70c543849a909e4cb8de3c39379a50f",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "3f7ff144bb4683f88db76869907691c2f87e3125d2677aabc029f7719cdf6eca"
+        },
+        {
+          "path": "java-service/attempt-06/S5-read-self/result.json",
+          "report_sha256": "fe2df401ba260e0e967217d730b97322aa0b3815c124f0bf0cd7e3804abebd6c",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "3f7ff144bb4683f88db76869907691c2f87e3125d2677aabc029f7719cdf6eca"
+        },
+        {
+          "path": "java-service/attempt-05/S5-read-self/result.json",
+          "report_sha256": "60558d536edcc0363325b54f5b7adde06e35f539e510dd1525d10a7436f094ab",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "52b4962bf3b9e0d244021e614f61809a79da7cbb411197380c264af395ce342d"
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S5-read-other",
+      "method": "readGuardedVersion",
+      "jml_sha256": "a473110930f3451a297fa41c3c94f047a7ac6f87bfcb0217e7e8628322612ac1",
+      "clauses": [
+        "S5-read-other.R01",
+        "S5-read-other.R02",
+        "S5-read-other.R03",
+        "S5-read-other.R04",
+        "S5-read-other.R05",
+        "S5-read-other.R06",
+        "S5-read-other.E01",
+        "S5-read-other.E02",
+        "S5-read-other.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-10/results.json",
+          "report_sha256": "1279e4f4bc951e4e359a0fdbed4e8c6d42dde1b204300a90d1f24ee9fb7649e8",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "9061832597d2086e564e6a10ba43661c0314167999a7c4173b888264e23ef0bd"
+        },
+        {
+          "path": "java-service/attempt-10/S5-read-other/result.json",
+          "report_sha256": "31cc4c6f73efad3316990154793c7ee6282bc6ec3796386cfe515a891cbad939",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "9061832597d2086e564e6a10ba43661c0314167999a7c4173b888264e23ef0bd"
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S5-absent",
+      "method": "readGuardedVersion",
+      "jml_sha256": "f3a456d4a482b8752db7059ac2300eb74c54ea481781ca44e629cdd9c9ae6dda",
+      "clauses": [
+        "S5-absent.R01",
+        "S5-absent.R02",
+        "S5-absent.R03",
+        "S5-absent.R04",
+        "S5-absent.R05",
+        "S5-absent.R06",
+        "S5-absent.O01",
+        "S5-absent.S01",
+        "S5-absent.S02",
+        "S5-absent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S6-check-self",
+      "method": "checkGuardUnchanged",
+      "jml_sha256": "a1126fb818ab12c841e753c45b1e9b75d6cf8d4addad9843a0b36b8506d5e1ff",
+      "clauses": [
+        "S6-check-self.R01",
+        "S6-check-self.R02",
+        "S6-check-self.R03",
+        "S6-check-self.R04",
+        "S6-check-self.E01",
+        "S6-check-self.E02",
+        "S6-check-self.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-10/results.json",
+          "report_sha256": "1279e4f4bc951e4e359a0fdbed4e8c6d42dde1b204300a90d1f24ee9fb7649e8",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "cb96b6b7498b9bd22ea1dd318c3c21eafb677b9c4a1a6c353a95c280569aabbd"
+        },
+        {
+          "path": "java-service/attempt-10/S6-check-self/result.json",
+          "report_sha256": "7eb0a2038c7bf0a003a0319a9e85a1c5e72c043c4b6b025b82dee92c60e5f60d",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "cb96b6b7498b9bd22ea1dd318c3c21eafb677b9c4a1a6c353a95c280569aabbd"
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S6-mismatch-self",
+      "method": "checkGuardUnchanged",
+      "jml_sha256": "917f57e4695d0882a886db48af0e064026168576d84a2153706b7b792931b426",
+      "clauses": [
+        "S6-mismatch-self.R01",
+        "S6-mismatch-self.R02",
+        "S6-mismatch-self.R03",
+        "S6-mismatch-self.R04",
+        "S6-mismatch-self.O01",
+        "S6-mismatch-self.S01",
+        "S6-mismatch-self.S02",
+        "S6-mismatch-self.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S6-check-other",
+      "method": "checkGuardUnchanged",
+      "jml_sha256": "7f3f2f7de2e79f48dc642e24c9ff11e4f901ca297bbbf6243547690500eb11cb",
+      "clauses": [
+        "S6-check-other.R01",
+        "S6-check-other.R02",
+        "S6-check-other.R03",
+        "S6-check-other.R04",
+        "S6-check-other.R05",
+        "S6-check-other.R06",
+        "S6-check-other.R07",
+        "S6-check-other.E01",
+        "S6-check-other.E02",
+        "S6-check-other.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-10/results.json",
+          "report_sha256": "1279e4f4bc951e4e359a0fdbed4e8c6d42dde1b204300a90d1f24ee9fb7649e8",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-12/results.json",
+          "report_sha256": "1a0be801f6c23b6a77c9def3f36c341ec329f5e9442c4dfdb162a39a6308571a",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-13/results.json",
+          "report_sha256": "7a7d0acae9273dbc9649c720b4be1c666fb3a0a617c39e79c74ac3578653c514",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "5d34fd7142965f9af3baa86384acbe625b4d9b54cf94a587154327ac706aaa13"
+        },
+        {
+          "path": "java-service/attempt-13/S6-check-other/result.json",
+          "report_sha256": "83ea1c18bb3b64f501241225c898957c27e9ba4175d916e12ba76a2b94e00261",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "5d34fd7142965f9af3baa86384acbe625b4d9b54cf94a587154327ac706aaa13"
+        },
+        {
+          "path": "java-service/attempt-12/S6-check-other/result.json",
+          "report_sha256": "25b52b37a89aabb942c0e47f7233d3189d5cb6306b2aab6a31affd0e7283b1e1",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-10/S6-check-other/result.json",
+          "report_sha256": "25b52b37a89aabb942c0e47f7233d3189d5cb6306b2aab6a31affd0e7283b1e1",
+          "status": "FAILED",
+          "proof_sha256": null
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S6-mismatch-other",
+      "method": "checkGuardUnchanged",
+      "jml_sha256": "606a1fb1898c6a62be76847f64e954060360b124d18c9d6ed2881756a2997661",
+      "clauses": [
+        "S6-mismatch-other.R01",
+        "S6-mismatch-other.R02",
+        "S6-mismatch-other.R03",
+        "S6-mismatch-other.R04",
+        "S6-mismatch-other.R05",
+        "S6-mismatch-other.R06",
+        "S6-mismatch-other.R07",
+        "S6-mismatch-other.O01",
+        "S6-mismatch-other.S01",
+        "S6-mismatch-other.S02",
+        "S6-mismatch-other.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S6-absent",
+      "method": "checkGuardUnchanged",
+      "jml_sha256": "f3a456d4a482b8752db7059ac2300eb74c54ea481781ca44e629cdd9c9ae6dda",
+      "clauses": [
+        "S6-absent.R01",
+        "S6-absent.R02",
+        "S6-absent.R03",
+        "S6-absent.R04",
+        "S6-absent.R05",
+        "S6-absent.R06",
+        "S6-absent.O01",
+        "S6-absent.S01",
+        "S6-absent.S02",
+        "S6-absent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S7-create-normal",
+      "method": "createRevRegEntry",
+      "jml_sha256": "b2b156868f203cff31965d1f5954b211aeac2d2958a739d9494b03b9f4fb9ed9",
+      "clauses": [
+        "S7-create-normal.R01",
+        "S7-create-normal.R02",
+        "S7-create-normal.R03",
+        "S7-create-normal.R04",
+        "S7-create-normal.R05",
+        "S7-create-normal.R06",
+        "S7-create-normal.E01",
+        "S7-create-normal.E02",
+        "S7-create-normal.E03",
+        "S7-create-normal.E04",
+        "S7-create-normal.E05",
+        "S7-create-normal.E06",
+        "S7-create-normal.E07",
+        "S7-create-normal.E08",
+        "S7-create-normal.E09",
+        "S7-create-normal.E10",
+        "S7-create-normal.E11",
+        "S7-create-normal.E12",
+        "S7-create-normal.E13",
+        "S7-create-normal.E14",
+        "S7-create-normal.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-14/results.json",
+          "report_sha256": "561e385f7dfba450420390828897331727163ad70cef243911d6eb3d62f42898",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-15/results.json",
+          "report_sha256": "561e385f7dfba450420390828897331727163ad70cef243911d6eb3d62f42898",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-15/S7-create-normal/result.json",
+          "report_sha256": "3f7dca877bfb4c8b2ba377cbeee7cbafdfbe7d3ffee590e00a6a40b99ce92094",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/attempt-14/S7-create-normal/result.json",
+          "report_sha256": "3f7dca877bfb4c8b2ba377cbeee7cbafdfbe7d3ffee590e00a6a40b99ce92094",
+          "status": "FAILED",
+          "proof_sha256": null
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S7-missing-parent",
+      "method": "createRevRegEntry",
+      "jml_sha256": "8a58e949268a8a6e0ec9369679592be82d7e44da29737e99ffdfe47e70941c70",
+      "clauses": [
+        "S7-missing-parent.R01",
+        "S7-missing-parent.R02",
+        "S7-missing-parent.R03",
+        "S7-missing-parent.R04",
+        "S7-missing-parent.O01",
+        "S7-missing-parent.S01",
+        "S7-missing-parent.S02",
+        "S7-missing-parent.S03",
+        "S7-missing-parent.S04",
+        "S7-missing-parent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S7-duplicate",
+      "method": "createRevRegEntry",
+      "jml_sha256": "300b10438a2b489e238ba68ea39fbab8c6ff872e153471386007feceb701c3f6",
+      "clauses": [
+        "S7-duplicate.R01",
+        "S7-duplicate.R02",
+        "S7-duplicate.R03",
+        "S7-duplicate.R04",
+        "S7-duplicate.R05",
+        "S7-duplicate.R06",
+        "S7-duplicate.O01",
+        "S7-duplicate.S01",
+        "S7-duplicate.S02",
+        "S7-duplicate.S03",
+        "S7-duplicate.S04",
+        "S7-duplicate.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S7-unauthorized",
+      "method": "createRevRegEntry",
+      "jml_sha256": "a25366251e3bc0e39fdcaad6f125fac4ae7f954c96ead22497335aceb05132f6",
+      "clauses": [
+        "S7-unauthorized.R01",
+        "S7-unauthorized.R02",
+        "S7-unauthorized.R03",
+        "S7-unauthorized.R04",
+        "S7-unauthorized.R05",
+        "S7-unauthorized.O01",
+        "S7-unauthorized.S01",
+        "S7-unauthorized.S02",
+        "S7-unauthorized.S03",
+        "S7-unauthorized.S04",
+        "S7-unauthorized.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S10-createRevRegEntry-invalid-input",
+      "method": "createRevRegEntry",
+      "jml_sha256": "2eed86e80f0cc2d9d64c80ea56119a452f0a2d34abd464ef7062f109a5548742",
+      "clauses": [
+        "S10-createRevRegEntry-invalid-input.R01",
+        "S10-createRevRegEntry-invalid-input.O01",
+        "S10-createRevRegEntry-invalid-input.S01",
+        "S10-createRevRegEntry-invalid-input.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S8-plain-normal",
+      "method": "updateRevRegEntry",
+      "jml_sha256": "32c60f196b7fa0e2029fb16e80fd2ddd13a89d1b77c6b29f057b838098e9f68e",
+      "clauses": [
+        "S8-plain-normal.R01",
+        "S8-plain-normal.R02",
+        "S8-plain-normal.R03",
+        "S8-plain-normal.R04",
+        "S8-plain-normal.R05",
+        "S8-plain-normal.R06",
+        "S8-plain-normal.R07",
+        "S8-plain-normal.R08",
+        "S8-plain-normal.R09",
+        "S8-plain-normal.E01",
+        "S8-plain-normal.E02",
+        "S8-plain-normal.E03",
+        "S8-plain-normal.E04",
+        "S8-plain-normal.E05",
+        "S8-plain-normal.E06",
+        "S8-plain-normal.E07",
+        "S8-plain-normal.E08",
+        "S8-plain-normal.E09",
+        "S8-plain-normal.E10",
+        "S8-plain-normal.E11",
+        "S8-plain-normal.E12",
+        "S8-plain-normal.E13",
+        "S8-plain-normal.E14",
+        "S8-plain-normal.E15",
+        "S8-plain-normal.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S10-updateRevRegEntry-invalid-input",
+      "method": "updateRevRegEntry",
+      "jml_sha256": "2eed86e80f0cc2d9d64c80ea56119a452f0a2d34abd464ef7062f109a5548742",
+      "clauses": [
+        "S10-updateRevRegEntry-invalid-input.R01",
+        "S10-updateRevRegEntry-invalid-input.O01",
+        "S10-updateRevRegEntry-invalid-input.S01",
+        "S10-updateRevRegEntry-invalid-input.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S8-missing-entry",
+      "method": "updateRevRegEntry",
+      "jml_sha256": "3eb2a6690f4a453547633313b442c77764ba367a163a6821c66a87d8e42d6494",
+      "clauses": [
+        "S8-missing-entry.R01",
+        "S8-missing-entry.R02",
+        "S8-missing-entry.R03",
+        "S8-missing-entry.R04",
+        "S8-missing-entry.R05",
+        "S8-missing-entry.R06",
+        "S8-missing-entry.O01",
+        "S8-missing-entry.S01",
+        "S8-missing-entry.S02",
+        "S8-missing-entry.S03",
+        "S8-missing-entry.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S8-missing-parent",
+      "method": "updateRevRegEntry",
+      "jml_sha256": "b1d45defdb15ad38557f1f3135acbd7e17ae49e2211849927de60f459ff49d7f",
+      "clauses": [
+        "S8-missing-parent.R01",
+        "S8-missing-parent.R02",
+        "S8-missing-parent.R03",
+        "S8-missing-parent.R04",
+        "S8-missing-parent.R05",
+        "S8-missing-parent.R06",
+        "S8-missing-parent.R07",
+        "S8-missing-parent.R08",
+        "S8-missing-parent.O01",
+        "S8-missing-parent.S01",
+        "S8-missing-parent.S02",
+        "S8-missing-parent.S03",
+        "S8-missing-parent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S8-unauthorized",
+      "method": "updateRevRegEntry",
+      "jml_sha256": "5470f6c6131f0c1f190c804a754e333710b141f849fa0169272e78dcd718ceab",
+      "clauses": [
+        "S8-unauthorized.R01",
+        "S8-unauthorized.R02",
+        "S8-unauthorized.R03",
+        "S8-unauthorized.R04",
+        "S8-unauthorized.R05",
+        "S8-unauthorized.R06",
+        "S8-unauthorized.R07",
+        "S8-unauthorized.R08",
+        "S8-unauthorized.R09",
+        "S8-unauthorized.O01",
+        "S8-unauthorized.S01",
+        "S8-unauthorized.S02",
+        "S8-unauthorized.S03",
+        "S8-unauthorized.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S8-overflow",
+      "method": "updateRevRegEntry",
+      "jml_sha256": "69dd5b4a5c586b3f8c28d90dfb90fb3da170e874cd7e5cb03987c379ccedc456",
+      "clauses": [
+        "S8-overflow.R01",
+        "S8-overflow.R02",
+        "S8-overflow.R03",
+        "S8-overflow.R04",
+        "S8-overflow.R05",
+        "S8-overflow.R06",
+        "S8-overflow.R07",
+        "S8-overflow.R08",
+        "S8-overflow.R09",
+        "S8-overflow.R10",
+        "S8-overflow.O01",
+        "S8-overflow.S01",
+        "S8-overflow.S02",
+        "S8-overflow.S03",
+        "S8-overflow.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "2eed86e80f0cc2d9d64c80ea56119a452f0a2d34abd464ef7062f109a5548742",
+      "clauses": [
+        "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.R01",
+        "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.O01",
+        "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.S01",
+        "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-missing-entry",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "04171b3a425515bb49402dd4728097a786dbbe59341f7f872952a9ac427bcfe2",
+      "clauses": [
+        "S9-missing-entry.R01",
+        "S9-missing-entry.R02",
+        "S9-missing-entry.R03",
+        "S9-missing-entry.R04",
+        "S9-missing-entry.R05",
+        "S9-missing-entry.R06",
+        "S9-missing-entry.R07",
+        "S9-missing-entry.R08",
+        "S9-missing-entry.O01",
+        "S9-missing-entry.S01",
+        "S9-missing-entry.S02",
+        "S9-missing-entry.S03",
+        "S9-missing-entry.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-missing-parent",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "d887eceb9b1e30b46494a4d4f02d38aac7bdd38d3ca2db087d992ca21eff0757",
+      "clauses": [
+        "S9-missing-parent.R01",
+        "S9-missing-parent.R02",
+        "S9-missing-parent.R03",
+        "S9-missing-parent.R04",
+        "S9-missing-parent.R05",
+        "S9-missing-parent.R06",
+        "S9-missing-parent.R07",
+        "S9-missing-parent.R08",
+        "S9-missing-parent.R09",
+        "S9-missing-parent.R10",
+        "S9-missing-parent.O01",
+        "S9-missing-parent.S01",
+        "S9-missing-parent.S02",
+        "S9-missing-parent.S03",
+        "S9-missing-parent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-unauthorized",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "5d3c77860a59f18a02e5ec6ad04dd89d6c35cd2b62b062b71d95a84f8f822ff1",
+      "clauses": [
+        "S9-unauthorized.R01",
+        "S9-unauthorized.R02",
+        "S9-unauthorized.R03",
+        "S9-unauthorized.R04",
+        "S9-unauthorized.R05",
+        "S9-unauthorized.R06",
+        "S9-unauthorized.R07",
+        "S9-unauthorized.R08",
+        "S9-unauthorized.R09",
+        "S9-unauthorized.R10",
+        "S9-unauthorized.R11",
+        "S9-unauthorized.O01",
+        "S9-unauthorized.S01",
+        "S9-unauthorized.S02",
+        "S9-unauthorized.S03",
+        "S9-unauthorized.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-guarded-normal",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "76fbcc05a6ac6df10c9dc420e6067eda7abd8344c3c168962675cbe6beff56d2",
+      "clauses": [
+        "S9-guarded-normal.R01",
+        "S9-guarded-normal.R02",
+        "S9-guarded-normal.R03",
+        "S9-guarded-normal.R04",
+        "S9-guarded-normal.R05",
+        "S9-guarded-normal.R06",
+        "S9-guarded-normal.R07",
+        "S9-guarded-normal.R08",
+        "S9-guarded-normal.R09",
+        "S9-guarded-normal.R10",
+        "S9-guarded-normal.R11",
+        "S9-guarded-normal.R12",
+        "S9-guarded-normal.R13",
+        "S9-guarded-normal.R14",
+        "S9-guarded-normal.R15",
+        "S9-guarded-normal.R16",
+        "S9-guarded-normal.R17",
+        "S9-guarded-normal.R18",
+        "S9-guarded-normal.R19",
+        "S9-guarded-normal.R20",
+        "S9-guarded-normal.R21",
+        "S9-guarded-normal.R22",
+        "S9-guarded-normal.E01",
+        "S9-guarded-normal.E02",
+        "S9-guarded-normal.E03",
+        "S9-guarded-normal.E04",
+        "S9-guarded-normal.E05",
+        "S9-guarded-normal.E06",
+        "S9-guarded-normal.E07",
+        "S9-guarded-normal.E08",
+        "S9-guarded-normal.E09",
+        "S9-guarded-normal.E10",
+        "S9-guarded-normal.E11",
+        "S9-guarded-normal.E12",
+        "S9-guarded-normal.E13",
+        "S9-guarded-normal.E14",
+        "S9-guarded-normal.E15",
+        "S9-guarded-normal.E16",
+        "S9-guarded-normal.E17",
+        "S9-guarded-normal.E18",
+        "S9-guarded-normal.E19",
+        "S9-guarded-normal.E20",
+        "S9-guarded-normal.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [
+        {
+          "path": "java-service/loop-attempt-01/results.json",
+          "report_sha256": "a6cf0217ca24453b6def95fc7b3e73cbb35699899cd103d605124134e1bcc030",
+          "status": "FAILED",
+          "proof_sha256": null
+        },
+        {
+          "path": "java-service/loop-attempt-01/S9-guarded-normal/result.json",
+          "report_sha256": "715843f819d3a05049b02519e71d55e68ab7960fc4ce8c804994008eff7c33c9",
+          "status": "FAILED",
+          "proof_sha256": null
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-overflow",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "b50f1dcd2c9531cded2c112d3334ef33ea306104c78aa7aa818debcfed00253c",
+      "clauses": [
+        "S9-overflow.R01",
+        "S9-overflow.R02",
+        "S9-overflow.R03",
+        "S9-overflow.R04",
+        "S9-overflow.R05",
+        "S9-overflow.R06",
+        "S9-overflow.R07",
+        "S9-overflow.R08",
+        "S9-overflow.R09",
+        "S9-overflow.R10",
+        "S9-overflow.R11",
+        "S9-overflow.R12",
+        "S9-overflow.R13",
+        "S9-overflow.R14",
+        "S9-overflow.R15",
+        "S9-overflow.R16",
+        "S9-overflow.R17",
+        "S9-overflow.R18",
+        "S9-overflow.R19",
+        "S9-overflow.R20",
+        "S9-overflow.R21",
+        "S9-overflow.O01",
+        "S9-overflow.S01",
+        "S9-overflow.S02",
+        "S9-overflow.S03",
+        "S9-overflow.S04",
+        "S9-overflow.S05",
+        "S9-overflow.S06",
+        "S9-overflow.S07",
+        "S9-overflow.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-absent",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "463165000a7648feebc276b273249e635ef34667a505d46b0e09c49e8b7bd9f1",
+      "clauses": [
+        "S9-absent.R01",
+        "S9-absent.R02",
+        "S9-absent.R03",
+        "S9-absent.R04",
+        "S9-absent.R05",
+        "S9-absent.R06",
+        "S9-absent.R07",
+        "S9-absent.R08",
+        "S9-absent.R09",
+        "S9-absent.R10",
+        "S9-absent.R11",
+        "S9-absent.R12",
+        "S9-absent.R13",
+        "S9-absent.R14",
+        "S9-absent.R15",
+        "S9-absent.R16",
+        "S9-absent.R17",
+        "S9-absent.R18",
+        "S9-absent.R19",
+        "S9-absent.R20",
+        "S9-absent.R21",
+        "S9-absent.R22",
+        "S9-absent.O01",
+        "S9-absent.S01",
+        "S9-absent.S02",
+        "S9-absent.S03",
+        "S9-absent.S04",
+        "S9-absent.S05",
+        "S9-absent.S06",
+        "S9-absent.S07",
+        "S9-absent.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-mismatch-self",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "8d8c25e2bba7578b37cc4aaef1951ae29fc48e6e0497f84742b83d34c9295006",
+      "clauses": [
+        "S9-mismatch-self.R01",
+        "S9-mismatch-self.R02",
+        "S9-mismatch-self.R03",
+        "S9-mismatch-self.R04",
+        "S9-mismatch-self.R05",
+        "S9-mismatch-self.R06",
+        "S9-mismatch-self.R07",
+        "S9-mismatch-self.R08",
+        "S9-mismatch-self.R09",
+        "S9-mismatch-self.R10",
+        "S9-mismatch-self.R11",
+        "S9-mismatch-self.R12",
+        "S9-mismatch-self.R13",
+        "S9-mismatch-self.R14",
+        "S9-mismatch-self.R15",
+        "S9-mismatch-self.R16",
+        "S9-mismatch-self.R17",
+        "S9-mismatch-self.R18",
+        "S9-mismatch-self.R19",
+        "S9-mismatch-self.R20",
+        "S9-mismatch-self.R21",
+        "S9-mismatch-self.R22",
+        "S9-mismatch-self.O01",
+        "S9-mismatch-self.S01",
+        "S9-mismatch-self.S02",
+        "S9-mismatch-self.S03",
+        "S9-mismatch-self.S04",
+        "S9-mismatch-self.S05",
+        "S9-mismatch-self.S06",
+        "S9-mismatch-self.S07",
+        "S9-mismatch-self.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-mismatch-other",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "9273c6bdb96f2fe8abbf18935c70f94044c0193964d1c483da6bb726bfc33df7",
+      "clauses": [
+        "S9-mismatch-other.R01",
+        "S9-mismatch-other.R02",
+        "S9-mismatch-other.R03",
+        "S9-mismatch-other.R04",
+        "S9-mismatch-other.R05",
+        "S9-mismatch-other.R06",
+        "S9-mismatch-other.R07",
+        "S9-mismatch-other.R08",
+        "S9-mismatch-other.R09",
+        "S9-mismatch-other.R10",
+        "S9-mismatch-other.R11",
+        "S9-mismatch-other.R12",
+        "S9-mismatch-other.R13",
+        "S9-mismatch-other.R14",
+        "S9-mismatch-other.R15",
+        "S9-mismatch-other.R16",
+        "S9-mismatch-other.R17",
+        "S9-mismatch-other.R18",
+        "S9-mismatch-other.R19",
+        "S9-mismatch-other.R20",
+        "S9-mismatch-other.R21",
+        "S9-mismatch-other.R22",
+        "S9-mismatch-other.O01",
+        "S9-mismatch-other.S01",
+        "S9-mismatch-other.S02",
+        "S9-mismatch-other.S03",
+        "S9-mismatch-other.S04",
+        "S9-mismatch-other.S05",
+        "S9-mismatch-other.S06",
+        "S9-mismatch-other.S07",
+        "S9-mismatch-other.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S9-invalid-parser",
+      "method": "updateRevRegEntryIfGuardsUnchanged",
+      "jml_sha256": "7c2b71b4e16e17a07dfa1a9d6eb4bc09a19a3038d26ca10574bd70c46bd7e443",
+      "clauses": [
+        "S9-invalid-parser.R01",
+        "S9-invalid-parser.R02",
+        "S9-invalid-parser.R03",
+        "S9-invalid-parser.R04",
+        "S9-invalid-parser.O01",
+        "S9-invalid-parser.S01",
+        "S9-invalid-parser.A01"
+      ],
+      "evidence_status": "not_discharged_by_inspected_evidence",
+      "matching_reports": [],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S3-owner-normal",
+      "method": "assertSignerOwnsEntity",
+      "jml_sha256": "d5b860c8ccba37781998ef886e7a9fc0cc55ef533d713f013bdc5488f109ef60",
+      "clauses": [
+        "S3-owner-normal.R01",
+        "S3-owner-normal.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-04/results.json",
+          "report_sha256": "8991afd4ffe6d7c60d736052b9ab030166effc4f65c00bfa43d4bc7d34682c2d",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "1d2b4be1ce57571b5117cfc40491e3c2d1e6553058ef0d3e5346294204869a68"
+        },
+        {
+          "path": "java-service/attempt-05/results.json",
+          "report_sha256": "4a9ca94e0f4a6994c34db886a91680d44f1479ea364f08a8ffaa8291c6149560",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "5e5124c20972d0cb7026966f68b31599cf37498bb10681520df39e31330d7dae"
+        },
+        {
+          "path": "java-service/attempt-06/results.json",
+          "report_sha256": "9d60172480afed0effabf6f5c28dba77e70c543849a909e4cb8de3c39379a50f",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "5840f209fa6b0df4a6eb3e4b8abb50c8ea6f89360235c5fb0285e36396fd99ff"
+        },
+        {
+          "path": "java-service/isolated-prerequisites/results.json",
+          "report_sha256": "56308b245c60dcc9b39a1bee75b2c42ce5306007354a601270b4190addeae0a4",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "e11e68b360d114fbbad724b14ebfb0a6fa71ed7e891132d3435558e7c0de0baf"
+        },
+        {
+          "path": "java-service/isolated-prerequisites/S3-owner-normal/result.json",
+          "report_sha256": "efaa81faf7aa936652131c6bc268ef5c474bd284587090a899f125410e045301",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "e11e68b360d114fbbad724b14ebfb0a6fa71ed7e891132d3435558e7c0de0baf"
+        },
+        {
+          "path": "java-service/attempt-06/S3-owner-normal/result.json",
+          "report_sha256": "9e7c89dcb29baa538db107ce0425d19ce180ee69b97258d48805b5f9b16d3d4e",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "5840f209fa6b0df4a6eb3e4b8abb50c8ea6f89360235c5fb0285e36396fd99ff"
+        },
+        {
+          "path": "java-service/attempt-05/S3-owner-normal/result.json",
+          "report_sha256": "724ea04f63216970b75579a7afedf92719dd77e264a7e535f5bcaabbcdc35cdb",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "5e5124c20972d0cb7026966f68b31599cf37498bb10681520df39e31330d7dae"
+        },
+        {
+          "path": "java-service/attempt-04/S3-owner-normal/result.json",
+          "report_sha256": "2d02122c1f21838fa8dc7136910f55c4f23694fe5f28b6ec5ee1b37bffb76f8c",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "1d2b4be1ce57571b5117cfc40491e3c2d1e6553058ef0d3e5346294204869a68"
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    },
+    {
+      "name": "S3-owner-reject",
+      "method": "assertSignerOwnsEntity",
+      "jml_sha256": "a3a83f928daf00397d1b582864943183bd67a21b741ccb5a7da74f0a293f9496",
+      "clauses": [
+        "S3-owner-reject.R01",
+        "S3-owner-reject.O01",
+        "S3-owner-reject.S01",
+        "S3-owner-reject.A01"
+      ],
+      "evidence_status": "matching_replayed_result_found",
+      "matching_reports": [
+        {
+          "path": "java-service/attempt-04/results.json",
+          "report_sha256": "8991afd4ffe6d7c60d736052b9ab030166effc4f65c00bfa43d4bc7d34682c2d",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "8f744afa0c82642d8f96ee3ff1cab409923697f41a51eaa5864f90a2fc4a85c7"
+        },
+        {
+          "path": "java-service/attempt-05/results.json",
+          "report_sha256": "4a9ca94e0f4a6994c34db886a91680d44f1479ea364f08a8ffaa8291c6149560",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "1ae03b5619904488fc95e4dc278f6e77eb12607a9aff51cf2d41c33a23317090"
+        },
+        {
+          "path": "java-service/attempt-06/results.json",
+          "report_sha256": "9d60172480afed0effabf6f5c28dba77e70c543849a909e4cb8de3c39379a50f",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "38c63804d508450991ff586735c2026a2c74f00dd687d695055a933e76834601"
+        },
+        {
+          "path": "java-service/isolated-prerequisites/results.json",
+          "report_sha256": "56308b245c60dcc9b39a1bee75b2c42ce5306007354a601270b4190addeae0a4",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "284d23dc3ecb2267aa7db92cce026f81ddc1ac852a046bbc8074a436f93e7dca"
+        },
+        {
+          "path": "java-service/isolated-prerequisites/S3-owner-reject/result.json",
+          "report_sha256": "9ce78ef435fdb802893e32ef198a579f726843958bbb4dbf1e2e2999793b7a26",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "284d23dc3ecb2267aa7db92cce026f81ddc1ac852a046bbc8074a436f93e7dca"
+        },
+        {
+          "path": "java-service/attempt-06/S3-owner-reject/result.json",
+          "report_sha256": "25dcdc8e7e8883cfd12e13232a88d5434988fa791ff0e95e51d35edb029ed391",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "38c63804d508450991ff586735c2026a2c74f00dd687d695055a933e76834601"
+        },
+        {
+          "path": "java-service/attempt-05/S3-owner-reject/result.json",
+          "report_sha256": "2f4e716a734a61dca09667ebada4907bac35136bb3c2af2582b426d647dd0f88",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "1ae03b5619904488fc95e4dc278f6e77eb12607a9aff51cf2d41c33a23317090"
+        },
+        {
+          "path": "java-service/attempt-04/S3-owner-reject/result.json",
+          "report_sha256": "29dbe1422d98a20f3c92ac09b5feaad5e828c1b664aabe26833f912ee1ec93b2",
+          "status": "PROVED_AND_FRESHLY_REPLAYED",
+          "proof_sha256": "8f744afa0c82642d8f96ee3ff1cab409923697f41a51eaa5864f90a2fc4a85c7"
+        }
+      ],
+      "qualification": "Report inspection only. Shared adapter environment, full dependency closure, transfer and KeY replay are not independently certified here."
+    }
+  ]
+}

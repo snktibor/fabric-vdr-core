@@ -1,0 +1,84 @@
+{
+  "A0": [],
+  "A1": [
+    {
+      "tx": "updateRevRegEntry",
+      "outcome": "COMMITTED",
+      "validationCode": "VALID",
+      "block": "94",
+      "txId": "d39764895783cde4e281082c2c69a55d41a9f5d3a4d34a8db7099a08fff6edeb",
+      "attempts": "1",
+      "error": "none"
+    },
+    {
+      "tx": "updateRevRegEntry",
+      "outcome": "MVCC_CONFLICT",
+      "validationCode": "MVCC_READ_CONFLICT",
+      "block": "94",
+      "txId": "75edc9a60a90484c5539463ab16d5fe54e186a74029586f3648dcce5775587ab",
+      "attempts": "1",
+      "error": "none"
+    }
+  ],
+  "A2": [
+    {
+      "tx": "updateRevRegEntryIfGuardsUnchanged",
+      "outcome": "MVCC_CONFLICT",
+      "validationCode": "MVCC_READ_CONFLICT",
+      "block": "100",
+      "txId": "2f5b1bd1f5ad8ad527fb42ac4001a16553c67a2ad827bf3b6f374dc69a1537f1",
+      "attempts": "1",
+      "error": "none"
+    },
+    {
+      "tx": "updateRevRegEntryIfGuardsUnchanged",
+      "outcome": "COMMITTED",
+      "validationCode": "VALID",
+      "block": "100",
+      "txId": "8d88fc0a200d1dbd7ddf1a498a00dee2856cbcab75681f2ef645802883be7586",
+      "attempts": "1",
+      "error": "none"
+    }
+  ],
+  "B0": [],
+  "B1u": [
+    {
+      "tx": "updateRevRegEntry",
+      "outcome": "COMMITTED",
+      "validationCode": "VALID",
+      "block": "122",
+      "txId": "5bdff63f6a81cd4ff0505675845074865f1f5f76cbeb344454ac3667e1d1cc6d",
+      "attempts": "1",
+      "error": "none"
+    },
+    {
+      "tx": "updateRevRegEntry",
+      "outcome": "COMMITTED",
+      "validationCode": "VALID",
+      "block": "122",
+      "txId": "2024b49f42109dbc1e4f188533f6773bb41d5e7b8c52f488cdb3ea28bae014aa",
+      "attempts": "1",
+      "error": "none"
+    }
+  ],
+  "B1": [
+    {
+      "tx": "updateRevRegEntryIfGuardsUnchanged",
+      "outcome": "MVCC_CONFLICT",
+      "validationCode": "MVCC_READ_CONFLICT",
+      "block": "133",
+      "txId": "40d7c8f937c3f21e2c5758213a8f7d0883e56f0aeda6975ebb3c64b0b4a30b3c",
+      "attempts": "1",
+      "error": "none"
+    },
+    {
+      "tx": "updateRevRegEntryIfGuardsUnchanged",
+      "outcome": "COMMITTED",
+      "validationCode": "VALID",
+      "block": "133",
+      "txId": "464334e3d979235e801038849824c3edc8b1f5e5f68329237b4f1d5c44a8e9fd",
+      "attempts": "1",
+      "error": "none"
+    }
+  ]
+}

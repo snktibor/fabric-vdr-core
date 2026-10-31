@@ -1,0 +1,46 @@
+{
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/logic/RevRegEntryService.java": {
+    "sha256": "9e5183d7d4a207147213b078964ce19ebdae90224ee02d676d6f3b1469f2ebbb",
+    "snapshot": "inputs/source/RevRegEntryService.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/logic/ValidationService.java": {
+    "sha256": "8f87ce739b6629461d7d46d88462e70bf78e745d7deed3f3cd41c47e5458a124",
+    "snapshot": "inputs/source/ValidationService.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/logic/AuthorizationService.java": {
+    "sha256": "f8caeb8b561dc73e007d689103ef88d52152e8eb6f20d8e2f3219c55cc2a7c4b",
+    "snapshot": "inputs/source/AuthorizationService.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/logic/JwtValidator.java": {
+    "sha256": "d1a470dde8d231670679292d32d15aeb4b9f07705001422b5f0f9457927557e1",
+    "snapshot": "inputs/source/JwtValidator.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/logic/JwtPrincipal.java": {
+    "sha256": "c849ab935a013670fc5f5df3ae6a53e676f933a206091325498260d5b48d3b8c",
+    "snapshot": "inputs/source/JwtPrincipal.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/logic/RevRegEntryVersion.java": {
+    "sha256": "43b1ccae34e26bac020c83e9ae6022424058f69db7227db34bce45f29bd59b29",
+    "snapshot": "inputs/source/RevRegEntryVersion.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/ledger/BaseRegistry.java": {
+    "sha256": "4c79a6ed24df0fd85cd902316bde4d01c68c96d57f845b9991e67232837e933e",
+    "snapshot": "inputs/source/BaseRegistry.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/ledger/JwtNonceRegistry.java": {
+    "sha256": "5f3e9e3773d6328927be5bd870b7e69ef6f46da7a3990ef45ca9ad361b3bfdce",
+    "snapshot": "inputs/source/JwtNonceRegistry.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/util/JsonUtil.java": {
+    "sha256": "daf3356422eaf086b168d4ff28e9a3f429ca1c2eaebbe52118ee6e5293fbb2ef",
+    "snapshot": "inputs/source/JsonUtil.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/contract/VdrContract.java": {
+    "sha256": "d37bb72ea666c75e627ee6e3f2d50eddad35a13491f0d59eb61dfabb51eb6376",
+    "snapshot": "inputs/source/VdrContract.java"
+  },
+  "sinka-tibor-code-fabric-vdr-core/src/main/java/com/example/vdr/model/RevRegEntryRecord.java": {
+    "sha256": "0e013fd447583f0aa62edb9cf60411f72471ffcea75a17875ec297ad370c7412",
+    "snapshot": "inputs/source/RevRegEntryRecord.java"
+  }
+}

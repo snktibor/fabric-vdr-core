@@ -11,7 +11,7 @@ package io.github.snktibor.vdr.exception;
  */
 public class VdrException extends RuntimeException {
 
-    private final String errorCode;
+    private /*@ spec_public @*/ final String errorCode;
 
     /**
      * Creates a new domain exception instance with a canonical error code.
@@ -71,15 +71,14 @@ public class VdrException extends RuntimeException {
     }
 
     /**
-     * Creates an exception for a request that is well formed and authorized but meets a world state
-     * the caller declared it was not expecting.
+     * Creates an exception for a request that is well formed and authorized but cannot proceed
+     * against the current world state.
      *
-     * <p>This is the only code that says nothing is wrong with the request itself: the arguments
-     * validated, the signer was entitled, and the transaction was refused solely because a state
-     * the caller pinned had moved on. Callers that retry after re-reading the moved state are
-     * behaving correctly, which is what separates this from the other five codes.
+     * <p>A guard may no longer match, or a stored audit version may be invalid or exhausted.
+     * Re-reading state can resolve a stale guard; it does not make an exhausted or invalid version
+     * usable. Callers must inspect the failure before deciding whether to retry.
      *
-     * @param message description naming the pinned state, the expected value, and the value found
+     * @param message description of the state condition preventing the operation
      * @return a {@link VdrException} with {@code FAILED_PRECONDITION} error code
      */
     public static VdrException failedPrecondition(final String message) {

@@ -1,0 +1,13 @@
+/organizations/
+/data/
+/runs/
+/m2/
+/artifact/
+/project/
+/bin/
+/config/
+/downloads/
+/__pycache__/
+/logs/
+
+/wrapper-tests.json

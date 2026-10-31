@@ -1,0 +1,12 @@
+/tools/
+/build/
+/artifacts/
+*.olean
+*.ilean
+/SUCCESS
+*.tmp
+/tools
+/logs/
+/result.json
+/theorem-inventory.json
+/THEOREMS.md

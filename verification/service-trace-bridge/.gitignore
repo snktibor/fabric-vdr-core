@@ -1,0 +1,10 @@
+/build/
+/logs/
+/artifacts/
+/result.json
+/theorem-inventory.json
+/SHA256SUMS
+/portability.json
+__pycache__/
+*.olean
+*.ilean

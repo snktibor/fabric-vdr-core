@@ -1,0 +1,189 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "failure_phase": null,
+      "aggregate_emits_artifacts": true,
+      "exitcode": 0,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize",
+        "aggregate"
+      ]
+    },
+    {
+      "failure_phase": "config",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "sanitize"
+      ]
+    },
+    {
+      "failure_phase": "tests",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "capture",
+        "cleanup",
+        "sanitize"
+      ]
+    },
+    {
+      "failure_phase": "manifest",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize"
+      ]
+    },
+    {
+      "failure_phase": "capture",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize"
+      ]
+    },
+    {
+      "failure_phase": "cleanup",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize"
+      ]
+    },
+    {
+      "failure_phase": "sanitize",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize"
+      ]
+    },
+    {
+      "failure_phase": "aggregate",
+      "aggregate_emits_artifacts": true,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize",
+        "aggregate"
+      ]
+    },
+    {
+      "failure_phase": null,
+      "aggregate_emits_artifacts": false,
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize",
+        "aggregate"
+      ]
+    },
+    {
+      "failure_phase": null,
+      "aggregate_emits_artifacts": "invalid",
+      "exitcode": 1,
+      "phases": [
+        "baseline",
+        "fetch",
+        "config",
+        "up",
+        "deploy",
+        "tests",
+        "classes",
+        "blocks",
+        "manifest",
+        "capture",
+        "cleanup",
+        "sanitize",
+        "aggregate"
+      ]
+    }
+  ],
+  "build_snapshot_maven_overrides": true
+}

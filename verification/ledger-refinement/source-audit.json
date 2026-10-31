@@ -1,0 +1,35 @@
+{
+  "purpose": "Read-only input to model design, not source refinement proof",
+  "observed_at": "2026-10-25T23:09:17.775620+00:00",
+  "files": [
+    {
+      "path": "src/main/java/com/example/vdr/logic/RevRegEntryService.java",
+      "sha256": "9e5183d7d4a207147213b078964ce19ebdae90224ee02d676d6f3b1469f2ebbb"
+    },
+    {
+      "path": "src/main/java/com/example/vdr/logic/RevRegEntryVersion.java",
+      "sha256": "43b1ccae34e26bac020c83e9ae6022424058f69db7227db34bce45f29bd59b29"
+    },
+    {
+      "path": "src/main/java/com/example/vdr/logic/JwtValidator.java",
+      "sha256": "d1a470dde8d231670679292d32d15aeb4b9f07705001422b5f0f9457927557e1"
+    },
+    {
+      "path": "src/main/java/com/example/vdr/ledger/BaseRegistry.java",
+      "sha256": "4c79a6ed24df0fd85cd902316bde4d01c68c96d57f845b9991e67232837e933e"
+    },
+    {
+      "path": "src/main/java/com/example/vdr/ledger/RevRegEntryRegistry.java",
+      "sha256": "4b5508dc34e60102fe74900fe6caed20774841cf609cc02d029ad8b89814a870"
+    },
+    {
+      "path": "src/main/java/com/example/vdr/ledger/JwtNonceRegistry.java",
+      "sha256": "5f3e9e3773d6328927be5bd870b7e69ef6f46da7a3990ef45ca9ad361b3bfdce"
+    },
+    {
+      "path": "src/main/java/com/example/vdr/model/RevRegEntryRecord.java",
+      "sha256": "0e013fd447583f0aa62edb9cf60411f72471ffcea75a17875ec297ad370c7412"
+    }
+  ],
+  "path_scope": "Repository-relative paths at the recorded October 25 audit; hashes are historical, not current-source claims"
+}
