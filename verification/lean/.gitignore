@@ -1,0 +1,12 @@
+/tools/
+/build/
+/logs/
+/artifacts/
+/result.json
+/SUCCESS
+/theorem-inventory.json
+/THEOREMS.md
+*.olean
+*.ilean
+*.tmp
+__pycache__/

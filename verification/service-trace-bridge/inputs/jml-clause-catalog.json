@@ -1,0 +1,2990 @@
+{
+  "S1-helper-normal.R01": {
+    "kind": "requires",
+    "text": "existing != null && \\typeof(existing) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.R02": {
+    "kind": "requires",
+    "text": "existing.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.R03": {
+    "kind": "requires",
+    "text": "0 <= existing.version && existing.version < Long.MAX_VALUE;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E01": {
+    "kind": "ensures",
+    "text": "\\result == existing;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E02": {
+    "kind": "ensures",
+    "text": "existing.version == \\old(existing.version)+1;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E03": {
+    "kind": "ensures",
+    "text": "existing.revRegDefId == \\old(existing.revRegDefId) && existing.createdAt == \\old(existing.createdAt);",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E04": {
+    "kind": "ensures",
+    "text": "existing.accumValue == accumValue;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E05": {
+    "kind": "ensures",
+    "text": "existing.updatedAt == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E06": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.writeCount == \\old(revRegEntryRegistry.writeCount)+1 && revRegEntryRegistry.putKey == revRegDefId && revRegEntryRegistry.putRecord == existing;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E07": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.putId == existing.revRegDefId && revRegEntryRegistry.putAccum == accumValue && revRegEntryRegistry.putVersion == existing.version && revRegEntryRegistry.putCreated == existing.createdAt && revRegEntryRegistry.putUpdated == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E08": {
+    "kind": "ensures",
+    "text": "eventEmitter.events == \\old(eventEmitter.events)+1 && eventEmitter.eventName == \"RevRegEntryUpdated\";",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E09": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).value_seq.length == 3;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E10": {
+    "kind": "ensures",
+    "text": "((Object)((java.util.Map)eventEmitter.payload).value_seq[0]) == existing.revRegDefId && ((Object)((java.util.Map)eventEmitter.payload).value_seq[1]) == accumValue;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E11": {
+    "kind": "ensures",
+    "text": "((Long)((java.util.Map)eventEmitter.payload).value_seq[2]).value == existing.version;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.E12": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).key_seq == \\seq_concat(\\seq_singleton(\"revRegDefId\"),\\seq_concat(\\seq_singleton(\"accumValue\"),\\seq_singleton(\"version\")));",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S1-helper-normal.A01": {
+    "kind": "assignable",
+    "text": "existing.accumValue, existing.version, existing.updatedAt, revRegEntryRegistry.writeCount, revRegEntryRegistry.putKey, revRegEntryRegistry.putRecord, revRegEntryRegistry.putId, revRegEntryRegistry.putAccum, revRegEntryRegistry.putVersion, revRegEntryRegistry.putCreated, revRegEntryRegistry.putUpdated, eventEmitter.events, eventEmitter.eventName, eventEmitter.payload;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S2-helper-invalid.R01": {
+    "kind": "requires",
+    "text": "existing != null && \\typeof(existing) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S2-helper-invalid.R02": {
+    "kind": "requires",
+    "text": "existing.version < 0 || existing.version == Long.MAX_VALUE;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S2-helper-invalid.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S2-helper-invalid.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S2-helper-invalid.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "RevRegEntryService",
+    "method": "applyAccumulatorUpdate"
+  },
+  "S4-owned-normal.R01": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.R02": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.R04": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.R05": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.R06": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.E01": {
+    "kind": "ensures",
+    "text": "\\result == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.E02": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.E03": {
+    "kind": "ensures",
+    "text": "revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-owned-normal.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.R01": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.R02": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.R03": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\old(revRegDefRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-entry.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.R01": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.R02": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.R04": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.R05": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-missing-parent.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.R01": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.R02": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.R04": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.R05": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.R06": {
+    "kind": "requires",
+    "text": "!(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"UNAUTHORIZED\";",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S4-unauthorized.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "requireOwnedEntry"
+  },
+  "S5-read-self.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-self.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-self.R03": {
+    "kind": "requires",
+    "text": "\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-self.E01": {
+    "kind": "ensures",
+    "text": "\\result == \\old(target.version);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-self.E02": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-self.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.R03": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.E01": {
+    "kind": "ensures",
+    "text": "\\result == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.E02": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\old(\\seq_concat(revRegEntryRegistry.reads,\\seq_singleton(guard.revRegDefId)));",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-read-other.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.R03": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(guard.revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S5-absent.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "readGuardedVersion"
+  },
+  "S6-check-self.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-self.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-self.R03": {
+    "kind": "requires",
+    "text": "\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-self.R04": {
+    "kind": "requires",
+    "text": "guard.expectedVersion == target.version;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-self.E01": {
+    "kind": "ensures",
+    "text": "\\result.revRegDefId == guard.revRegDefId && \\result.checkedVersion == \\old(target.version);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-self.E02": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-self.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.R03": {
+    "kind": "requires",
+    "text": "\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.R04": {
+    "kind": "requires",
+    "text": "guard.expectedVersion != target.version;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-self.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R03": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.R07": {
+    "kind": "requires",
+    "text": "guard.expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.E01": {
+    "kind": "ensures",
+    "text": "\\result.revRegDefId == guard.revRegDefId && \\result.checkedVersion == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.E02": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\old(\\seq_concat(revRegEntryRegistry.reads,\\seq_singleton(guard.revRegDefId)));",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-check-other.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R03": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.R07": {
+    "kind": "requires",
+    "text": "guard.expectedVersion != ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(guard.revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-mismatch-other.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.R01": {
+    "kind": "requires",
+    "text": "guard != null && guard.revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.R02": {
+    "kind": "requires",
+    "text": "target != null && \\typeof(target) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.R03": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(guard.revRegDefId) == \\dl_strContent(targetRevRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(guard.revRegDefId));",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S6-absent.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "checkGuardUnchanged"
+  },
+  "S7-create-normal.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.R02": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.R04": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.R05": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.R06": {
+    "kind": "requires",
+    "text": "!revRegEntryRegistry.present;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E01": {
+    "kind": "ensures",
+    "text": "\\fresh(\\result);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E02": {
+    "kind": "ensures",
+    "text": "\\result.revRegDefId == validationService.idOutput && \\result.version == 0 && \\result.createdAt == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E03": {
+    "kind": "ensures",
+    "text": "\\result.accumValue == validationService.accumOutput;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E04": {
+    "kind": "ensures",
+    "text": "\\result.updatedAt == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E05": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.writeCount == \\old(revRegEntryRegistry.writeCount)+1 && revRegEntryRegistry.putKey == validationService.idOutput && revRegEntryRegistry.putRecord == \\result;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E06": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.putId == \\result.revRegDefId && revRegEntryRegistry.putAccum == validationService.accumOutput && revRegEntryRegistry.putVersion == \\result.version && revRegEntryRegistry.putCreated == \\result.createdAt && revRegEntryRegistry.putUpdated == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E07": {
+    "kind": "ensures",
+    "text": "eventEmitter.events == \\old(eventEmitter.events)+1 && eventEmitter.eventName == \"RevRegEntryCreated\";",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E08": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).value_seq.length == 3;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E09": {
+    "kind": "ensures",
+    "text": "((Object)((java.util.Map)eventEmitter.payload).value_seq[0]) == \\result.revRegDefId && ((Object)((java.util.Map)eventEmitter.payload).value_seq[1]) == validationService.accumOutput;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E10": {
+    "kind": "ensures",
+    "text": "((Long)((java.util.Map)eventEmitter.payload).value_seq[2]).value == \\result.version;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E11": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).key_seq == \\seq_concat(\\seq_singleton(\"revRegDefId\"),\\seq_concat(\\seq_singleton(\"accumValue\"),\\seq_singleton(\"version\")));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E12": {
+    "kind": "ensures",
+    "text": "revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E13": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.existsReads == \\seq_concat(\\old(revRegEntryRegistry.existsReads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.E14": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-create-normal.A01": {
+    "kind": "assignable",
+    "text": "revRegDefRegistry.reads, revRegEntryRegistry.existsReads, revRegEntryRegistry.writeCount, revRegEntryRegistry.putKey, revRegEntryRegistry.putRecord, revRegEntryRegistry.putId, revRegEntryRegistry.putAccum, revRegEntryRegistry.putVersion, revRegEntryRegistry.putCreated, revRegEntryRegistry.putUpdated, eventEmitter.events, eventEmitter.eventName, eventEmitter.payload;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.R02": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.R04": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-missing-parent.A01": {
+    "kind": "assignable",
+    "text": "revRegDefRegistry.reads, revRegEntryRegistry.existsReads;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.R02": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.R04": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.R05": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.R06": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.present;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"ALREADY_EXISTS\";",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\seq_concat(\\old(revRegEntryRegistry.existsReads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-duplicate.A01": {
+    "kind": "assignable",
+    "text": "revRegDefRegistry.reads, revRegEntryRegistry.existsReads;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.R02": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.R03": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.R04": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.R05": {
+    "kind": "requires",
+    "text": "!(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"UNAUTHORIZED\";",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S7-unauthorized.A01": {
+    "kind": "assignable",
+    "text": "revRegDefRegistry.reads, revRegEntryRegistry.existsReads;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S10-createRevRegEntry-invalid-input.R01": {
+    "kind": "requires",
+    "text": "!validationService.idValid || !validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S10-createRevRegEntry-invalid-input.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S10-createRevRegEntry-invalid-input.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"INVALID_ARGUMENT\";",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S10-createRevRegEntry-invalid-input.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "RevRegEntryService",
+    "method": "createRevRegEntry"
+  },
+  "S8-plain-normal.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R02": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R03": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R04": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R05": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R07": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.R09": {
+    "kind": "requires",
+    "text": "0 <= ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version && ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version < Long.MAX_VALUE;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E01": {
+    "kind": "ensures",
+    "text": "\\result == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E02": {
+    "kind": "ensures",
+    "text": "\\result.version == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version)+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E03": {
+    "kind": "ensures",
+    "text": "\\result.revRegDefId == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).revRegDefId) && \\result.createdAt == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).createdAt);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E04": {
+    "kind": "ensures",
+    "text": "\\result.accumValue == validationService.accumOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E05": {
+    "kind": "ensures",
+    "text": "\\result.updatedAt == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E06": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.writeCount == \\old(revRegEntryRegistry.writeCount)+1 && revRegEntryRegistry.putKey == validationService.idOutput && revRegEntryRegistry.putRecord == \\result;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E07": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.putId == \\result.revRegDefId && revRegEntryRegistry.putAccum == validationService.accumOutput && revRegEntryRegistry.putVersion == \\result.version && revRegEntryRegistry.putCreated == \\result.createdAt && revRegEntryRegistry.putUpdated == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E08": {
+    "kind": "ensures",
+    "text": "eventEmitter.events == \\old(eventEmitter.events)+1 && eventEmitter.eventName == \"RevRegEntryUpdated\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E09": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).value_seq.length == 3;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E10": {
+    "kind": "ensures",
+    "text": "((Object)((java.util.Map)eventEmitter.payload).value_seq[0]) == \\result.revRegDefId && ((Object)((java.util.Map)eventEmitter.payload).value_seq[1]) == validationService.accumOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E11": {
+    "kind": "ensures",
+    "text": "((Long)((java.util.Map)eventEmitter.payload).value_seq[2]).value == \\result.version;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E12": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).key_seq == \\seq_concat(\\seq_singleton(\"revRegDefId\"),\\seq_concat(\\seq_singleton(\"accumValue\"),\\seq_singleton(\"version\")));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E13": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E14": {
+    "kind": "ensures",
+    "text": "revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.E15": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-plain-normal.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads, ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).accumValue, ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version, ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).updatedAt, revRegEntryRegistry.writeCount, revRegEntryRegistry.putKey, revRegEntryRegistry.putRecord, revRegEntryRegistry.putId, revRegEntryRegistry.putAccum, revRegEntryRegistry.putVersion, revRegEntryRegistry.putCreated, revRegEntryRegistry.putUpdated, eventEmitter.events, eventEmitter.eventName, eventEmitter.payload;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S10-updateRevRegEntry-invalid-input.R01": {
+    "kind": "requires",
+    "text": "!validationService.idValid || !validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S10-updateRevRegEntry-invalid-input.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S10-updateRevRegEntry-invalid-input.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"INVALID_ARGUMENT\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S10-updateRevRegEntry-invalid-input.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\old(revRegDefRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-entry.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-missing-parent.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.R09": {
+    "kind": "requires",
+    "text": "!(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"UNAUTHORIZED\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-unauthorized.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R09": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.R10": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version < 0 || ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version == Long.MAX_VALUE;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S8-overflow.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntry"
+  },
+  "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.R01": {
+    "kind": "requires",
+    "text": "!validationService.idValid || !validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"INVALID_ARGUMENT\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S10-updateRevRegEntryIfGuardsUnchanged-invalid-input.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R06": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R07": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.R08": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\old(revRegDefRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-entry.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R09": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.R10": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-missing-parent.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R09": {
+    "kind": "requires",
+    "text": "!(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R10": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.R11": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"UNAUTHORIZED\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads == \\seq_concat(\\old(revRegEntryRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-unauthorized.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R09": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R10": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R11": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R12": {
+    "kind": "requires",
+    "text": "validationService.typedGuards != null && validationService.nonselfBefore != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R13": {
+    "kind": "requires",
+    "text": "1 <= validationService.guards.seq.length && validationService.guards.seq.length <= 16;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R14": {
+    "kind": "requires",
+    "text": "validationService.typedGuards.length == validationService.guards.seq.length && validationService.nonselfBefore.length == validationService.guards.seq.length+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R15": {
+    "kind": "requires",
+    "text": "validationService.nonselfBefore[0] == 0;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R16": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.typedGuards[i] != null && validationService.typedGuards[i].revRegDefId != null && validationService.typedGuards[i].expectedVersion >= 0 && (Object)validationService.guards.seq[i] == validationService.typedGuards[i]);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R17": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.nonselfBefore[i+1] == validationService.nonselfBefore[i] + (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? 0 : 1));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R18": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i <= validationService.guards.seq.length; 0 <= validationService.nonselfBefore[i] && validationService.nonselfBefore[i] <= i);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R19": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).revRegDefId != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R20": {
+    "kind": "requires",
+    "text": "0 <= ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version && ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version < Long.MAX_VALUE;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R21": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.guards.seq.length] <= revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.R22": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version : (((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]) != null && \\typeof(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]])) == \\type(RevRegEntryRecord) && validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]).version)));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E01": {
+    "kind": "ensures",
+    "text": "\\result.entry == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E02": {
+    "kind": "ensures",
+    "text": "\\result.entry.version == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version)+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E03": {
+    "kind": "ensures",
+    "text": "\\result.checkedGuards.seq.length == validationService.guards.seq.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E04": {
+    "kind": "ensures",
+    "text": "\\result.entry.accumValue == validationService.accumOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E05": {
+    "kind": "ensures",
+    "text": "\\result.entry.updatedAt == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E06": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.writeCount == \\old(revRegEntryRegistry.writeCount)+1 && revRegEntryRegistry.putKey == validationService.idOutput && revRegEntryRegistry.putRecord == \\result.entry;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E07": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.putId == \\result.entry.revRegDefId && revRegEntryRegistry.putAccum == validationService.accumOutput && revRegEntryRegistry.putVersion == \\result.entry.version && revRegEntryRegistry.putCreated == \\result.entry.createdAt && revRegEntryRegistry.putUpdated == txTimestamp.iso;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E08": {
+    "kind": "ensures",
+    "text": "eventEmitter.events == \\old(eventEmitter.events)+1 && eventEmitter.eventName == \"RevRegEntryUpdated\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E09": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).value_seq.length == 3;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E10": {
+    "kind": "ensures",
+    "text": "((Object)((java.util.Map)eventEmitter.payload).value_seq[0]) == \\result.entry.revRegDefId && ((Object)((java.util.Map)eventEmitter.payload).value_seq[1]) == validationService.accumOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E11": {
+    "kind": "ensures",
+    "text": "((Long)((java.util.Map)eventEmitter.payload).value_seq[2]).value == \\result.entry.version;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E12": {
+    "kind": "ensures",
+    "text": "((java.util.Map)eventEmitter.payload).key_seq == \\seq_concat(\\seq_singleton(\"revRegDefId\"),\\seq_concat(\\seq_singleton(\"accumValue\"),\\seq_singleton(\"version\")));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E13": {
+    "kind": "ensures",
+    "text": "\\result.entry.revRegDefId == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).revRegDefId) && \\result.entry.createdAt == \\old(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).createdAt);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E14": {
+    "kind": "ensures",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; ((CheckedRevRegEntryGuard)\\result.checkedGuards.seq[i]).revRegDefId == validationService.typedGuards[i].revRegDefId && ((CheckedRevRegEntryGuard)\\result.checkedGuards.seq[i]).checkedVersion == validationService.typedGuards[i].expectedVersion && ((CheckedRevRegEntryGuard)\\result.checkedGuards.seq[i]).checkedVersion == \\old(\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version : ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]).version));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E15": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.reads.length == \\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[validationService.guards.seq.length];",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E16": {
+    "kind": "ensures",
+    "text": "\\seq_sub(revRegEntryRegistry.reads,0,\\old(revRegEntryRegistry.reads.length)) == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E17": {
+    "kind": "ensures",
+    "text": "(Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)] == validationService.idOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E18": {
+    "kind": "ensures",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; !(\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput)) ==> (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[i]] == validationService.typedGuards[i].revRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E19": {
+    "kind": "ensures",
+    "text": "revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.E20": {
+    "kind": "ensures",
+    "text": "revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-guarded-normal.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads, ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).accumValue, ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version, ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).updatedAt, revRegEntryRegistry.writeCount, revRegEntryRegistry.putKey, revRegEntryRegistry.putRecord, revRegEntryRegistry.putId, revRegEntryRegistry.putAccum, revRegEntryRegistry.putVersion, revRegEntryRegistry.putCreated, revRegEntryRegistry.putUpdated, eventEmitter.events, eventEmitter.eventName, eventEmitter.payload;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R09": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R10": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R11": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R12": {
+    "kind": "requires",
+    "text": "validationService.typedGuards != null && validationService.nonselfBefore != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R13": {
+    "kind": "requires",
+    "text": "1 <= validationService.guards.seq.length && validationService.guards.seq.length <= 16;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R14": {
+    "kind": "requires",
+    "text": "validationService.typedGuards.length == validationService.guards.seq.length && validationService.nonselfBefore.length == validationService.guards.seq.length+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R15": {
+    "kind": "requires",
+    "text": "validationService.nonselfBefore[0] == 0;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R16": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.typedGuards[i] != null && validationService.typedGuards[i].revRegDefId != null && validationService.typedGuards[i].expectedVersion >= 0 && (Object)validationService.guards.seq[i] == validationService.typedGuards[i]);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R17": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.nonselfBefore[i+1] == validationService.nonselfBefore[i] + (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? 0 : 1));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R18": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i <= validationService.guards.seq.length; 0 <= validationService.nonselfBefore[i] && validationService.nonselfBefore[i] <= i);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R19": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.guards.seq.length] <= revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R20": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version : (((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]) != null && \\typeof(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]])) == \\type(RevRegEntryRecord) && validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]).version)));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.R21": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version < 0 || ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version == Long.MAX_VALUE;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads.length == \\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[validationService.guards.seq.length];",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) \\seq_sub(revRegEntryRegistry.reads,0,\\old(revRegEntryRegistry.reads.length)) == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)] == validationService.idOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S05": {
+    "kind": "signals",
+    "text": "(VdrException e) (\\forall int i; 0 <= i && i < validationService.guards.seq.length; !(\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput)) ==> (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[i]] == validationService.typedGuards[i].revRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S06": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.S07": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-overflow.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R09": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R10": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R11": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R12": {
+    "kind": "requires",
+    "text": "validationService.typedGuards != null && validationService.nonselfBefore != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R13": {
+    "kind": "requires",
+    "text": "1 <= validationService.guards.seq.length && validationService.guards.seq.length <= 16;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R14": {
+    "kind": "requires",
+    "text": "validationService.typedGuards.length == validationService.guards.seq.length && validationService.nonselfBefore.length == validationService.guards.seq.length+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R15": {
+    "kind": "requires",
+    "text": "validationService.nonselfBefore[0] == 0;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R16": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.typedGuards[i] != null && validationService.typedGuards[i].revRegDefId != null && validationService.typedGuards[i].expectedVersion >= 0 && (Object)validationService.guards.seq[i] == validationService.typedGuards[i]);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R17": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.nonselfBefore[i+1] == validationService.nonselfBefore[i] + (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? 0 : 1));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R18": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i <= validationService.guards.seq.length; 0 <= validationService.nonselfBefore[i] && validationService.nonselfBefore[i] <= i);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R19": {
+    "kind": "requires",
+    "text": "0 <= validationService.failureIndex && validationService.failureIndex < validationService.guards.seq.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R20": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex+1] <= revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R21": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.failureIndex; (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version : (((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]) != null && \\typeof(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]])) == \\type(RevRegEntryRecord) && validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]).version)));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.R22": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(validationService.typedGuards[validationService.failureIndex].revRegDefId) == \\dl_strContent(validationService.idOutput)) && ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex]]) == null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"NOT_FOUND\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads.length == \\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[validationService.failureIndex+1];",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) \\seq_sub(revRegEntryRegistry.reads,0,\\old(revRegEntryRegistry.reads.length)) == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)] == validationService.idOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S05": {
+    "kind": "signals",
+    "text": "(VdrException e) (\\forall int i; 0 <= i && i < validationService.failureIndex+1; !(\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput)) ==> (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[i]] == validationService.typedGuards[i].revRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S06": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.S07": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-absent.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R09": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R10": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R11": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R12": {
+    "kind": "requires",
+    "text": "validationService.typedGuards != null && validationService.nonselfBefore != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R13": {
+    "kind": "requires",
+    "text": "1 <= validationService.guards.seq.length && validationService.guards.seq.length <= 16;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R14": {
+    "kind": "requires",
+    "text": "validationService.typedGuards.length == validationService.guards.seq.length && validationService.nonselfBefore.length == validationService.guards.seq.length+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R15": {
+    "kind": "requires",
+    "text": "validationService.nonselfBefore[0] == 0;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R16": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.typedGuards[i] != null && validationService.typedGuards[i].revRegDefId != null && validationService.typedGuards[i].expectedVersion >= 0 && (Object)validationService.guards.seq[i] == validationService.typedGuards[i]);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R17": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.nonselfBefore[i+1] == validationService.nonselfBefore[i] + (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? 0 : 1));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R18": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i <= validationService.guards.seq.length; 0 <= validationService.nonselfBefore[i] && validationService.nonselfBefore[i] <= i);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R19": {
+    "kind": "requires",
+    "text": "0 <= validationService.failureIndex && validationService.failureIndex < validationService.guards.seq.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R20": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex+1] <= revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R21": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.failureIndex; (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version : (((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]) != null && \\typeof(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]])) == \\type(RevRegEntryRecord) && validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]).version)));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.R22": {
+    "kind": "requires",
+    "text": "\\dl_strContent(validationService.typedGuards[validationService.failureIndex].revRegDefId) == \\dl_strContent(validationService.idOutput) && validationService.typedGuards[validationService.failureIndex].expectedVersion != ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads.length == \\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[validationService.failureIndex+1];",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) \\seq_sub(revRegEntryRegistry.reads,0,\\old(revRegEntryRegistry.reads.length)) == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)] == validationService.idOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S05": {
+    "kind": "signals",
+    "text": "(VdrException e) (\\forall int i; 0 <= i && i < validationService.failureIndex+1; !(\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput)) ==> (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[i]] == validationService.typedGuards[i].revRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S06": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.S07": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-self.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R04": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length < revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R05": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.answers[revRegEntryRegistry.reads.length] == null || \\typeof(revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) == \\type(RevRegEntryRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R06": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.reads.length < revRegDefRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R07": {
+    "kind": "requires",
+    "text": "revRegDefRegistry.answers[revRegDefRegistry.reads.length] == null || \\typeof(revRegDefRegistry.answers[revRegDefRegistry.reads.length]) == \\type(RevRegDefRecord);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R08": {
+    "kind": "requires",
+    "text": "((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]) != null && ((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]) != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R09": {
+    "kind": "requires",
+    "text": "((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId != null && !((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId.blank && \\dl_strContent(((RevRegDefRecord)revRegDefRegistry.answers[revRegDefRegistry.reads.length]).ownerId) == \\dl_strContent(signerDid);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R10": {
+    "kind": "requires",
+    "text": "validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R11": {
+    "kind": "requires",
+    "text": "validationService.guards != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R12": {
+    "kind": "requires",
+    "text": "validationService.typedGuards != null && validationService.nonselfBefore != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R13": {
+    "kind": "requires",
+    "text": "1 <= validationService.guards.seq.length && validationService.guards.seq.length <= 16;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R14": {
+    "kind": "requires",
+    "text": "validationService.typedGuards.length == validationService.guards.seq.length && validationService.nonselfBefore.length == validationService.guards.seq.length+1;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R15": {
+    "kind": "requires",
+    "text": "validationService.nonselfBefore[0] == 0;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R16": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.typedGuards[i] != null && validationService.typedGuards[i].revRegDefId != null && validationService.typedGuards[i].expectedVersion >= 0 && (Object)validationService.guards.seq[i] == validationService.typedGuards[i]);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R17": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.guards.seq.length; validationService.nonselfBefore[i+1] == validationService.nonselfBefore[i] + (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? 0 : 1));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R18": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i <= validationService.guards.seq.length; 0 <= validationService.nonselfBefore[i] && validationService.nonselfBefore[i] <= i);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R19": {
+    "kind": "requires",
+    "text": "0 <= validationService.failureIndex && validationService.failureIndex < validationService.guards.seq.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R20": {
+    "kind": "requires",
+    "text": "revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex+1] <= revRegEntryRegistry.answers.length;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R21": {
+    "kind": "requires",
+    "text": "(\\forall int i; 0 <= i && i < validationService.failureIndex; (\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput) ? validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length]).version : (((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]) != null && \\typeof(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]])) == \\type(RevRegEntryRecord) && validationService.typedGuards[i].expectedVersion == ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[i]]).version)));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.R22": {
+    "kind": "requires",
+    "text": "!(\\dl_strContent(validationService.typedGuards[validationService.failureIndex].revRegDefId) == \\dl_strContent(validationService.idOutput)) && ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex]]) != null && \\typeof(((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex]])) == \\type(RevRegEntryRecord) && validationService.typedGuards[validationService.failureIndex].expectedVersion != ((RevRegEntryRecord)revRegEntryRegistry.answers[revRegEntryRegistry.reads.length+1+validationService.nonselfBefore[validationService.failureIndex]]).version;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"FAILED_PRECONDITION\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S02": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.reads.length == \\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[validationService.failureIndex+1];",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S03": {
+    "kind": "signals",
+    "text": "(VdrException e) \\seq_sub(revRegEntryRegistry.reads,0,\\old(revRegEntryRegistry.reads.length)) == \\old(revRegEntryRegistry.reads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S04": {
+    "kind": "signals",
+    "text": "(VdrException e) (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)] == validationService.idOutput;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S05": {
+    "kind": "signals",
+    "text": "(VdrException e) (\\forall int i; 0 <= i && i < validationService.failureIndex+1; !(\\dl_strContent(validationService.typedGuards[i].revRegDefId) == \\dl_strContent(validationService.idOutput)) ==> (Object)revRegEntryRegistry.reads[\\old(revRegEntryRegistry.reads.length)+1+validationService.nonselfBefore[i]] == validationService.typedGuards[i].revRegDefId);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S06": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegDefRegistry.reads == \\seq_concat(\\old(revRegDefRegistry.reads),\\seq_singleton(validationService.idOutput));",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.S07": {
+    "kind": "signals",
+    "text": "(VdrException e) revRegEntryRegistry.existsReads == \\old(revRegEntryRegistry.existsReads);",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-mismatch-other.A01": {
+    "kind": "assignable",
+    "text": "revRegEntryRegistry.reads, revRegDefRegistry.reads;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.R01": {
+    "kind": "requires",
+    "text": "validationService.idValid && validationService.accumValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.R02": {
+    "kind": "requires",
+    "text": "validationService.idOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.R03": {
+    "kind": "requires",
+    "text": "validationService.accumOutput != null;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.R04": {
+    "kind": "requires",
+    "text": "!validationService.guardsValid;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"INVALID_ARGUMENT\";",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S9-invalid-parser.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "RevRegEntryService",
+    "method": "updateRevRegEntryIfGuardsUnchanged"
+  },
+  "S3-owner-normal.R01": {
+    "kind": "requires",
+    "text": "ownerId != null && !ownerId.blank && \\dl_strContent(ownerId) == \\dl_strContent(signerDid);",
+    "class": "AuthorizationService",
+    "method": "assertSignerOwnsEntity"
+  },
+  "S3-owner-normal.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "AuthorizationService",
+    "method": "assertSignerOwnsEntity"
+  },
+  "S3-owner-reject.R01": {
+    "kind": "requires",
+    "text": "ownerId == null || ownerId.blank || \\dl_strContent(ownerId) != \\dl_strContent(signerDid);",
+    "class": "AuthorizationService",
+    "method": "assertSignerOwnsEntity"
+  },
+  "S3-owner-reject.O01": {
+    "kind": "signals_only",
+    "text": "VdrException;",
+    "class": "AuthorizationService",
+    "method": "assertSignerOwnsEntity"
+  },
+  "S3-owner-reject.S01": {
+    "kind": "signals",
+    "text": "(VdrException e) e.errorCode == \"UNAUTHORIZED\";",
+    "class": "AuthorizationService",
+    "method": "assertSignerOwnsEntity"
+  },
+  "S3-owner-reject.A01": {
+    "kind": "assignable",
+    "text": "\\nothing;",
+    "class": "AuthorizationService",
+    "method": "assertSignerOwnsEntity"
+  }
+}

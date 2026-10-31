@@ -1,0 +1,8 @@
+/build/
+/logs/
+/result.json
+/theorem-inventory.json
+*.olean
+*.ilean
+*.tmp
+__pycache__/

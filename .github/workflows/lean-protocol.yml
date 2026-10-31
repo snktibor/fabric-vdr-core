@@ -1,0 +1,44 @@
+name: Lean proofs
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: verification/lean
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned Lean toolchain
+        run: bash scripts/setup-toolchain.sh
+      - name: Protocol model
+        run: bash scripts/verify.sh
+      - name: A failed replay removes an earlier success
+        run: python3 scripts/test-failure-invalidation.py
+      - name: Concrete ledger refinement, with a relocated replay
+        run: python3 ../ledger-refinement/scripts/replay.py --check-package
+      - name: Service-trace bridge
+        run: python3 ../service-trace-bridge/scripts/replay.py
+      - name: Keep the theorem inventories and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean-proofs
+          path: |
+            verification/lean/result.json
+            verification/lean/THEOREMS.md
+            verification/lean/theorem-inventory.json
+            verification/lean/logs/
+            verification/ledger-refinement/result.json
+            verification/ledger-refinement/THEOREMS.md
+            verification/ledger-refinement/theorem-inventory.json
+            verification/ledger-refinement/logs/
+            verification/ledger-refinement/artifacts/
+            verification/service-trace-bridge/result.json
+            verification/service-trace-bridge/theorem-inventory.json
+            verification/service-trace-bridge/logs/
