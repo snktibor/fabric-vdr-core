@@ -1,6 +1,13 @@
 # fabric-vdr-core
 
-Java chaincode implementing a **Verifiable Data Registry (VDR) for AnonCreds v2** on
+<!-- After the first Zenodo release, replace TODO with the concept DOI from the record's DOI badge dialog
+     and uncomment the badge.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.TODO.svg)](https://doi.org/10.5281/zenodo.TODO)
+-->
+
+This repository is the artifact of the TDK paper
+*Decentralized verifiable credential revocation with atomic test-and-set for cross-organizational settings* (Tibor Sinka, BME, 2026).
+It holds Java chaincode implementing a **Verifiable Data Registry (VDR) for AnonCreds v2** on
 Hyperledger Fabric, together with a Cucumber-based end-to-end test suite that runs
 against a real Fabric network.
 
@@ -30,8 +37,6 @@ AnonCreds v2 reference implementation actually ships.
 
 [![CI](https://github.com/snktibor/fabric-vdr-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/snktibor/fabric-vdr-core/actions/workflows/ci.yml?query=branch%3Amain)
 
-This repository is the artifact of the TDK paper *Decentralized verifiable credential
-revocation with atomic test-and-set for cross-organizational settings* (Tibor Sinka, BME, 2026).
 The [CI run on `main`](https://github.com/snktibor/fabric-vdr-core/actions/workflows/ci.yml?query=branch%3Amain)
 shows every check below on a GitHub runner: the unit tests, the Lean proofs, the E2E suite on a
 live Fabric network, and a short scalability run, whose CSVs it keeps as an artifact.
@@ -45,7 +50,8 @@ docker run --rm fabric-vdr-reproduce
 
 This runs the unit tests, builds the Lean model and proofs of
 [`argos-formal`](https://github.com/snktibor/argos-formal) at the commit the paper cites, checks
-that each of its eight mutations breaks a proof, and prints the committed scalability results.
+that each of its eight mutations breaks a proof, prints the committed scalability results, and
+regenerates from them the CSVs that the paper's figures plot (`just figures`).
 
 The E2E suite and the measurement need a live Fabric network, so they run on the host. With
 JDK 17, Maven, Docker, [Fablo 2.6.0](https://github.com/hyperledger-labs/fablo),
@@ -65,7 +71,29 @@ just reproduce           # the same with the full matrix, about an hour per topo
 | Cost of the guards, throughput under load, and rejections under contention (W1 to W3) | `just benchmark` | `results/<topology>/<run>/summary.csv` ([`results/`](results/README.md), [`bench/`](bench/README.md)) |
 | Under a crashed peer, organisation, Raft leader or Raft majority, at most one revocation of each mutually guarded pair commits, and Org1 alone cannot change the ledger | `just robustness` | `pairs.csv`, `faults.csv` and `solo.csv` of the `3org-raft` runs in [`results/`](results/README.md); `bench/analyze-faults.py` summarises them |
 
-**What does not reproduce exactly.** Latency and throughput depend on the machine: the paper's
+## Results map
+
+One row per figure and table of the paper's evaluation chapter. Times are wall-clock: the CI's GitHub
+runner for the first rows, the measurement machine below for `just benchmark` and `just robustness`.
+
+| Paper | Recipe | Output | Time |
+|---|---|---|---|
+| Table "Every security goal and requirement holds for guarded revocation" (Correctness, RQ1) | `just test`, `just formal`, `just e2e` | `target/surefire-reports/` (unit tests), the console output of `lake build` and `mutations/check.sh`, `target/failsafe-reports/` (E2E scenarios) | `just test` under 1 min; `just check` in the reproduce image under 1 min after a 3 min image build; `just e2e` about 12 min |
+| Figure "On the test network, the double award commits twice without guards and once with mutual guards" (Correctness, RQ1) | `just e2e` | scenarios B1u and B1 | about 12 min (whole suite) |
+| Figure of the scalability results (Scalability, RQ2) | `just figures` from the committed runs; `just benchmark` for new runs | `out/figures/data/scalability/W1.csv`, `W2.csv`, `W3.csv`; new runs under `results/<topology>/` | under 1 s; about 2 h |
+| Table "Under every fault, at most one revocation of each pair committed" and the robustness figure (Robustness, RQ3) | `just figures` from the committed runs; `just robustness` for new runs | `out/figures/data/robustness/faults-deadline-60s.csv`, `faults-deadline-2s.csv`, `timeline-5s.csv`; the totals that `bench/analyze-faults.py` prints | under 1 s; about 50 min |
+| Table of the evaluation targets | none: it collects the observations of the rows above | n/a | n/a |
+
+On the committed runs, `just figures` writes the same bytes as the CSVs that the paper's figures read.
+[`results/README.md`](results/README.md) names the run behind each figure.
+
+Measurement machine: BME Cloud VM, 8 vCPU, 16 GB, Linux 6.8 (Ubuntu), Docker 29.9.2, OpenJDK 17.0.20.1,
+Hyperledger Fabric 2.5.15 (peer and orderer) through Fablo 2.6.0. Each run's `environment.txt` records
+the exact images.
+
+## What does not reproduce exactly
+
+Latency and throughput depend on the machine: the paper's
 numbers come from the runs in [`results/`](results/README.md), each with its `environment.txt`,
 and the CI runner only shows that the measurement runs. In B1 either issuer may win, and no
 assertion names the winner. In the robustness runs, how long a Raft fault stalls the clients depends on
@@ -73,9 +101,37 @@ their commit-status deadline (`COMMIT_STATUS_S`), so the paper reports those fau
 `VDR_DEMO_STAGE3_DIR` points at the output of
 [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo).
 
+## Results tag
+
+The paper's numbers come from the runs in [`results/`](results/README.md), measured with the chaincode
+and benchmark at commits `38e76f5` and `2728a55`. Release `v1.0.0` (Zenodo version TODO) archives them
+together with the recipes above. Later versions change packaging and documentation, never the
+committed results.
+
+## Cite
+
+Cite the concept DOI, which resolves to the newest version; the results tag above names the version
+the paper measured. [CITATION.cff](CITATION.cff) holds the same metadata.
+
+```bibtex
+@software{sinka2026fabricvdrcore,
+  author    = {Sinka, Tibor},
+  title     = {fabric-vdr-core: an {AnonCreds} v2 Verifiable Data Registry chaincode for {Hyperledger} {Fabric}},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {1.0.0},
+  doi       = {10.5281/zenodo.TODO},
+  url       = {https://doi.org/10.5281/zenodo.TODO}
+}
+```
+
 ## Contents
 
 - [Reproduce](#reproduce)
+- [Results map](#results-map)
+- [What does not reproduce exactly](#what-does-not-reproduce-exactly)
+- [Results tag](#results-tag)
+- [Cite](#cite)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
 - [Unit tests](#unit-tests)
@@ -694,8 +750,6 @@ same registry are serialized by Fabric's MVCC validation.
 The objects-method specification this chaincode implements, including the conditional
 update (`updateRevRegEntryIfGuardsUnchanged`), is
 [Hyperledger Fabric AnonCreds Method](docs/anoncreds-method.md).
-
-To cite this software, use the metadata in [CITATION.cff](CITATION.cff).
 
 ## License
 
