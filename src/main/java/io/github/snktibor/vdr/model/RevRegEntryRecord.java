@@ -22,17 +22,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class RevRegEntryRecord {
 
     // Parent revocation registry definition this entry belongs to.
-    private String revRegDefId;
+    private /*@ spec_public nullable @*/ String revRegDefId;
     // Off-chain-computed compressed G1 accumulator point (lowercase hex), stored verbatim.
-    private String accumValue;
+    private /*@ spec_public nullable @*/ String accumValue;
     // Monotonically increasing audit counter; 0 at genesis, +1 per update.
-    private long version;
+    private /*@ spec_public @*/ long version;
     // Client-declared creation time (ISO-8601); audit metadata, set server-side.
-    private String createdAt;
+    private /*@ spec_public nullable @*/ String createdAt;
     // Client-declared last-mutation time (ISO-8601); audit metadata, set server-side.
-    private String updatedAt;
+    private /*@ spec_public nullable @*/ String updatedAt;
 
     /** Creates an empty record instance for JSON deserialization frameworks. */
+    /*@ public normal_behavior
+    @ ensures revRegDefId == null && accumValue == null && version == 0;
+    @ ensures createdAt == null && updatedAt == null;
+    @ assignable this.*;
+    @*/
     public RevRegEntryRecord() {}
 
     /**
@@ -45,8 +50,15 @@ public class RevRegEntryRecord {
      * @param accumValue accumulator value submitted by the issuer (compressed G1 point as hex)
      * @param version monotonically increasing audit counter
      */
+    /*@ public normal_behavior
+    @ ensures this.revRegDefId == revRegDefId && this.accumValue == accumValue;
+    @ ensures this.version == version && createdAt == null && updatedAt == null;
+    @ assignable this.*;
+    @*/
     public RevRegEntryRecord(
-            final String revRegDefId, final String accumValue, final long version) {
+            final /*@ nullable @*/ String revRegDefId,
+            final /*@ nullable @*/ String accumValue,
+            final long version) {
         this.revRegDefId = revRegDefId;
         this.accumValue = accumValue;
         this.version = version;
@@ -57,7 +69,11 @@ public class RevRegEntryRecord {
      *
      * @return revocation registry definition identifier
      */
-    public String getRevRegDefId() {
+    /*@ public normal_behavior
+    @ ensures \result == revRegDefId;
+    @ assignable \nothing;
+    @*/
+    public /*@ nullable @*/ String getRevRegDefId() {
         return revRegDefId;
     }
 
@@ -66,7 +82,11 @@ public class RevRegEntryRecord {
      *
      * @param revRegDefId revocation registry definition identifier to assign
      */
-    public void setRevRegDefId(final String revRegDefId) {
+    /*@ public normal_behavior
+    @ ensures this.revRegDefId == revRegDefId;
+    @ assignable this.revRegDefId;
+    @*/
+    public void setRevRegDefId(final /*@ nullable @*/ String revRegDefId) {
         this.revRegDefId = revRegDefId;
     }
 
@@ -75,7 +95,11 @@ public class RevRegEntryRecord {
      *
      * @return verbatim off-chain-computed accumulator value
      */
-    public String getAccumValue() {
+    /*@ public normal_behavior
+    @ ensures \result == accumValue;
+    @ assignable \nothing;
+    @*/
+    public /*@ nullable @*/ String getAccumValue() {
         return accumValue;
     }
 
@@ -84,7 +108,11 @@ public class RevRegEntryRecord {
      *
      * @param accumValue verbatim off-chain-computed accumulator value
      */
-    public void setAccumValue(final String accumValue) {
+    /*@ public normal_behavior
+    @ ensures this.accumValue == accumValue;
+    @ assignable this.accumValue;
+    @*/
+    public void setAccumValue(final /*@ nullable @*/ String accumValue) {
         this.accumValue = accumValue;
     }
 
@@ -93,6 +121,10 @@ public class RevRegEntryRecord {
      *
      * @return audit counter, 0 at genesis and incremented per update
      */
+    /*@ public normal_behavior
+    @ ensures \result == version;
+    @ assignable \nothing;
+    @*/
     public long getVersion() {
         return version;
     }
@@ -102,6 +134,10 @@ public class RevRegEntryRecord {
      *
      * @param version audit counter value
      */
+    /*@ public normal_behavior
+    @ ensures this.version == version;
+    @ assignable this.version;
+    @*/
     public void setVersion(final long version) {
         this.version = version;
     }
@@ -116,7 +152,11 @@ public class RevRegEntryRecord {
      *
      * @return ISO-8601 creation time, never {@code null} for a persisted record
      */
-    public String getCreatedAt() {
+    /*@ public normal_behavior
+    @ ensures \result == createdAt;
+    @ assignable \nothing;
+    @*/
+    public /*@ nullable @*/ String getCreatedAt() {
         return createdAt;
     }
 
@@ -125,7 +165,11 @@ public class RevRegEntryRecord {
      *
      * @param createdAt ISO-8601 transaction time
      */
-    public void setCreatedAt(final String createdAt) {
+    /*@ public normal_behavior
+    @ ensures this.createdAt == createdAt;
+    @ assignable this.createdAt;
+    @*/
+    public void setCreatedAt(final /*@ nullable @*/ String createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -137,7 +181,11 @@ public class RevRegEntryRecord {
      *
      * @return ISO-8601 last-mutation time, never {@code null} for a persisted record
      */
-    public String getUpdatedAt() {
+    /*@ public normal_behavior
+    @ ensures \result == updatedAt;
+    @ assignable \nothing;
+    @*/
+    public /*@ nullable @*/ String getUpdatedAt() {
         return updatedAt;
     }
 
@@ -146,7 +194,11 @@ public class RevRegEntryRecord {
      *
      * @param updatedAt ISO-8601 transaction time
      */
-    public void setUpdatedAt(final String updatedAt) {
+    /*@ public normal_behavior
+    @ ensures this.updatedAt == updatedAt;
+    @ assignable this.updatedAt;
+    @*/
+    public void setUpdatedAt(final /*@ nullable @*/ String updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

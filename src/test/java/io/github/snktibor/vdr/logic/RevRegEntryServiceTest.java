@@ -1,7 +1,9 @@
 package io.github.snktibor.vdr.logic;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,6 +62,8 @@ class RevRegEntryServiceTest {
     private static final String GUARD_TWO_ID =
             OTHER_DID + "/anoncreds/v2/REV_REG_DEF/018f6c0a-53b9-7e88-8f21-c06d95e4718b";
     private static final Instant TX_TIME = Instant.parse("2026-07-12T10:15:30Z");
+    private static final String CREATED_AT = "2026-07-10T08:00:00Z";
+    private static final String PREVIOUS_UPDATED_AT = "2026-07-11T09:00:00Z";
     private static final String GENESIS_ACCUM = TestVectors.G1_GENERATOR;
     private static final String NEXT_ACCUM = TestVectors.G1_TIMES_2;
     private static final String HIJACK_ACCUM = TestVectors.G1_TIMES_3;
@@ -109,6 +113,15 @@ class RevRegEntryServiceTest {
         assertEquals(GENESIS_ACCUM, captor.getValue().getAccumValue());
         assertEquals(TX_TIME.toString(), captor.getValue().getCreatedAt());
         assertEquals(TX_TIME.toString(), captor.getValue().getUpdatedAt());
+        verify(revRegEntryRegistry, times(1)).put(anyString(), any());
+        verify(eventEmitter)
+                .emit(
+                        VdrEvents.REV_REG_ENTRY_CREATED,
+                        Map.of(
+                                "revRegDefId", REV_REG_DEF_ID,
+                                "accumValue", GENESIS_ACCUM,
+                                "version", 0L));
+        verify(eventEmitter, times(1)).emit(anyString(), any());
     }
 
     /** Verifies genesis creation emits the accumulator event carrying the full payload. */
@@ -187,6 +200,8 @@ class RevRegEntryServiceTest {
                                 revRegEntryService.createRevRegEntry(
                                         ISSUER_DID, REV_REG_DEF_ID, GENESIS_ACCUM));
         assertEquals("ALREADY_EXISTS", exception.getErrorCode());
+        verify(revRegEntryRegistry, never()).put(anyString(), any());
+        verify(eventEmitter, never()).emit(anyString(), any());
     }
 
     /** Verifies updates replace the accumulator value verbatim and increment the version. */
@@ -204,6 +219,142 @@ class RevRegEntryServiceTest {
         assertEquals(NEXT_ACCUM, captor.getValue().getAccumValue());
         assertEquals(4L, captor.getValue().getVersion());
         assertEquals(TX_TIME.toString(), captor.getValue().getUpdatedAt());
+    }
+
+    /** Verifies the last representable increment succeeds through the plain update path. */
+    @Test
+    void updateRevRegEntryAdvancesMaxMinusOneToMax() {
+        final RevRegEntryRecord existing = stubAuditedTarget(Long.MAX_VALUE - 1);
+
+        final RevRegEntryRecord result =
+                revRegEntryService.updateRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM);
+
+        assertSame(existing, result);
+        assertMaxVersionUpdate(existing);
+    }
+
+    /** Verifies passing guards retain their pre-update versions at the upper boundary. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedAdvancesMaxMinusOneToMax() {
+        final RevRegEntryRecord existing = stubAuditedTarget(Long.MAX_VALUE - 1);
+        stubGuardedEntry(GUARD_ONE_ID, 7L);
+
+        final GuardedRevRegEntryUpdate result =
+                guardedUpdate(
+                        guards(guard(REV_REG_DEF_ID, Long.MAX_VALUE - 1), guard(GUARD_ONE_ID, 7L)));
+
+        assertSame(existing, result.getEntry());
+        assertMaxVersionUpdate(existing);
+        assertEquals(2, result.getCheckedGuards().size());
+        assertEquals(REV_REG_DEF_ID, result.getCheckedGuards().get(0).getRevRegDefId());
+        assertEquals(Long.MAX_VALUE - 1, result.getCheckedGuards().get(0).getCheckedVersion());
+        assertEquals(GUARD_ONE_ID, result.getCheckedGuards().get(1).getRevRegDefId());
+        assertEquals(7L, result.getCheckedGuards().get(1).getCheckedVersion());
+        verify(revRegEntryRegistry, times(1)).get(REV_REG_DEF_ID);
+        verify(revRegEntryRegistry).get(GUARD_ONE_ID);
+    }
+
+    /** Verifies overflow rejection leaves the plain update's target and adapters untouched. */
+    @Test
+    void updateRevRegEntryRejectsMaxWithoutMutation() {
+        assertPlainVersionRejected(Long.MAX_VALUE);
+    }
+
+    /** Verifies overflow is rejected after a passing external guard without changing the target. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMaxWithoutMutation() {
+        assertGuardedVersionRejected(Long.MAX_VALUE);
+    }
+
+    /** Verifies malformed negative state cannot be repaired silently by incrementing to zero. */
+    @Test
+    void updateRevRegEntryRejectsNegativeOneWithoutMutation() {
+        assertPlainVersionRejected(-1L);
+    }
+
+    /** Verifies negative target rejection is reached after a valid external guard passes. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsNegativeOneWithoutMutation() {
+        assertGuardedVersionRejected(-1L);
+    }
+
+    /** Verifies rejection includes the lowest representable stored version. */
+    @Test
+    void updateRevRegEntryRejectsMinWithoutMutation() {
+        assertPlainVersionRejected(Long.MIN_VALUE);
+    }
+
+    /** Verifies the guarded path rejects the lowest representable stored target version. */
+    @Test
+    void updateRevRegEntryIfGuardsUnchangedRejectsMinWithoutMutation() {
+        assertGuardedVersionRejected(Long.MIN_VALUE);
+    }
+
+    /** Gives the target distinct existing timestamps so unintended changes are visible. */
+    private RevRegEntryRecord stubAuditedTarget(final long version) {
+        final RevRegEntryRecord existing = stubOwnedTarget(version);
+        existing.setCreatedAt(CREATED_AT);
+        existing.setUpdatedAt(PREVIOUS_UPDATED_AT);
+        return existing;
+    }
+
+    /** Checks the entire successful boundary state and exactly one registry write and event. */
+    private void assertMaxVersionUpdate(final RevRegEntryRecord existing) {
+        assertAll(
+                () -> assertEquals(REV_REG_DEF_ID, existing.getRevRegDefId()),
+                () -> assertEquals(NEXT_ACCUM, existing.getAccumValue()),
+                () -> assertEquals(Long.MAX_VALUE, existing.getVersion()),
+                () -> assertEquals(CREATED_AT, existing.getCreatedAt()),
+                () -> assertEquals(TX_TIME.toString(), existing.getUpdatedAt()));
+        verify(revRegEntryRegistry).put(REV_REG_DEF_ID, existing);
+        verify(revRegEntryRegistry, times(1)).put(anyString(), any());
+        verify(eventEmitter)
+                .emit(
+                        VdrEvents.REV_REG_ENTRY_UPDATED,
+                        Map.of(
+                                "revRegDefId", REV_REG_DEF_ID,
+                                "accumValue", NEXT_ACCUM,
+                                "version", Long.MAX_VALUE));
+        verify(eventEmitter, times(1)).emit(anyString(), any());
+    }
+
+    /** Runs a plain update against malformed or exhausted state. */
+    private void assertPlainVersionRejected(final long version) {
+        final RevRegEntryRecord existing = stubAuditedTarget(version);
+        assertVersionRejectedWithoutMutation(
+                existing,
+                () -> revRegEntryService.updateRevRegEntry(ISSUER_DID, REV_REG_DEF_ID, NEXT_ACCUM));
+    }
+
+    /** Uses a passing external guard to reach target version validation on the guarded path. */
+    private void assertGuardedVersionRejected(final long version) {
+        final RevRegEntryRecord existing = stubAuditedTarget(version);
+        stubGuardedEntry(GUARD_ONE_ID, 7L);
+        assertVersionRejectedWithoutMutation(
+                existing, () -> guardedUpdate(guards(guard(GUARD_ONE_ID, 7L))));
+        verify(revRegEntryRegistry).get(GUARD_ONE_ID);
+    }
+
+    /** Snapshots every target field and requires rejection before mutation, writes or events. */
+    private void assertVersionRejectedWithoutMutation(
+            final RevRegEntryRecord existing, final Runnable update) {
+        final String revRegDefId = existing.getRevRegDefId();
+        final String accumValue = existing.getAccumValue();
+        final long version = existing.getVersion();
+        final String createdAt = existing.getCreatedAt();
+        final String updatedAt = existing.getUpdatedAt();
+
+        final VdrException exception = assertThrows(VdrException.class, update::run);
+
+        assertAll(
+                () -> assertEquals("FAILED_PRECONDITION", exception.getErrorCode()),
+                () -> assertEquals(revRegDefId, existing.getRevRegDefId()),
+                () -> assertEquals(accumValue, existing.getAccumValue()),
+                () -> assertEquals(version, existing.getVersion()),
+                () -> assertEquals(createdAt, existing.getCreatedAt()),
+                () -> assertEquals(updatedAt, existing.getUpdatedAt()),
+                () -> verify(revRegEntryRegistry, never()).put(anyString(), any()),
+                () -> verify(eventEmitter, never()).emit(anyString(), any()));
     }
 
     /** Verifies accumulator updates emit the witness-refresh event with the new value. */
