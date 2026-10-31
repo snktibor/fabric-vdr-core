@@ -5,3 +5,73 @@
 d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:487
 d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:686
 d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:759
+
+# Verification evidence reviewed in verification/PUBLICATION-AUDIT.md. Exact findings only.
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/lean/toolchain-lock.json:generic-api-key:153
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/lean/toolchain-lock.json:generic-api-key:156
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/lean/toolchain-lock.json:generic-api-key:450
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/lean/toolchain-lock.json:generic-api-key:515
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/lean/toolchain-lock.json:generic-api-key:935
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/15.json:jwt-base64:130
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/15.json:jwt-base64:298
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/15.json:jwt:130
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/15.json:jwt:298
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/21.json:jwt-base64:131
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/21.json:jwt-base64:300
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/21.json:jwt:131
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/21.json:jwt:300
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/43.json:jwt-base64:130
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/43.json:jwt-base64:298
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/43.json:jwt:130
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/43.json:jwt:298
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/54.json:jwt-base64:138
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/54.json:jwt-base64:314
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/54.json:jwt:138
+# Expired disposable E2E ES256 DID-JWT; scenario-generated signing key is not committed.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/blocks/54.json:jwt:314
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/class-correspondence.json:generic-api-key:17
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/class-correspondence.json:generic-api-key:40
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/deployment-manifest.json:generic-api-key:14
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/deployment-manifest.json:generic-api-key:21
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/deployment-manifest.json:generic-api-key:52
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/source-hashes.json:generic-api-key:13
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/source-hashes.json:generic-api-key:20
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/live-fabric/evidence/20261026/source-hashes.json:generic-api-key:51
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/service-trace-bridge/toolchain-lock.json:generic-api-key:153
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/service-trace-bridge/toolchain-lock.json:generic-api-key:156
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/service-trace-bridge/toolchain-lock.json:generic-api-key:450
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/service-trace-bridge/toolchain-lock.json:generic-api-key:515
+# SHA-256 file/toolchain digest (64 hex characters), not an API credential.
+db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/service-trace-bridge/toolchain-lock.json:generic-api-key:935
