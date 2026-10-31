@@ -20,6 +20,10 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
+      # Zenodo reads .zenodo.json at every release and rejects the release if it does not parse.
+      - name: Validate .zenodo.json
+        run: python3 -m json.tool .zenodo.json > /dev/null
+
       - name: Check Code Formatting (Spotless)
         run: mvn -B spotless:check
 

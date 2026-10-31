@@ -1,0 +1,26 @@
+{
+  "title": "fabric-vdr-core: an AnonCreds v2 Verifiable Data Registry chaincode for Hyperledger Fabric",
+  "description": "Java chaincode for Hyperledger Fabric that implements a Verifiable Data Registry for AnonCreds v2, with a guarded revocation update that commits at most one of two mutually guarded revocations. This is the artifact of the TDK paper <i>Decentralized verifiable credential revocation with atomic test-and-set for cross-organizational settings</i> (Tibor Sinka, BME, 2026): the chaincode, its unit and end-to-end tests, the benchmark scripts, and the raw scalability and robustness results that the paper reports.",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "publication_date": "TODO-YYYY-MM-DD",
+  "license": "Apache-2.0",
+  "creators": [
+    { "name": "Sinka, Tibor", "affiliation": "Budapest University of Technology and Economics" }
+  ],
+  "contributors": [
+    { "name": "Farkas, Martin", "affiliation": "Budapest University of Technology and Economics", "type": "Supervisor" }
+  ],
+  "keywords": [
+    "hyperledger-fabric",
+    "verifiable-data-registry",
+    "anoncreds",
+    "self-sovereign-identity",
+    "revocation",
+    "chaincode"
+  ],
+  "related_identifiers": [
+    { "identifier": "https://github.com/snktibor/argos-formal", "relation": "requires", "resource_type": "software", "scheme": "url" },
+    { "identifier": "https://github.com/snktibor/anoncreds-vdr-demo", "relation": "references", "resource_type": "software", "scheme": "url" }
+  ]
+}

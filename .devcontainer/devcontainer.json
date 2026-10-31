@@ -1,0 +1,12 @@
+{
+  "name": "fabric-vdr-core",
+  "image": "mcr.microsoft.com/devcontainers/java:1-17-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": { "version": "none", "installMaven": "true" },
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/guiyomh/features/just:0": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": { "vscode": { "extensions": ["vscjava.vscode-java-pack"] } },
+  "postCreateCommand": "sudo curl -sSfL https://github.com/hyperledger-labs/fablo/releases/download/2.6.0/fablo.sh -o /usr/local/bin/fablo && sudo chmod +x /usr/local/bin/fablo && just --list"
+}

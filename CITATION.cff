@@ -2,6 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using these metadata."
 title: "fabric-vdr-core: an AnonCreds v2 Verifiable Data Registry chaincode for Hyperledger Fabric"
 type: software
+version: "1.0.0"
+# date-released: YYYY-MM-DD   Set with the v1.0.0 release, the same date as publication_date in .zenodo.json.
 authors:
   - family-names: Sinka
     given-names: Tibor
