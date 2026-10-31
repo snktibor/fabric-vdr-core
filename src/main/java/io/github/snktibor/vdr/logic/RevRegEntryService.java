@@ -120,7 +120,8 @@ public class RevRegEntryService {
      *     G1 point as 96 lowercase hex characters)
      * @return updated and persisted revocation registry entry record
      * @throws VdrException if validation fails, the entry or its parent definition is missing, the
-     *     parent definition records no owner, or the signer does not own the parent definition
+     *     parent definition records no owner, the signer does not own the parent definition, or the
+     *     stored version is negative or exhausted ({@code FAILED_PRECONDITION})
      */
     public RevRegEntryRecord updateRevRegEntry(
             final String signerDid, final String revRegDefId, final String newAccumValue) {
@@ -172,7 +173,8 @@ public class RevRegEntryService {
      * @throws VdrException {@code INVALID_ARGUMENT} if any argument or the guard list is malformed;
      *     {@code NOT_FOUND} if the entry, its parent definition, or any guarded entry is missing;
      *     {@code UNAUTHORIZED} if the signer does not own the parent definition; {@code
-     *     FAILED_PRECONDITION} if a guarded entry stands at a different version
+     *     FAILED_PRECONDITION} if a guarded entry stands at a different version or the target's
+     *     stored version is negative or exhausted
      */
     public GuardedRevRegEntryUpdate updateRevRegEntryIfGuardsUnchanged(
             final String signerDid,
@@ -312,21 +314,21 @@ public class RevRegEntryService {
      * @param revRegDefId normalized storage key of the entry
      * @param accumValue validated replacement accumulator value
      * @return the mutated and persisted entry record
-     * @throws VdrException {@code FAILED_PRECONDITION} if the entry is already at {@link
-     *     Long#MAX_VALUE}, before anything is written
+     * @throws VdrException {@code FAILED_PRECONDITION} if the stored version is negative or already
+     *     at {@link Long#MAX_VALUE}, before anything is written
      */
+    /*@ private exceptional_behavior
+    @ requires existing != null && \typeof(existing) == \type(RevRegEntryRecord);
+    @ requires existing.version < 0 || existing.version == Long.MAX_VALUE;
+    @ signals_only VdrException;
+    @ signals (VdrException e) e.errorCode == "FAILED_PRECONDITION";
+    @ assignable \nothing;
+    @*/
     private RevRegEntryRecord applyAccumulatorUpdate(
             final RevRegEntryRecord existing, final String revRegDefId, final String accumValue) {
-        if (existing.getVersion() == Long.MAX_VALUE) {
-            // One more increment would wrap to a negative version, and a guard pinned at an
-            // earlier version could then match again.
-            throw VdrException.failedPrecondition(
-                    "revocation registry entry '"
-                            + revRegDefId
-                            + "' is at the largest version and accepts no further update");
-        }
+        final long newVersion = RevRegEntryVersion.next(existing.getVersion());
         existing.setAccumValue(accumValue);
-        existing.setVersion(existing.getVersion() + 1);
+        existing.setVersion(newVersion);
         existing.setUpdatedAt(txTimeIso());
         revRegEntryRegistry.put(revRegDefId, existing);
         eventEmitter.emit(VdrEvents.REV_REG_ENTRY_UPDATED, entryEventPayload(existing));

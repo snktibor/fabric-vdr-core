@@ -1,0 +1,66 @@
+name: Reconstructed protocol contracts (Lean)
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  kernel-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: verification/lean
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned local Lean toolchain
+        run: bash scripts/setup-toolchain.sh
+      - name: Check frozen specifications, all proofs and transitive axioms
+        run: bash scripts/verify.sh
+      - name: Check failed reruns invalidate previous success
+        run: python3 scripts/test-failure-invalidation.py
+      - name: Prove concrete ledger refinement and check portable evidence
+        working-directory: verification/ledger-refinement
+        env:
+          RECONSTRUCTION_DIR: ${{ github.workspace }}/verification/lean
+        run: python3 scripts/replay.py --check-package
+      - name: Check the conditional service trace bridge
+        working-directory: verification/service-trace-bridge
+        env:
+          LEAN_TOOLCHAIN_DIR: ${{ github.workspace }}/verification/lean/tools/lean-4.23.0
+        run: |
+          python3 scripts/check-integrated-deps.py
+          python3 scripts/test-integrated-deps.py
+          python3 scripts/replay.py
+      - name: Retain source, theorem inventory and replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean-protocol-evidence
+          path: |
+            verification/lean/*.lean
+            verification/lean/*.md
+            verification/lean/*.json
+            verification/lean/lean-toolchain
+            verification/lean/frozen/
+            verification/lean/scripts/
+            verification/lean/logs/
+            verification/lean/SUCCESS
+            verification/ledger-refinement/*.lean
+            verification/ledger-refinement/*.md
+            verification/ledger-refinement/*.json
+            verification/ledger-refinement/lean-toolchain
+            verification/ledger-refinement/frozen/
+            verification/ledger-refinement/scripts/
+            verification/ledger-refinement/logs/
+            verification/ledger-refinement/artifacts/
+            verification/ledger-refinement/SUCCESS
+            verification/service-trace-bridge/*.lean
+            verification/service-trace-bridge/*.md
+            verification/service-trace-bridge/*.json
+            verification/service-trace-bridge/frozen/
+            verification/service-trace-bridge/deps/
+            verification/service-trace-bridge/inputs/
+            verification/service-trace-bridge/scripts/
+            verification/service-trace-bridge/logs/

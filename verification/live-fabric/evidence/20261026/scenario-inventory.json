@@ -1,0 +1,174 @@
+[
+  {
+    "file": "creddef_management.feature",
+    "scenario": "Scenario: 1. Publish a new credential definition"
+  },
+  {
+    "file": "creddef_management.feature",
+    "scenario": "Scenario: 2. Query an existing credential definition by ID"
+  },
+  {
+    "file": "creddef_management.feature",
+    "scenario": "Scenario: 3. List credential definitions returns previously created entries"
+  },
+  {
+    "file": "did_management.feature",
+    "scenario": "Scenario: 1. Register a new DID document and retrieve it"
+  },
+  {
+    "file": "did_management.feature",
+    "scenario": "Scenario: 2. Query an existing DID to get the document with public keys"
+  },
+  {
+    "file": "did_management.feature",
+    "scenario": "Scenario: 3. Deactivate a DID and prevent modifications"
+  },
+  {
+    "file": "did_management.feature",
+    "scenario": "Scenario: 4. Reject a protected DID transaction with an invalid JWT"
+  },
+  {
+    "file": "did_management.feature",
+    "scenario": "Scenario: 5. List all registered DIDs includes a newly created one"
+  },
+  {
+    "file": "did_management.feature",
+    "scenario": "Scenario: 6. Reject a DID document payload that is the JSON null literal"
+  },
+  {
+    "file": "revregdef_management.feature",
+    "scenario": "Scenario: 1. Publish a new revocation registry definition"
+  },
+  {
+    "file": "revregdef_management.feature",
+    "scenario": "Scenario: 2. Query an existing revocation registry definition by ID"
+  },
+  {
+    "file": "revregdef_management.feature",
+    "scenario": "Scenario: 3. List revocation registry definitions returns previously created entries"
+  },
+  {
+    "file": "revregentry_concurrency.feature",
+    "scenario": "Scenario: A0. Control \u2014 two updates to one registry, applied one after the other"
+  },
+  {
+    "file": "revregentry_concurrency.feature",
+    "scenario": "Scenario: A1. Two updates to one registry, endorsed against the same state and released together"
+  },
+  {
+    "file": "revregentry_concurrency.feature",
+    "scenario": "Scenario: A2. Two updates to one registry, each guarded by that same registry, released together"
+  },
+  {
+    "file": "revregentry_concurrency.feature",
+    "scenario": "Scenario: B0. Control \u2014 two independent registries, each issuer re-checks the other before acting"
+  },
+  {
+    "file": "revregentry_concurrency.feature",
+    "scenario": "Scenario: B1u. Characterisation \u2014 without a guard, both issuers observe the other unrevoked and both revocations commit"
+  },
+  {
+    "file": "revregentry_concurrency.feature",
+    "scenario": "Scenario: B1. With mutual guards, both issuers observe the other unrevoked and at most one revocation commits"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G1. A guarded update commits against an observed guard version and writes only its own registry"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G2. A guarded update is refused when the guard registry moved after it was observed"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G3a. A guard on the target itself commits while the target is still where the caller read it"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G3b. A guard on the target refuses a write computed from a version it has already left"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G3c-i. A malformed guard list is refused before anything is written \u2014 an empty list"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G3c-ii. A malformed guard list is refused before anything is written \u2014 the same registry twice"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G3c-iii. A malformed guard list is refused before anything is written \u2014 a duplicated JSON key"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G4. A registered non-owner is refused on the guarded path by the ownership check"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G5a. A guard naming an identifier that never existed is refused, not read as version zero"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G5b. A guard naming a definition whose genesis entry was never created is refused"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G5c. For a caller that does not own the target, the authorization failure wins over a missing guard"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G7. Several guards at their observed versions commit, and no guarded registry is written"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G8. Every element of the guard list is checked \u2014 only the last one is stale and the update is refused"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G9. A second guarded update continues from the first response alone"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G9b. The two version fields are not interchangeable \u2014 the checked version is refused for a guard on the target"
+  },
+  {
+    "file": "revregentry_guarded_update.feature",
+    "scenario": "Scenario: G9c. A version carried over from an earlier response is checked again, not assumed to still hold"
+  },
+  {
+    "file": "revregentry_lifecycle.feature",
+    "scenario": "Scenario: 1. Initialize the genesis accumulator for a revocation registry definition"
+  },
+  {
+    "file": "revregentry_lifecycle.feature",
+    "scenario": "Scenario: 2. Owner updates the accumulator value after a revocation"
+  },
+  {
+    "file": "revregentry_lifecycle.feature",
+    "scenario": "Scenario: 3. Reject an accumulator update from a registered non-owner issuer"
+  },
+  {
+    "file": "revregentry_lifecycle.feature",
+    "scenario": "Scenario: 4. An accumulator update emits a chaincode event carrying the new value"
+  },
+  {
+    "file": "revregentry_lifecycle.feature",
+    "scenario": "Scenario: 5. Accumulator history preserves overwritten values oldest first"
+  },
+  {
+    "file": "schema_management.feature",
+    "scenario": "Scenario: 1. Publish a new verifiable credential schema"
+  },
+  {
+    "file": "schema_management.feature",
+    "scenario": "Scenario: 2. Query and fetch a published schema by ID"
+  },
+  {
+    "file": "schema_management.feature",
+    "scenario": "Scenario: 3. Publish a schema signed with an explicitly held issuer key"
+  },
+  {
+    "file": "schema_management.feature",
+    "scenario": "Scenario: 4. List schemas returns previously created entries"
+  }
+]

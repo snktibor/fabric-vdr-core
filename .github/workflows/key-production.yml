@@ -1,0 +1,33 @@
+name: Production Java contracts (KeY)
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  prove-and-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+      - name: Prove exact production slice and replay saved proofs
+        run: python3 verification/key/run.py
+      - name: Retain source correspondence, proofs and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: key-production-evidence
+          path: |
+            target/key-production/result.json
+            target/key-production/failure.json
+            target/key-production/source-manifest.json
+            target/key-production/commands.json
+            target/key-production/source/
+            target/key-production/inputs/
+            target/key-production/proofs/
+            target/key-production/logs/

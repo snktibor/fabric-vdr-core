@@ -1,0 +1,49 @@
+{
+  "validated": true,
+  "focused": {
+    "scenarios": 6,
+    "passed": 6
+  },
+  "full": {
+    "scenarios": 43,
+    "passed": 43
+  },
+  "source_unchanged": true,
+  "production_classes_byte_identical_to_jar": 42,
+  "git_status_unchanged": true,
+  "initial_container_ids_and_states_unchanged": true,
+  "runtime_versions": {
+    "peer0": "peer:\n Version: v2.5.15\n Commit SHA: 83c7930\n Go version: go1.26.0\n OS/Arch: linux/amd64\n Chaincode:\n  Base Docker Label: org.hyperledger.fabric\n  Docker Namespace: hyperledger",
+    "peer1": "peer:\n Version: v2.5.15\n Commit SHA: 83c7930\n Go version: go1.26.0\n OS/Arch: linux/amd64\n Chaincode:\n  Base Docker Label: org.hyperledger.fabric\n  Docker Namespace: hyperledger",
+    "orderer": "orderer:\n Version: v2.5.15\n Commit SHA: 83c7930\n Go version: go1.26.0\n OS/Arch: linux/amd64"
+  },
+  "jar_sha256": "6bdc3cd68e46332be80dd6cbe445d0da6e9a61fc1139d5a8ae712e1250b8e6ca",
+  "source_tree_manifest_sha256": "aa6a851d3845dfe5c7a739d56ba714f039c8da9aaacf6167aa9a1652e388c0e2",
+  "concurrency_peer_blocks": [
+    15,
+    21,
+    43,
+    54
+  ],
+  "race_validation_codes": {
+    "A1": [
+      "VALID",
+      "MVCC_READ_CONFLICT"
+    ],
+    "A2": [
+      "VALID",
+      "MVCC_READ_CONFLICT"
+    ],
+    "B1u": [
+      "VALID",
+      "VALID"
+    ],
+    "B1": [
+      "MVCC_READ_CONFLICT",
+      "VALID"
+    ]
+  },
+  "peer_block_copies_identical": true,
+  "cleanup": "all recorded containers, network and custom chaincode image absent; downloaded official image cache retained",
+  "generated_crypto_absent": true
+}

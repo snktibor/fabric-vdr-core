@@ -1,0 +1,17 @@
+{
+  "kind": "independent reconstruction",
+  "original_lean_source": "Unavailable at reconstruction time; public upstream subsequently located",
+  "source_paper": {
+    "sha256": "3c88c43a07b3ae12e098d1e6465a37a3f36877649d0607f492782c9b47b65c9e",
+    "reviewed_focus": "lines 165-282",
+    "description": "TDK paper theory section, reviewed at reconstruction time; private source location omitted for publication"
+  },
+  "parent_charter_sha256": "bd3cb63270d0fb0851a7f1d1b072db5920375abd1d64be1ed10c60cfaa1ebc9a",
+  "decision_authority": {
+    "USER": "Overall verification argument and execution approved",
+    "AGENT": "Encoding/tool/evidence policy and optional extension, recorded in contracts"
+  },
+  "original_source_comparison": "OPEN",
+  "implementation_model_correspondence": "OPEN",
+  "public_original_model": "https://github.com/snktibor/argos-formal/tree/ae57a657d58a401d433a9475e4b5fc91e71baf37"
+}

@@ -1,0 +1,144 @@
+{
+  "A1": {
+    "transactions": [
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265\u0000",
+          "\u0000JWTNONCE\u0000c255b75376eb5d3ae4685fbfb210fa4ed5173f9b09b52d8401faf91c8abcfd6a\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u0000c255b75376eb5d3ae4685fbfb210fa4ed5173f9b09b52d8401faf91c8abcfd6a\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000"
+        ]
+      },
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265\u0000",
+          "\u0000JWTNONCE\u0000b7582eb8d4838845aff4b6ecf7f21683f131ab0afbb9ddadc1dd93db76223d71\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u0000b7582eb8d4838845aff4b6ecf7f21683f131ab0afbb9ddadc1dd93db76223d71\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000"
+        ]
+      }
+    ],
+    "read_against_other_write": [
+      [
+        "\u0000REVREGENTRY\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000"
+      ],
+      [
+        "\u0000REVREGENTRY\u0000did:vdr:01a17559-b04e-7596-8511-0043d20ab265/anoncreds/v2/REV_REG_DEF/01a17559-c89c-7b90-ba51-38cba2f85a5f\u0000"
+      ]
+    ]
+  },
+  "A2": {
+    "transactions": [
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0\u0000",
+          "\u0000JWTNONCE\u00006868d3cf09fb160f7a6d4c0fdf533326c8514e7ba216615f7ddf714efbe06b62\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u00006868d3cf09fb160f7a6d4c0fdf533326c8514e7ba216615f7ddf714efbe06b62\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000"
+        ]
+      },
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0\u0000",
+          "\u0000JWTNONCE\u0000fa71aa2900225c4b1cf48efce7bdc078236b9ace5b068f0652d485529520d748\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u0000fa71aa2900225c4b1cf48efce7bdc078236b9ace5b068f0652d485529520d748\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000"
+        ]
+      }
+    ],
+    "read_against_other_write": [
+      [
+        "\u0000REVREGENTRY\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000"
+      ],
+      [
+        "\u0000REVREGENTRY\u0000did:vdr:01a17559-e128-70af-8e21-41b6800cc2c0/anoncreds/v2/REV_REG_DEF/01a17559-f980-7e0b-ae60-993b016a57b4\u0000"
+      ]
+    ]
+  },
+  "B1u": {
+    "transactions": [
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a1755a-6b41-77a1-b728-84d0c4b30d84\u0000",
+          "\u0000JWTNONCE\u0000db9490478b98d205f43d5d796067b7eb4d5aae73315bce0d84de6cae4c9d83df\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a1755a-6b41-77a1-b728-84d0c4b30d84/anoncreds/v2/REV_REG_DEF/01a1755a-83a4-7eac-a29d-035d434ed7a2\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-6b41-77a1-b728-84d0c4b30d84/anoncreds/v2/REV_REG_DEF/01a1755a-83a4-7eac-a29d-035d434ed7a2\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u0000db9490478b98d205f43d5d796067b7eb4d5aae73315bce0d84de6cae4c9d83df\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-6b41-77a1-b728-84d0c4b30d84/anoncreds/v2/REV_REG_DEF/01a1755a-83a4-7eac-a29d-035d434ed7a2\u0000"
+        ]
+      },
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a1755a-93c2-7223-b07f-8feb6f79f630\u0000",
+          "\u0000JWTNONCE\u0000d858b19004835fbd9a7ad654c4c59eba5fc57f6a40fc278aaa2878b317b5ff76\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a1755a-93c2-7223-b07f-8feb6f79f630/anoncreds/v2/REV_REG_DEF/01a1755a-abe7-7894-aed2-2d21d52a32a2\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-93c2-7223-b07f-8feb6f79f630/anoncreds/v2/REV_REG_DEF/01a1755a-abe7-7894-aed2-2d21d52a32a2\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u0000d858b19004835fbd9a7ad654c4c59eba5fc57f6a40fc278aaa2878b317b5ff76\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-93c2-7223-b07f-8feb6f79f630/anoncreds/v2/REV_REG_DEF/01a1755a-abe7-7894-aed2-2d21d52a32a2\u0000"
+        ]
+      }
+    ],
+    "read_against_other_write": [
+      [],
+      []
+    ]
+  },
+  "B1": {
+    "transactions": [
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a1755a-c456-79dd-a296-e1b5d2dbd70b\u0000",
+          "\u0000JWTNONCE\u0000bb8a40452980c0e183c16042a06540837b198a42eb8b7780600b56e3393fa973\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a1755a-c456-79dd-a296-e1b5d2dbd70b/anoncreds/v2/REV_REG_DEF/01a1755a-dc99-7fa9-8360-7b2e39ce5a5d\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-c456-79dd-a296-e1b5d2dbd70b/anoncreds/v2/REV_REG_DEF/01a1755a-dc99-7fa9-8360-7b2e39ce5a5d\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-ecc2-7c12-a31d-1a1e0c425480/anoncreds/v2/REV_REG_DEF/01a1755b-04ee-79df-b404-9d07e2d1d16c\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u0000bb8a40452980c0e183c16042a06540837b198a42eb8b7780600b56e3393fa973\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-c456-79dd-a296-e1b5d2dbd70b/anoncreds/v2/REV_REG_DEF/01a1755a-dc99-7fa9-8360-7b2e39ce5a5d\u0000"
+        ]
+      },
+      {
+        "reads": [
+          "\u0000DID\u0000did:vdr:01a1755a-ecc2-7c12-a31d-1a1e0c425480\u0000",
+          "\u0000JWTNONCE\u00000013265cc4a9eec4f7b7d777c9005837a29d8376905b6aae85536564a870f586\u0000",
+          "\u0000REVREGDEF\u0000did:vdr:01a1755a-ecc2-7c12-a31d-1a1e0c425480/anoncreds/v2/REV_REG_DEF/01a1755b-04ee-79df-b404-9d07e2d1d16c\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-c456-79dd-a296-e1b5d2dbd70b/anoncreds/v2/REV_REG_DEF/01a1755a-dc99-7fa9-8360-7b2e39ce5a5d\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-ecc2-7c12-a31d-1a1e0c425480/anoncreds/v2/REV_REG_DEF/01a1755b-04ee-79df-b404-9d07e2d1d16c\u0000"
+        ],
+        "writes": [
+          "\u0000JWTNONCE\u00000013265cc4a9eec4f7b7d777c9005837a29d8376905b6aae85536564a870f586\u0000",
+          "\u0000REVREGENTRY\u0000did:vdr:01a1755a-ecc2-7c12-a31d-1a1e0c425480/anoncreds/v2/REV_REG_DEF/01a1755b-04ee-79df-b404-9d07e2d1d16c\u0000"
+        ]
+      }
+    ],
+    "read_against_other_write": [
+      [
+        "\u0000REVREGENTRY\u0000did:vdr:01a1755a-ecc2-7c12-a31d-1a1e0c425480/anoncreds/v2/REV_REG_DEF/01a1755b-04ee-79df-b404-9d07e2d1d16c\u0000"
+      ],
+      [
+        "\u0000REVREGENTRY\u0000did:vdr:01a1755a-c456-79dd-a296-e1b5d2dbd70b/anoncreds/v2/REV_REG_DEF/01a1755a-dc99-7fa9-8360-7b2e39ce5a5d\u0000"
+      ]
+    ]
+  }
+}

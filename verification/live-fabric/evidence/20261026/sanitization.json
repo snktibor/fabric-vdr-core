@@ -1,0 +1,10 @@
+{
+  "removed_generated_directories": [
+    "data"
+  ],
+  "private_keys_retained": false,
+  "absent_after": [
+    "organizations",
+    "data"
+  ]
+}

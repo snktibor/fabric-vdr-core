@@ -1,0 +1,7 @@
+{
+  "reason": "Provenance-only correction requested by parent: operational requirements came from parent-agent brief/paper, not direct original-user choices. No definition or target change.",
+  "original_contract_sha256": "5c42b629bd2172fe7dc59f967fc58ba5989e146c74ef2670a7754532addbe617",
+  "corrected_contract_sha256": "d01164b6b92cf3bbca128214abdebbd07864598a71dce1bc46bdc7193d118450",
+  "unchanged_model_sha256": "6d0ab397ce16b757bc0761254afa38643f8224f09bcdd809a9f5d20c9d2126ba",
+  "proof_state_at_correction": "Seven core targets compiled once in logs/proofs-01.log; no further checking before provenance correction."
+}

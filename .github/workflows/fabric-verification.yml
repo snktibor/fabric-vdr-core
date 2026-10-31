@@ -1,0 +1,68 @@
+name: Isolated Fabric verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'verification/live-fabric/**'
+      - '.github/workflows/fabric-verification.yml'
+
+jobs:
+  runner-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install harness dependency in an isolated environment
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fabric-venv"
+          "$RUNNER_TEMP/fabric-venv/bin/pip" install PyYAML==6.0.3
+      - name: Check runner failure propagation and build overrides
+        run: '"$RUNNER_TEMP/fabric-venv/bin/python" verification/live-fabric/test_runner.py'
+
+  live-network:
+    if: github.event_name == 'workflow_dispatch'
+    needs: runner-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare the harness environment
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fabric-venv"
+          "$RUNNER_TEMP/fabric-venv/bin/pip" install PyYAML==6.0.3
+          echo "$RUNNER_TEMP/fabric-venv/bin" >> "$GITHUB_PATH"
+      - name: Build an isolated snapshot of this checkout
+        run: |
+          python3 verification/live-fabric/prepare_snapshot.py --repo "$GITHUB_WORKSPACE" --maven "$(command -v mvn)" > "$RUNNER_TEMP/snapshot.env"
+          cat "$RUNNER_TEMP/snapshot.env" >> "$GITHUB_ENV"
+      - name: Run focused and full scenarios, capture evidence and clean owned resources
+        env:
+          TDK_PROOF_REPO: ${{ github.workspace }}
+        run: python3 verification/live-fabric/reproduce.py
+      - name: Retain public run evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-fabric-evidence
+          path: |
+            verification/live-fabric/runs/*/results.json
+            verification/live-fabric/runs/*/REPORT.md
+            verification/live-fabric/runs/*/*-manifest.json
+            verification/live-fabric/runs/*/*-evidence.json
+            verification/live-fabric/runs/*/*-correspondence.json
+            verification/live-fabric/runs/*/*-cucumber.json
+            verification/live-fabric/runs/*/*-race-results.json
+            verification/live-fabric/runs/*/source-hashes.json
+            verification/live-fabric/runs/*/driver-exitcode.txt
+            verification/live-fabric/runs/*/blocks/
+            verification/live-fabric/runs/*/logs/
