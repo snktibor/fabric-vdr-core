@@ -11,9 +11,11 @@ The measurements the paper reports live here, one folder per run. `bench/run-mat
 The columns are described in [`bench/README.md`](../bench/README.md). `bench.log` is not committed
 (`*.log` is ignored). GitHub refuses files over 100 MB, so gzip a larger `transactions.csv`.
 
-`just results` prints every `summary.csv` in this folder; the reproduce image runs it too.
-`bench/aggregate.py results <dir>` turns the scalability runs into the CSVs behind the paper's
-scalability figure, and `bench/analyze-faults.py <run>` summarises a robustness run.
+`just results` prints every `summary.csv` in this folder. `just figures` regenerates from these runs
+the CSVs that the paper's scalability and robustness figures plot, into `out/figures/data/`, and leaves
+this folder untouched. It runs `bench/aggregate.py` on the scalability runs, `bench/analyze-faults.py`
+on the two robustness runs, and `bench/bin-timeline.py` for the fault timeline. The reproduce image
+runs both recipes.
 
 | Topology | Run | Machine | Commit | Used in the paper |
 |---|---|---|---|---|
