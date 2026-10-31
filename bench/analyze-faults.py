@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Summarises the robustness runs (WORKLOADS=F) of one results directory.
 
-Usage:  bench/analyze-faults.py results/3org-raft/<timestamp>
+Usage:  bench/analyze-faults.py results/3org-raft/<timestamp> [<out dir>]
         bench/analyze-faults.py --selftest
 
 Writes faults-summary.csv (one row per run) and timeline.csv (committed client transactions per
-second, relative to the moment the fault started) into the same directory, and prints the totals
-per fault. Standard library only.
+second, relative to the moment the fault started) into <out dir>, by default the run directory, and
+prints the totals per fault. `just figures` passes an out dir under out/, so it never writes into
+results/. Standard library only.
 """
 import csv
 import statistics
@@ -72,8 +73,10 @@ def timeline(fault, txs):
     return [(s, per_s[s]) for s in range(lo, hi)]
 
 
-def main(directory):
+def main(directory, out_dir=None):
     d = Path(directory)
+    out = Path(out_dir) if out_dir else d
+    out.mkdir(parents=True, exist_ok=True)
     faults = read(d / "faults.csv")
     txs, pairs = defaultdict(list), defaultdict(list)
     for t in read(d / "transactions.csv"):
@@ -83,11 +86,11 @@ def main(directory):
         pairs[p["run_id"]].append(p)
 
     rows = [summarise_run(f, txs[f["run_id"]], pairs[f["run_id"]]) for f in faults]
-    with open(d / "faults-summary.csv", "w", newline="") as f:
+    with open(out / "faults-summary.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    with open(d / "timeline.csv", "w", newline="") as f:
+    with open(out / "timeline.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["run_id", "fault", "repetition", "t_s", "committed"])
         for fr in faults:
@@ -140,7 +143,7 @@ def selftest():
 if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]:
         selftest()
-    elif len(sys.argv) == 2:
-        main(sys.argv[1])
+    elif len(sys.argv) in (2, 3):
+        main(*sys.argv[1:])
     else:
         sys.exit(__doc__)

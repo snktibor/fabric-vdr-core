@@ -79,8 +79,32 @@ results:
       cut -d, -f3- "$f" | column -t -s,
     done
 
+# The CSVs behind the paper's scalability and robustness figures, from the committed runs, into
+# out/figures/data/ in the layout of the paper's figures/data/. Python only; results/ stays untouched.
+figures:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=out/figures/data
+    rm -rf "$out" out/figures/faults-60s out/figures/faults-2s
+    mkdir -p "$out/scalability" "$out/robustness"
+    python3 bench/aggregate.py results "$out/scalability"
+    python3 bench/analyze-faults.py results/3org-raft/20261029-005129-bt250ms out/figures/faults-60s
+    python3 bench/analyze-faults.py results/3org-raft/20261029-110821-bt250ms out/figures/faults-2s
+    cp out/figures/faults-60s/faults-summary.csv "$out/robustness/faults-deadline-60s.csv"
+    cp out/figures/faults-2s/faults-summary.csv "$out/robustness/faults-deadline-2s.csv"
+    python3 bench/bin-timeline.py \
+      out/figures/faults-60s/timeline.csv:F-org-rep2:org \
+      out/figures/faults-2s/timeline.csv:F-leader-rep1:leader \
+      out/figures/faults-2s/timeline.csv:F-quorum-rep1:quorum > "$out/robustness/timeline-5s.csv"
+    echo "Wrote $(find "$out" -name '*.csv' | wc -l) CSVs under $out"
+
+# Publication hygiene: private links, local paths, paper sources, agent commit identities and agent
+# files in the archive. Pass --strict before a release; the hygiene workflow adds gitleaks.
+hygiene *flags:
+    python3 scripts/hygiene.py {{flags}}
+
 # What the reproduce image runs: everything that needs no Fabric network.
-check: test formal results
+check: test formal results figures
 
 # Everything, live network included; `just reproduce --smoke` shortens the measurement.
 reproduce *flags: check e2e (benchmark flags)
