@@ -20,6 +20,10 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
+      # Zenodo reads .zenodo.json at every release and rejects the release if it does not parse.
+      - name: Validate .zenodo.json
+        run: python3 -m json.tool .zenodo.json > /dev/null
+
       - name: Check Code Formatting (Spotless)
         run: mvn -B spotless:check
 
@@ -44,7 +48,9 @@ jobs:
         run: docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
 
       - name: Run it (just check)
-        run: docker run --rm fabric-vdr-reproduce
+        run: |
+          mkdir -p out
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" fabric-vdr-reproduce
 
   # The parts that need a live Fabric network: the E2E suite and a short scalability run. The
   # paper's numbers come from the full matrix on stated hardware (results/), not from this runner.
