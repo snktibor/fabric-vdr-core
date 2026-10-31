@@ -1,0 +1,7 @@
+# gitleaks findings checked by hand and accepted. Each line is one finding's fingerprint.
+# The method specification's examples show the public keys of AnonCreds objects (an issuer's
+# verifiable_encryption_key and a revocation registry's revocationVerifyingKey). They are published
+# on the ledger by design and are not secrets.
+d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:487
+d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:686
+d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:759
