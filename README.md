@@ -44,14 +44,27 @@ live Fabric network, and a short scalability run, whose CSVs it keeps as an arti
 With only Docker installed:
 
 ```bash
-docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
-docker run --rm fabric-vdr-reproduce
+mkdir -p out
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" ghcr.io/snktibor/fabric-vdr-core:v1.0.0
 ```
+
+The release workflow publishes that image for every release tag. To build it from this checkout
+instead:
+
+```bash
+docker build -f reproduce.Dockerfile -t fabric-vdr-reproduce .
+mkdir -p out
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" fabric-vdr-reproduce
+```
+
+`--user` runs the image as you, so the files it writes to `out/` are yours, not root's. Create
+`out/` first: if Docker creates it for the mount, root owns it and the image cannot write there.
 
 This runs the unit tests, builds the Lean model and proofs of
 [`argos-formal`](https://github.com/snktibor/argos-formal) at the commit the paper cites, checks
 that each of its eight mutations breaks a proof, prints the committed scalability results, and
-regenerates from them the CSVs that the paper's figures plot (`just figures`).
+regenerates from them the CSVs that the paper's figures plot (`just figures`) into
+`out/figures/data/`.
 
 The E2E suite and the measurement need a live Fabric network, so they run on the host. With
 JDK 17, Maven, Docker, [Fablo 2.6.0](https://github.com/hyperledger-labs/fablo),
