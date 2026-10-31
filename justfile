@@ -98,6 +98,11 @@ figures:
       out/figures/faults-2s/timeline.csv:F-quorum-rep1:quorum > "$out/robustness/timeline-5s.csv"
     echo "Wrote $(find "$out" -name '*.csv' | wc -l) CSVs under $out"
 
+# Publication hygiene: private links, local paths, paper sources, agent commit identities and agent
+# files in the archive. Pass --strict before a release; the hygiene workflow adds gitleaks.
+hygiene *flags:
+    python3 scripts/hygiene.py {{flags}}
+
 # What the reproduce image runs: everything that needs no Fabric network.
 check: test formal results figures
 
