@@ -1,1 +1,11 @@
 * text=auto eol=lf
+
+# Kept in the repository, left out of `git archive` and so out of GitHub's release
+# archives that Zenodo stores. `just hygiene` fails on an agent file missing here.
+.claude/ export-ignore
+.codex/ export-ignore
+.cursor/ export-ignore
+.gemini/ export-ignore
+CLAUDE.md export-ignore
+AGENTS.md export-ignore
+GEMINI.md export-ignore
