@@ -1,6 +1,8 @@
 # Publication hygiene on every push: secrets (gitleaks, whole history), private links, local
 # paths, paper sources, agent commit identities and agent files in the archive. History
-# findings only warn here; `just hygiene --strict` must pass before the repository goes public.
+# findings only warn here; history is not rewritten, so review them and rotate any leaked secret.
+# Copying scripts/publishing-checklist.md to PUBLISHING.md turns on the publication gate.
+# Every step reports even when an earlier one fails. Accepted gitleaks findings go in .gitleaksignore.
 name: hygiene
 on: [push, pull_request, workflow_dispatch]
 jobs:
@@ -12,4 +14,13 @@ jobs:
       - name: Secrets (gitleaks)
         run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose
       - name: Links, paths, paper sources, agent identities and files
+        if: ${{ !cancelled() && hashFiles('PUBLISHING.md') == '' }}
         run: python3 scripts/hygiene.py
+      - name: Publication gate (once PUBLISHING.md exists)
+        if: ${{ !cancelled() && hashFiles('PUBLISHING.md') != '' }}
+        run: python3 scripts/hygiene.py --publish
+      - name: Release metadata (.zenodo.json, CITATION.cff)
+        if: ${{ !cancelled() }}
+        run: |
+          python3 -m json.tool .zenodo.json > /dev/null
+          docker run --rm -v "$PWD:/app" citationcff/cffconvert --validate
