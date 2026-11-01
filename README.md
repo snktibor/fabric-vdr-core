@@ -117,7 +117,7 @@ their commit-status deadline (`COMMIT_STATUS_S`), so the paper reports those fau
 ## Results tag
 
 The paper's numbers come from the runs in [`results/`](results/README.md), measured with the chaincode
-and benchmark at commits `38e76f5` and `2728a55`. Release `v1.0.0` (Zenodo version TODO) archives them
+and benchmark at commits `91710f4` and `4a97b27`. Release `v1.0.0` (Zenodo version TODO) archives them
 together with the recipes above. Later versions change packaging and documentation, never the
 committed results.
 
