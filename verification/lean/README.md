@@ -1,7 +1,7 @@
 # Lean model of guarded revocation
 
 This directory is a second Lean model of the guarded-update protocol, written from the
-paper's definitions and kept separate from [argos-formal](https://github.com/snktibor/argos-formal),
+paper's definitions and kept separate from [fabric-vdr-formal](https://github.com/snktibor/fabric-vdr-formal),
 which the paper cites. The two models are not proved equivalent. This one is the base that
 the [ledger refinement](../ledger-refinement/) and the
 [service-trace bridge](../service-trace-bridge/) build on.

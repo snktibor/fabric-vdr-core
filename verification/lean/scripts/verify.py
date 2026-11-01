@@ -193,7 +193,7 @@ def verify(log, run_id: str) -> dict:
     for rec in explicit.values():
         rows.append(f"| [{rec['name']}]({rec['file']}#L{rec['line']}) | {rec['role']} | proved | {', '.join(rec['axioms']) or 'none'} |")
     rows += ["", "Only the optional prior-writer theorem uses Classical.choice, for classical existence extraction.",
-             "The argos-formal development is a separate model; this inventory does not count its theorems."]
+             "The fabric-vdr-formal development is a separate model; this inventory does not count its theorems."]
     (ROOT / "THEOREMS.md").write_text("\n".join(rows) + "\n")
     return {"status": "passed", "success": True, "implementation_model_correspondence": "OPEN",
             "counts": counts, "frozen_sha256": seals, "source_script_document_sha256": before,

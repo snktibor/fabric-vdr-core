@@ -53,9 +53,9 @@ is open: its evidence says what is missing.
       - Pinned:
         - the base image `maven:3.9.16-eclipse-temurin-17` (`reproduce.Dockerfile:15`), by tag,
           not by digest;
-        - elan `v4.2.4` (`reproduce.Dockerfile:28`), and the Lean toolchain through argos-formal's
+        - elan `v4.2.4` (`reproduce.Dockerfile:28`), and the Lean toolchain through fabric-vdr-formal's
           `lean-toolchain`;
-        - argos-formal at commit `ae57a65` (`justfile:7`);
+        - fabric-vdr-formal at commit `ae57a65` (`justfile:7`);
         - Fabric `2.5.15` (`bench/fablo/1org-solo.json:4`, `bench/fablo/3org-raft.json:4`) and
           Fablo `2.6.0` (CI and `.devcontainer/devcontainer.json`);
         - the Maven dependency versions in `pom.xml`.
@@ -79,7 +79,7 @@ is open: its evidence says what is missing.
         only Overleaf and the private `BlackLight54/TDK26-Sinka-Tibor`. Following guide 08:14,
         nothing goes in until the paper has a DOI or a public URL.
       - Conflict, for Martin: `.zenodo.json` has two other entries, which "nothing else" excludes:
-        - `requires` `https://github.com/snktibor/argos-formal` (`just formal` fetches it);
+        - `requires` `https://github.com/snktibor/fabric-vdr-formal` (`just formal` fetches it);
         - `references` `https://github.com/snktibor/anoncreds-vdr-demo`.
       - Martin decided on 2026-10-31 to link the other two repositories this way. I kept them
         rather than override that decision.
@@ -152,7 +152,7 @@ is open: its evidence says what is missing.
         - If the JWTs count as leaked, rotation is moot: they expired on 2026-10-25, and their test
           network no longer exists.
 - [x] No link points to a same-year TDK paper. Evidence: every link in the tree points to one of:
-      - this repository or Tibor's public `argos-formal` and `anoncreds-vdr-demo`;
+      - this repository or Tibor's public `fabric-vdr-formal` and `anoncreds-vdr-demo`;
       - upstream projects: Hyperledger, Fablo, Lean/elan, KeY, just, Docker;
       - licences and policies: Apache, Contributor Covenant, the DCO;
       - eprint.iacr.org 2020/777;
