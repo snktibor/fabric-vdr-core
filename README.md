@@ -149,6 +149,7 @@ the paper measured. [CITATION.cff](CITATION.cff) holds the same metadata.
 - [Build](#build)
 - [Unit tests](#unit-tests)
 - [End-to-end tests against a live network](#end-to-end-tests-against-a-live-network)
+- [Proofs in this repository](#proofs-in-this-repository)
 - [Transaction reference](#transaction-reference)
 - [Wire encodings and type identifiers](#wire-encodings-and-type-identifiers)
 - [Chaincode events](#chaincode-events)
@@ -194,7 +195,7 @@ mvn spotless:apply    # fix
 mvn test
 ```
 
-Runs the 160 JUnit 5 unit tests (services, registries, contract routing, JWT
+Runs the 168 JUnit 5 unit tests (services, registries, contract routing, JWT
 validation, and three for the scalability harness). No network or Docker required.
 
 Use `mvn test`, not a bare `mvn verify`, when no network is running: the `verify`
@@ -294,6 +295,36 @@ commit-time validation instead.
 
 The build defines no default tag filter: `-Dcucumber.filter.tags` takes any tag expression
 on the command line, and without it every scenario runs.
+
+## Proofs in this repository
+
+The Lean model that the paper cites is in [`argos-formal`](https://github.com/snktibor/argos-formal).
+[`verification/`](verification/) adds machine-checked proofs that sit closer to this code:
+
+- [`verification/key`](verification/key/): KeY 3.0.0 proves 15 JML contracts on the production
+  `RevRegEntryVersion.next` and `RevRegEntryRecord`: the increment by one, the rejection of a
+  negative or maximal version with `FAILED_PRECONDITION`, and the record's constructors and
+  accessors. `RevRegEntryService` itself does not load in KeY, because of its generic types.
+- [`verification/lean`](verification/lean/): a second Lean 4.23.0 model of the guarded update,
+  written from the paper's definitions, with 14 targets, among them reciprocal safety under any
+  interleaving and under rejections other than MVCC.
+- [`verification/ledger-refinement`](verification/ledger-refinement/): refines that model to a
+  ledger with signed versions, creation at version 0 and atomic nonce writes, and carries the
+  safety theorem over to it.
+- [`verification/service-trace-bridge`](verification/service-trace-bridge/): links observations
+  of the Java service calls to that ledger. The safety result holds if every call that returns
+  normally meets its JML contract; those contracts are premises here, not results.
+
+None of this verifies Fabric or the whole service. The `KeY proofs` and `Lean proofs` workflows
+run everything on each push and pull request; locally:
+
+```bash
+python3 verification/key/run.py                              # Java 21
+bash verification/lean/scripts/setup-toolchain.sh            # needs curl, tar and zstd
+bash verification/lean/scripts/verify.sh
+python3 verification/ledger-refinement/scripts/replay.py
+python3 verification/service-trace-bridge/scripts/replay.py
+```
 
 ## Transaction reference
 
@@ -452,6 +483,7 @@ Which code comes back when:
 | a guarded registry has **no entry** — the identifier names nothing at all, or names a definition whose genesis entry was never created | `NOT_FOUND`, **including** under `expectedVersion: 0` |
 | a guarded entry stands at a version other than the submitted one | `FAILED_PRECONDITION` |
 | the target already stands at the largest version, 2⁶³ − 1, which this update or `updateRevRegEntry` would wrap to a negative one | `FAILED_PRECONDITION` |
+| the target holds a negative version, which the chaincode never writes | `FAILED_PRECONDITION` |
 
 An absent record is not a version-zero record: "does not exist" is not a state a caller
 could have observed and pinned, and treating it as a match would let a guard naming a typo
@@ -697,7 +729,7 @@ Failures surface as `ChaincodeException` with a stable machine-readable code:
 | `ALREADY_EXISTS` | an object with the given id already exists |
 | `NOT_FOUND` | the requested object, or one it references, does not exist |
 | `UNAUTHORIZED` | JWT validation or ownership check failed, or the acting DID is deactivated |
-| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)), or the entry to update already stands at the largest version |
+| `FAILED_PRECONDITION` | the request is well-formed and authorized, but world state does not meet a precondition it stated: a registry named as a guard is no longer at the version the caller submitted (see [conditional updates](#conditional-updates-guards)), or the entry to update already stands at the largest version or holds a negative one |
 | `INTERNAL` | a chaincode invariant was violated (only a code defect can produce this) |
 
 `FAILED_PRECONDITION` says only that the guarded registry's `version` moved — **not** that
