@@ -1,9 +1,6 @@
 # fabric-vdr-core
 
-<!-- After the first Zenodo release, put the concept DOI from the record's DOI badge dialog into both
-     zenodo.TODO placeholders and uncomment the badge.
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.TODO.svg)](https://doi.org/10.5281/zenodo.TODO)
--->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23866399.svg)](https://doi.org/10.5281/zenodo.23866399)
 
 This repository is the artifact of the TDK paper
 *Decentralized verifiable credential revocation with atomic test-and-set for cross-organizational settings* (Tibor Sinka, BME, 2026).
@@ -45,7 +42,7 @@ With only Docker installed:
 
 ```bash
 mkdir -p out
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" ghcr.io/snktibor/fabric-vdr-reproduce:v1.0.0
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" ghcr.io/snktibor/fabric-vdr-reproduce:v.1.0.0
 ```
 
 The release workflow publishes that image for every release tag. To build it from this checkout
@@ -120,10 +117,10 @@ their commit-status deadline (`COMMIT_STATUS_S`), so the paper reports those fau
 ## Results tag
 
 The paper's numbers come from the runs in [`results/`](results/README.md), measured with the chaincode
-and benchmark at commits `91710f4` and `4a97b27`. Release `v1.0.0` archives them
-together with the recipes above. Later versions change packaging and documentation, never the
-committed results.
-The Zenodo version DOI of `v1.0.0` is added here in the first update after the release (`v1.0.1`).
+and benchmark at commits `91710f4` and `4a97b27`. Release `v.1.0.0` archives them
+together with the recipes above. Later versions, from `v1.0.1` on, change packaging and documentation,
+never the committed results.
+The Zenodo version of `v.1.0.0` is [10.5281/zenodo.23866400](https://doi.org/10.5281/zenodo.23866400).
 
 ## Cite
 
@@ -137,8 +134,8 @@ the paper measured. [CITATION.cff](CITATION.cff) holds the same metadata.
   year      = {2026},
   publisher = {Zenodo},
   version   = {1.0.0},
-  doi       = {10.5281/zenodo.TODO},
-  url       = {https://doi.org/10.5281/zenodo.TODO}
+  doi       = {10.5281/zenodo.23866399},
+  url       = {https://doi.org/10.5281/zenodo.23866399}
 }
 ```
 
