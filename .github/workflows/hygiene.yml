@@ -1,6 +1,6 @@
 # Publication hygiene on every push: secrets (gitleaks, whole history), private links, local
 # paths, paper sources, agent commit identities and agent files in the archive. History
-# findings only warn here; `just hygiene --strict` must pass before the repository goes public.
+# findings only warn here; `just hygiene --strict` must pass before a release.
 name: hygiene
 on: [push, pull_request, workflow_dispatch]
 jobs:

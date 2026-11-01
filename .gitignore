@@ -54,4 +54,3 @@ out/
 wallets*
 *.pem
 *.key
-.claude/settings.local.json

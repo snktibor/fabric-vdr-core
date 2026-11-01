@@ -23,7 +23,7 @@ PRIVATE_LINKS = (
     r"|claude\.ai/(share|chat)|chatgpt\.com/(share|c)/"
 )
 LOCAL_PATHS = r"/home/[a-z_][a-z0-9_.-]*/|/Users/[A-Za-z0-9_.-]+/|[A-Za-z]:\\Users\\"
-# Commit identities of coding agents. Co-Authored-By trailers are allowed; authorship is not.
+# Commit identities of coding agents, as author, committer or Co-Authored-By trailer.
 AGENT_IDENTITY = r"noreply@anthropic\.com|\bclaude\b|openai|\bcodex\b|copilot|cursor(agent)?@|gemini|devin-ai"
 AGENT_FILES = r"(^|/)(\.claude|\.codex|\.cursor|\.gemini|CLAUDE\.md|AGENTS\.md|GEMINI\.md)(/|$)"
 # Paper sources belong in the paper repository; standalone TikZ figures are fine.
@@ -87,8 +87,13 @@ def main():
     for ident in git("log", "--all", "--format=%an <%ae>%n%cn <%ce>").splitlines():
         if ident not in seen and re.search(AGENT_IDENTITY, ident, re.I):
             seen.add(ident)
-            report(hist, "agent-author", f"commits authored or committed as {ident}; commit as yourself "
-                   "(a Co-Authored-By trailer is fine), then rewrite these commits before going public")
+            report(hist, "agent-author", f"commits authored or committed as {ident}; commit as yourself, "
+                   "then rewrite these commits before going public")
+    for ident in git("log", "--all", "--format=%(trailers:key=Co-authored-by,valueonly)").splitlines():
+        if ident and ident not in seen and re.search(AGENT_IDENTITY, ident, re.I):
+            seen.add(ident)
+            report(hist, "agent-trailer", f"commits carry a Co-Authored-By trailer for {ident}; "
+                   "rewrite their messages without it before going public")
 
     archived = git("ls-files").splitlines()
     ignored = git("check-attr", "export-ignore", "--", *archived) if archived else ""
