@@ -6,7 +6,15 @@ d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-ke
 d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:686
 d1303cb3b7f4dd2b7bf6ac26dd2ded0685010b5d:docs/anoncreds-method.md:generic-api-key:759
 
-# Verification evidence reviewed in verification/PUBLICATION-AUDIT.md. Exact findings only.
+# SHA-256 digests in the Lean toolchain lock file. Exact findings only.
+a293bf7697fbddcb364e7dc7ebfab0cc2f6808ae:verification/lean/toolchain-lock.json:generic-api-key:153
+a293bf7697fbddcb364e7dc7ebfab0cc2f6808ae:verification/lean/toolchain-lock.json:generic-api-key:156
+a293bf7697fbddcb364e7dc7ebfab0cc2f6808ae:verification/lean/toolchain-lock.json:generic-api-key:450
+a293bf7697fbddcb364e7dc7ebfab0cc2f6808ae:verification/lean/toolchain-lock.json:generic-api-key:515
+a293bf7697fbddcb364e7dc7ebfab0cc2f6808ae:verification/lean/toolchain-lock.json:generic-api-key:935
+
+# The same digests and expired test JWTs on the verification/guarded-core branch, which the
+# whole-history scan also reads while that branch exists.
 # SHA-256 file/toolchain digest (64 hex characters), not an API credential.
 db8f8028eb077653cbef3c7c7a0eeaae394e2ee7:verification/lean/toolchain-lock.json:generic-api-key:153
 # SHA-256 file/toolchain digest (64 hex characters), not an API credential.
