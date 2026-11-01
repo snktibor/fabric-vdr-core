@@ -3,9 +3,9 @@
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# argos-formal, which holds the Lean model and its proofs, at the commit the paper cites.
+# fabric-vdr-formal, which holds the Lean model and its proofs, at the commit the paper cites.
 formal_rev := "ae57a657d58a401d433a9475e4b5fc91e71baf37"
-formal_dir := env("ARGOS_FORMAL_DIR", "out/argos-formal")
+formal_dir := env("FABRIC_VDR_FORMAL_DIR", "out/fabric-vdr-formal")
 image := "vdr-chaincode:bench"
 fablo := env("FABLO", "fablo")
 
@@ -16,13 +16,13 @@ default:
 test:
     mvn -B spotless:check test
 
-# Download argos-formal at formal_rev, unless formal_dir already holds it.
+# Download fabric-vdr-formal at formal_rev, unless formal_dir already holds it.
 formal-src:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -f "{{formal_dir}}/lakefile.toml" ] && exit 0
     git init -q "{{formal_dir}}"
-    git -C "{{formal_dir}}" fetch -q --depth 1 https://github.com/snktibor/argos-formal.git {{formal_rev}}
+    git -C "{{formal_dir}}" fetch -q --depth 1 https://github.com/snktibor/fabric-vdr-formal.git {{formal_rev}}
     git -C "{{formal_dir}}" checkout -q FETCH_HEAD
 
 # The Lean proofs (`lake build --wfail`), then the check that all eight mutations break them.

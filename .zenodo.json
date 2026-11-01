@@ -34,7 +34,7 @@
   ],
   "related_identifiers": [
     {
-      "identifier": "https://github.com/snktibor/argos-formal",
+      "identifier": "https://github.com/snktibor/fabric-vdr-formal",
       "relation": "requires",
       "resource_type": "software",
       "scheme": "url"

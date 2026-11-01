@@ -35,7 +35,7 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean package -DskipTests
 
-  # What `docker run` of the reproduce image shows: the unit tests, the Lean proofs of argos-formal with
+  # What `docker run` of the reproduce image shows: the unit tests, the Lean proofs of fabric-vdr-formal with
   # its mutation check, and the committed scalability results.
   reproduce-image:
     runs-on: ubuntu-latest

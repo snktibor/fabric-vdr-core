@@ -58,7 +58,7 @@ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" fabric-vdr-re
 `out/` first: if Docker creates it for the mount, root owns it and the image cannot write there.
 
 This runs the unit tests, builds the Lean model and proofs of
-[`argos-formal`](https://github.com/snktibor/argos-formal) at the commit the paper cites, checks
+[`fabric-vdr-formal`](https://github.com/snktibor/fabric-vdr-formal) at the commit the paper cites, checks
 that each of its eight mutations breaks a proof, prints the committed scalability results, and
 regenerates from them the CSVs that the paper's figures plot (`just figures`) into
 `out/figures/data/`.
@@ -75,7 +75,7 @@ just reproduce           # the same with the full matrix, about an hour per topo
 | Claim | Recipe | Evidence |
 |---|---|---|
 | The services, registries, contract routing and JWT checks behave as specified | `just test` | the JUnit 5 unit tests, under a minute |
-| In the Lean model, two parties that guard each other's registries do not both commit, and a guarded check still holds when the revocation commits | `just formal` | `lake build --wfail` over `argos-formal`; `Axioms.lean` fails the build on a `sorry` or an extra axiom |
+| In the Lean model, two parties that guard each other's registries do not both commit, and a guarded check still holds when the revocation commits | `just formal` | `lake build --wfail` over `fabric-vdr-formal`; `Axioms.lean` fails the build on a `sorry` or an extra axiom |
 | Leaving out one part of the design or one hypothesis breaks a proof | `just formal` | `mutations/check.sh`: each of the eight mutations breaks the build |
 | On a live network, the unguarded check-then-revoke race lets both revocations commit (B1u) and the guarded update lets exactly one commit (B1) | `just e2e` | 43 Cucumber scenarios, A0 to B1 among them ([below](#concurrency-scenarios--part-of-the-default-run)) |
 | Cost of the guards, throughput under load, and rejections under contention (W1 to W3) | `just benchmark` | `results/<topology>/<run>/summary.csv` ([`results/`](results/README.md), [`bench/`](bench/README.md)) |
@@ -171,7 +171,7 @@ the paper measured. [CITATION.cff](CITATION.cff) holds the same metadata.
 | Docker | recent | Needed for the reproduce image and the end-to-end suite (Docker Desktop or OrbStack; Apple Silicon works — see [`anoncreds-vdr-demo`](https://github.com/snktibor/anoncreds-vdr-demo), which holds the network recipe). |
 | [just](https://github.com/casey/just) | 1.21+ | Runs the recipes in the `justfile`. Optional: each recipe is a few plain commands. |
 | [Fablo](https://github.com/hyperledger-labs/fablo) | 2.6.0 | Brings up the network for `just e2e` and `just benchmark`. |
-| [elan](https://github.com/leanprover/elan) | recent | Installs the Lean toolchain `argos-formal` pins, for `just formal`. |
+| [elan](https://github.com/leanprover/elan) | recent | Installs the Lean toolchain `fabric-vdr-formal` pins, for `just formal`. |
 
 ## Build
 
@@ -299,7 +299,7 @@ on the command line, and without it every scenario runs.
 
 ## Proofs in this repository
 
-The Lean model that the paper cites is in [`argos-formal`](https://github.com/snktibor/argos-formal).
+The Lean model that the paper cites is in [`fabric-vdr-formal`](https://github.com/snktibor/fabric-vdr-formal).
 [`verification/`](verification/) adds machine-checked proofs that sit closer to this code:
 
 - [`verification/key`](verification/key/): KeY 3.0.0 proves 15 JML contracts on the production
