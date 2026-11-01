@@ -19,10 +19,13 @@ runs both recipes.
 
 | Topology | Run | Machine | Commit | Used in the paper |
 |---|---|---|---|---|
-| `1org-solo` | `20261028-225051-bt250ms` | BME Cloud VM, 8 vCPU, 16 GB | `38e76f5` | scalability, W1 to W3 |
-| `1org-solo` | `20261029-003934-bt2s` | same | `38e76f5` | W1 at Fabric's default 2 s batch timeout |
-| `3org-raft` | `20261028-234453-bt250ms` | same | `38e76f5` | scalability, W1 to W3 |
-| `3org-raft` | `20261029-005129-bt250ms` | same | `38e76f5` | robustness, every fault, 60 s commit-status deadline |
-| `3org-raft` | `20261029-110821-bt250ms` | same | `2728a55` | robustness, the two Raft faults with a 2 s deadline |
+| `1org-solo` | `20261028-225051-bt250ms` | BME Cloud VM, 8 vCPU, 16 GB | `91710f4` | scalability, W1 to W3 |
+| `1org-solo` | `20261029-003934-bt2s` | same | `91710f4` | W1 at Fabric's default 2 s batch timeout |
+| `3org-raft` | `20261028-234453-bt250ms` | same | `91710f4` | scalability, W1 to W3 |
+| `3org-raft` | `20261029-005129-bt250ms` | same | `91710f4` | robustness, every fault, 60 s commit-status deadline |
+| `3org-raft` | `20261029-110821-bt250ms` | same | `4a97b27` | robustness, the two Raft faults with a 2 s deadline |
+
+The `environment.txt` files name these commits by their earlier hashes, `38e76f5` and `2728a55`.
+Only the author address of the two commits changed since; the code is the same.
 
 Smoke runs (`just benchmark --smoke`, and the CI) write to `out/results-smoke/` and never here.
