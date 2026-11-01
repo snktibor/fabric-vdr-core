@@ -1,1 +1,4 @@
 * text=auto eol=lf
+
+# The publication checklist is evidence for the advisors, not part of the artifact.
+PUBLISHING.md export-ignore
