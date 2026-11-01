@@ -7,12 +7,14 @@
 # `just figures` regenerates from those results. `docker run --rm --user "$(id -u):$(id -g)" fabric-vdr-reproduce formal`
 # runs one recipe. The E2E suite and the measurement need a live Fabric network, so they run on
 # the host (`just e2e`, `just benchmark`) or in CI, not in here. The release workflow publishes this
-# image as ghcr.io/snktibor/fabric-vdr-core:<tag>.
+# image as ghcr.io/snktibor/fabric-vdr-reproduce:<tag>.
 #
 # The image runs as any user: --user keeps the files it writes to the mounted out/ owned by the
 # caller instead of root. Everything it writes at run time (/work, the Maven repository, the Lean
 # build of argos-formal) is therefore writable by every user, and HOME points at /tmp.
 FROM maven:3.9.16-eclipse-temurin-17
+# Links the published package to this repository on ghcr.io.
+LABEL org.opencontainers.image.source=https://github.com/snktibor/fabric-vdr-core
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends just patch bsdextrautils python3 \

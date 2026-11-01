@@ -1,7 +1,7 @@
 # fabric-vdr-core
 
-<!-- After the first Zenodo release, replace TODO with the concept DOI from the record's DOI badge dialog
-     and uncomment the badge.
+<!-- After the first Zenodo release, put the concept DOI from the record's DOI badge dialog into both
+     zenodo.TODO placeholders and uncomment the badge.
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.TODO.svg)](https://doi.org/10.5281/zenodo.TODO)
 -->
 
@@ -45,7 +45,7 @@ With only Docker installed:
 
 ```bash
 mkdir -p out
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" ghcr.io/snktibor/fabric-vdr-core:v1.0.0
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work/out" ghcr.io/snktibor/fabric-vdr-reproduce:v1.0.0
 ```
 
 The release workflow publishes that image for every release tag. To build it from this checkout
@@ -86,8 +86,10 @@ just reproduce           # the same with the full matrix, about an hour per topo
 
 ## Results map
 
-One row per figure and table of the paper's evaluation chapter. Times are wall-clock: the CI's GitHub
-runner for the first rows, the measurement machine below for `just benchmark` and `just robustness`.
+One row per figure and table of the paper that reports a result: the evaluation chapter and the Lean
+results in the appendix. The other figures and tables are diagrams and comparisons, with nothing to
+rerun. Times are wall-clock: on the CI's GitHub runner, except `just benchmark` and `just robustness`,
+which ran on the measurement machine below.
 
 | Paper | Recipe | Output | Time |
 |---|---|---|---|
@@ -96,6 +98,7 @@ runner for the first rows, the measurement machine below for `just benchmark` an
 | Figure of the scalability results (Scalability, RQ2) | `just figures` from the committed runs; `just benchmark` for new runs | `out/figures/data/scalability/W1.csv`, `W2.csv`, `W3.csv`; new runs under `results/<topology>/` | under 1 s; about 2 h |
 | Table "Under every fault, at most one revocation of each pair committed" and the robustness figure (Robustness, RQ3) | `just figures` from the committed runs; `just robustness` for new runs | `out/figures/data/robustness/faults-deadline-60s.csv`, `faults-deadline-2s.csv`, `timeline-5s.csv`; the totals that `bench/analyze-faults.py` prints | under 1 s; about 50 min |
 | Table of the evaluation targets | none: it collects the observations of the rows above | n/a | n/a |
+| Appendix: figure "A machine-checked theorem proves each security goal", table "Further named results of the Lean model", table "The mutants of the Lean model" | `just formal` | the console output of `lake build --wfail` (the theorems, and the counterexamples M9 and M10 in `Counterexamples.lean`) and of `mutations/check.sh` (M1 to M8) | under 1 min in the reproduce image |
 
 On the committed runs, `just figures` writes the same bytes as the CSVs that the paper's figures read.
 [`results/README.md`](results/README.md) names the run behind each figure.
@@ -117,9 +120,10 @@ their commit-status deadline (`COMMIT_STATUS_S`), so the paper reports those fau
 ## Results tag
 
 The paper's numbers come from the runs in [`results/`](results/README.md), measured with the chaincode
-and benchmark at commits `38e76f5` and `2728a55`. Release `v1.0.0` (Zenodo version TODO) archives them
+and benchmark at commits `38e76f5` and `2728a55`. Release `v1.0.0` archives them
 together with the recipes above. Later versions change packaging and documentation, never the
 committed results.
+The Zenodo version DOI of `v1.0.0` is added here in the first update after the release (`v1.0.1`).
 
 ## Cite
 
